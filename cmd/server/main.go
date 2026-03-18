@@ -26,6 +26,7 @@ import (
 	"github.com/wared2003/freekiosk-hub/internal/clients"
 
 	"github.com/wared2003/freekiosk-hub/internal/api"
+	"github.com/wared2003/freekiosk-hub/internal/i18n"
 )
 
 type ApiKeyTransport struct {
@@ -47,6 +48,14 @@ func main() {
 		"port", cfg.ServerPort,
 		"db_path", cfg.DBPath,
 	)
+
+	// Initialize i18n translations
+	i18nStore := i18n.GetStore()
+	if err := i18nStore.LoadTranslations("internal/i18n/locales"); err != nil {
+		slog.Warn("Could not load all translations", "error", err)
+	}
+	// Set default language (can be overridden per-request via middleware)
+	i18n.SetLang("en")
 
 	// Global context for graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -115,7 +124,7 @@ func main() {
 
 	mediaService := services.NewMediaService(cfg.MediaDir, cfg.BaseURL)
 
-	// 5. Monitoring Service initialization
+	// 5. 监控服务初始化
 	monitorSvc := services.NewMonitorService(
 		tabletRepo,
 		reportRepo,
@@ -125,6 +134,36 @@ func main() {
 		cfg.PollInterval,
 		cfg.RetentionDays,
 	)
+
+	// 6. MQTT 服务初始化
+	// MQTT 提供实时双向通信能力，用于设备状态同步和命令下发
+	var mqttService *services.MQTTService
+	mqttCfg := &services.MQTTServiceConfig{
+		BrokerURL:  cfg.MQTTBrokerURL,
+		Port:       cfg.MQTTPort,
+		ClientID:   cfg.MQTTClientID,
+		Username:   cfg.MQTTUsername,
+		Password:   cfg.MQTTPassword,
+		UseTLS:     cfg.MQTTUseTLS,
+		KeepAlive:  cfg.MQTTKeepAlive,
+		CleanStart: cfg.MQTTCleanStart,
+		TenantID:   "default", // 默认租户 ID，后续可从配置读取
+	}
+	mqttService = services.NewMQTTService(tabletRepo, reportRepo, mqttCfg)
+
+	// 连接 MQTT Broker
+	if err := mqttService.Connect(ctx); err != nil {
+		slog.Warn("⚠️ MQTT 连接失败，将使用 HTTP 轮询模式", "error", err)
+	} else {
+		slog.Info("✅ MQTT 服务已连接", "broker", cfg.MQTTBrokerURL, "port", cfg.MQTTPort)
+	}
+	defer func() {
+		if mqttService.IsConnected() {
+			if err := mqttService.Disconnect(context.Background()); err != nil {
+				slog.Error("❌ MQTT 断开连接失败", "error", err)
+			}
+		}
+	}()
 
 	// 6. Launch Background Monitor Service
 	if cfg.PollInterval > 0 {
@@ -140,7 +179,7 @@ func main() {
 
 	e := echo.New()
 	e.Renderer = &api.TemplRenderer{}
-	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, monitorSvc, kioskClient, *cfg, mediaService)
+	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService)
 	e.Static("/media", cfg.MediaDir)
 	go func() {
 		slog.Info("🌐 Web Server starting", "port", cfg.ServerPort)

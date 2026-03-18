@@ -1,6 +1,7 @@
 package ui
 
 import (
+    "github.com/wared2003/freekiosk-hub/internal/i18n"
     "github.com/wared2003/freekiosk-hub/internal/repositories"
     "fmt"
     "encoding/json"
@@ -61,33 +62,34 @@ func getFullHistoryJSON(history []repositories.TabletReport) (string, string) {
 
 // --- Logique des Templates ---
 
-templ TabletDetails(t *models.TabletDisplay, history []repositories.TabletReport, fullPage bool) {
+templ TabletDetails(t *models.TabletDisplay, history []repositories.TabletReport, fullPage bool, lang string) {
+    {{ translate := func(key string) string { return i18n.TL(lang, key) } }}
     if fullPage {
-        @Layout(fmt.Sprintf("Détails %s", t.Name)) {
-            @TabletDetailsContent(t, history)
+        @Layout(fmt.Sprintf("Détails %s", t.Name), lang) {
+            @TabletDetailsContent(t, history, translate)
         }
     } else {
-        @TabletDetailsContent(t, history)
+        @TabletDetailsContent(t, history, translate)
     }
 }
 
-templ TabletDetailsContent(t *models.TabletDisplay, history []repositories.TabletReport) {
+templ TabletDetailsContent(t *models.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) {
     <div id="modal-container"></div>
     <div hx-ext="sse" sse-connect={ fmt.Sprintf("/sse/tablet/%d", t.ID) }>
-        <div 
+        <div
             id="details-container"
-            hx-get={ fmt.Sprintf("/tablets/%d?refresh=true", t.ID) } 
+            hx-get={ fmt.Sprintf("/tablets/%d?refresh=true", t.ID) }
             hx-trigger="sse:update, update from:body"
-            hx-target="this" 
+            hx-target="this"
             hx-swap="innerHTML"
             class="px-6 pb-12 space-y-6"
         >
-            @TabletUIInner(t, history)
+            @TabletUIInner(t, history, translate)
         </div>
     </div>
 }
 
-templ TabletUIInner(t *models.TabletDisplay, history []repositories.TabletReport) {
+templ TabletUIInner(t *models.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) {
     {{ historyData, rawJSON := getFullHistoryJSON(history) }}
     
     {{
@@ -116,30 +118,30 @@ templ TabletUIInner(t *models.TabletDisplay, history []repositories.TabletReport
         </div>
         
         <div class="flex items-center gap-2">
-            <button 
-                hx-get={ fmt.Sprintf("/tablets/%d/groups-selection", t.ID) } 
+            <button
+                hx-get={ fmt.Sprintf("/tablets/%d/groups-selection", t.ID) }
                 hx-target="#modal-container"
                 class="btn btn-sm btn-outline gap-2 border-slate-200">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
-                Groups
+                { translate("action.groups") }
             </button>
 
             <div class="divider divider-horizontal mx-0"></div>
-            @ActionButton("Beep", IconBeep(), fmt.Sprintf("/tablets/%d/command/beep", t.ID), "POST", BtnNormal)
-            @ActionButton("Audio", Emoji("🔊"), fmt.Sprintf("/tablets/%d/sound-modal", t.ID), "GET", BtnNormal)
-            @ActionButton("Capture", IconCamera(), "#", "POST", BtnNormal)
-            @ActionButton("Wake up", Emoji("⏰"), fmt.Sprintf("/tablets/%d/command/wake", t.ID), "POST", BtnNormal)
-            @ActionButton("Reload", IconReload(), fmt.Sprintf("/tablets/%d/command/reload", t.ID), "POST", BtnWarning)           
-            @ActionButton("Reboot", nil, fmt.Sprintf("/tablets/%d/command/reboot", t.ID), "POST", BtnDanger)
+            @ActionButton(translate("action.beep"), IconBeep(), fmt.Sprintf("/tablets/%d/command/beep", t.ID), "POST", BtnNormal)
+            @ActionButton(translate("action.audio"), Emoji("🔊"), fmt.Sprintf("/tablets/%d/sound-modal", t.ID), "GET", BtnNormal)
+            @ActionButton(translate("action.capture"), IconCamera(), "#", "POST", BtnNormal)
+            @ActionButton(translate("action.wake"), Emoji("⏰"), fmt.Sprintf("/tablets/%d/command/wake", t.ID), "POST", BtnNormal)
+            @ActionButton(translate("action.reload"), IconReload(), fmt.Sprintf("/tablets/%d/command/reload", t.ID), "POST", BtnWarning)
+            @ActionButton(translate("action.reboot"), nil, fmt.Sprintf("/tablets/%d/command/reboot", t.ID), "POST", BtnDanger)
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-6">
         if t.LastReport != nil {
             <div class="xl:col-span-3 space-y-6">
-                @SectionDisplay(t.LastReport)
+                @SectionDisplay(t.LastReport, translate)
                 @SectionWebview(t)
             </div>
 
@@ -153,13 +155,13 @@ templ TabletUIInner(t *models.TabletDisplay, history []repositories.TabletReport
                 <div class="card bg-base-100 border border-base-200 shadow-sm">
                     <div class="card-body p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-slate-800">Historique Principal</h3>
+                            <h3 class="font-bold text-slate-800">{ translate("history.primary") }</h3>
                             <select id="chartSelector1" class="select select-bordered select-sm" autocomplete="off">
-                                <option value="battery">🔋 Batterie %</option>
-                                <option value="wifi">📶 WiFi (dBm)</option>
-                                <option value="mem">🧠 RAM %</option>
-                                <option value="storage">💾 Stockage %</option>
-                                <option value="connection">🟢 Status</option>
+                                <option value="battery">🔋 { translate("metric.battery") }</option>
+                                <option value="wifi">📶 { translate("metric.wifi") }</option>
+                                <option value="mem">🧠 { translate("metric.ram") }</option>
+                                <option value="storage">💾 { translate("metric.storage") }</option>
+                                <option value="connection">🟢 { translate("metric.connection") }</option>
                             </select>
                         </div>
                         <div class="h-[250px]">
@@ -171,13 +173,13 @@ templ TabletUIInner(t *models.TabletDisplay, history []repositories.TabletReport
                 <div class="card bg-base-100 border border-base-200 shadow-sm">
                     <div class="card-body p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-slate-800">Historique Secondaire</h3>
+                            <h3 class="font-bold text-slate-800">{ translate("history.secondary") }</h3>
                             <select id="chartSelector2" class="select select-bordered select-sm" autocomplete="off">
-                                <option value="connection">🟢 Status</option>
-                                <option value="wifi">📶 WiFi (dBm)</option>
-                                <option value="battery">🔋 Batterie %</option>
-                                <option value="mem">🧠 RAM %</option>
-                                <option value="storage">💾 Stockage %</option>
+                                <option value="connection">🟢 { translate("metric.connection") }</option>
+                                <option value="wifi">📶 { translate("metric.wifi") }</option>
+                                <option value="battery">🔋 { translate("metric.battery") }</option>
+                                <option value="mem">🧠 { translate("metric.ram") }</option>
+                                <option value="storage">💾 { translate("metric.storage") }</option>
                             </select>
                         </div>
                         <div class="h-[250px]">
@@ -188,14 +190,14 @@ templ TabletUIInner(t *models.TabletDisplay, history []repositories.TabletReport
 
                 <div class="collapse collapse-arrow bg-neutral text-neutral-content shadow-xl overflow-hidden">
                     <input type="checkbox"/>
-                    <div class="collapse-title text-sm font-bold opacity-80">📦 Rapport JSON brut</div>
+                    <div class="collapse-title text-sm font-bold opacity-80">📦 { translate("common.noData") }</div>
                     <div class="collapse-content">
                         <pre id="rawJson" class="text-[11px] font-mono bg-black/40 p-4 rounded-xl overflow-x-auto max-h-[300px]">{ rawJSON }</pre>
                     </div>
                 </div>
             </div>
         } else {
-            <div class="lg:col-span-12 alert alert-warning">Waiting for device connection...</div>
+            <div class="lg:col-span-12 alert alert-warning">{ translate("device.waiting") }</div>
         }
     </div>
     @chartScript()
@@ -203,21 +205,21 @@ templ TabletUIInner(t *models.TabletDisplay, history []repositories.TabletReport
 
 // --- Sections et Scripts inchangés ---
 
-templ SectionDisplay(last *repositories.TabletReport) {
+templ SectionDisplay(last *repositories.TabletReport, translate func(key string) string) {
     <div class="card bg-base-100 border border-base-200 shadow-sm">
         <div class="card-body p-5">
             <h3 class="text-xs font-bold uppercase tracking-widest opacity-40 text-primary mb-4">screen & audio</h3>
             <div class="grid grid-cols-2 gap-3 mb-4">
 
-                
-                @ScreenStatusBox(last.ScreenOn, last.TabletID)
-                @infoBox("Brightness", fmt.Sprintf("%d%%", (last.ScreenBrightness * 100) / 255))
-                @ScreensaverStatusBox(last.ScreensaverActive, last.TabletID)
-                @infoBox("Auto Bright.", boolToText(last.AutoBrightnessEnabled, "ON", "OFF"))
+
+                @ScreenStatusBox(last.ScreenOn, last.TabletID, translate)
+                @infoBox(translate("metric.battery"), fmt.Sprintf("%d%%", (last.ScreenBrightness * 100) / 255))
+                @ScreensaverStatusBox(last.ScreensaverActive, last.TabletID, translate)
+                @infoBox("Auto Bright.", boolToText(last.AutoBrightnessEnabled, translate("screen.on"), translate("screen.off")))
             </div>
             <div class="space-y-1">
-                @detailRow("Rotation", boolToText(last.RotationEnabled, "Auto", "Fixe"))
-                @detailRow("Volume", fmt.Sprintf("%d %%", last.AudioVolume))
+                @detailRow(translate("device.rotation"), boolToText(last.RotationEnabled, translate("device.auto"), translate("device.fixed")))
+                @detailRow(translate("device.volume"), fmt.Sprintf("%d %%", last.AudioVolume))
             </div>
         </div>
     </div>
@@ -457,25 +459,25 @@ templ TabletGroupsModal(tabletID int64, allGroups []repositories.Group, selected
     </dialog>
 }
 
-templ ScreenStatusBox(isOn bool, tabletID int64) {
-    <div 
+templ ScreenStatusBox(isOn bool, tabletID int64, translate func(key string) string) {
+    <div
         class="bg-slate-50 p-3 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-all relative group"
         hx-post={ fmt.Sprintf("/tablets/%d/command/screen-status", tabletID) }
         hx-vals={ fmt.Sprintf(`{"status": "%t"}`, !isOn) }
         hx-target="this"
         hx-swap="outerHTML"
     >
-        <p class="text-[10px] opacity-50 uppercase font-black leading-none mb-2">Screen Status</p>
-        
+        <p class="text-[10px] opacity-50 uppercase font-black leading-none mb-2">{ translate("screen.status") }</p>
+
         <div class="flex items-center gap-2">
             <p class="font-bold text-slate-800 text-sm">
                 if isOn {
-                    { "On" }
+                    { translate("screen.on") }
                 } else {
-                    { "Off" }
+                    { translate("screen.off") }
                 }
             </p>
-            
+
             <span class="htmx-indicator loading loading-spinner loading-xs opacity-40"></span>
         </div>
 
@@ -483,25 +485,25 @@ templ ScreenStatusBox(isOn bool, tabletID int64) {
     </div>
 }
 
-templ ScreensaverStatusBox(isOn bool, tabletID int64) {
-    <div 
+templ ScreensaverStatusBox(isOn bool, tabletID int64, translate func(key string) string) {
+    <div
         class="bg-slate-50 p-3 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-all relative group"
         hx-post={ fmt.Sprintf("/tablets/%d/command/screensaver-status", tabletID) }
         hx-vals={ fmt.Sprintf(`{"status": "%t"}`, !isOn) }
         hx-target="this"
         hx-swap="outerHTML"
     >
-        <p class="text-[10px] opacity-50 uppercase font-black leading-none mb-2">ScreenSaver</p>
-        
+        <p class="text-[10px] opacity-50 uppercase font-black leading-none mb-2">{ translate("screensaver.label") }</p>
+
         <div class="flex items-center gap-2">
             <p class="font-bold text-slate-800 text-sm">
                 if isOn {
-                    { "On" }
+                    { translate("screensaver.on") }
                 } else {
-                    { "Off" }
+                    { translate("screensaver.off") }
                 }
             </p>
-            
+
             <span class="htmx-indicator loading loading-spinner loading-xs opacity-40"></span>
         </div>
 
@@ -591,45 +593,45 @@ templ NavigateModal(tabletID int64, currentURL string) {
     </dialog>
 }
 
-templ TabSoundModal(sounds []services.SoundFileInfo, tabletID int64) {
+templ TabSoundModal(sounds []services.SoundFileInfo, tabletID int64, translate func(key string) string) {
     <dialog id="sound_modal" class="modal modal-open">
         <div class="modal-box bg-white max-w-2xl border border-slate-200 p-0 shadow-2xl">
             <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <h3 class="font-black text-sm uppercase tracking-widest text-slate-800 flex items-center gap-2">
-                    <span class="text-primary text-lg">🔊</span> Sound Library
+                    <span class="text-primary text-lg">🔊</span> { translate("sound.library") }
                 </h3>
                 <button type="button" class="btn btn-xs btn-circle btn-ghost" onclick="this.closest('dialog').remove()">✕</button>
             </div>
 
             <div class="p-6">
-                <form 
-                    hx-post={ fmt.Sprintf("/tablets/%d/sound/upload", tabletID) } 
-                    hx-encoding="multipart/form-data" 
+                <form
+                    hx-post={ fmt.Sprintf("/tablets/%d/sound/upload", tabletID) }
+                    hx-encoding="multipart/form-data"
                     hx-target="#sound-list-container"
                     class="flex gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 mb-6"
                 >
                     <input type="file" name="soundFile" class="file-input file-input-bordered file-input-primary file-input-sm w-full" accept="audio/*" required />
-                    <button type="submit" class="btn btn-sm btn-primary px-6 text-white uppercase font-bold text-xs">Upload</button>
+                    <button type="submit" class="btn btn-sm btn-primary px-6 text-white uppercase font-bold text-xs">{ translate("sound.upload") }</button>
                 </form>
 
                 <div id="sound-list-container" class="max-h-[250px] overflow-y-auto pr-2 custom-scrollbar mb-8">
-                    @TabSoundList(sounds, tabletID)
+                    @TabSoundList(sounds, tabletID, translate)
                 </div>
 
                 <div class="pt-6 border-t border-slate-100">
-                    <h4 class="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3">Text To Speech</h4>
+                    <h4 class="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3">{ translate("sound.tts") }</h4>
                     <form hx-post={ fmt.Sprintf("/tablets/%d/command/gtsl-tts", tabletID) } hx-swap="none" class="space-y-3">
                         <div class="relative">
-                            <textarea 
-                                name="tts_text" 
+                            <textarea
+                                name="tts_text"
                                 maxlength="200"
-                                class="textarea textarea-bordered w-full bg-slate-50 text-slate-800 text-sm focus:bg-white transition-all min-h-[100px] pb-12" 
-                                placeholder="Type what the kiosk should say..."></textarea>
-                            
+                                class="textarea textarea-bordered w-full bg-slate-50 text-slate-800 text-sm focus:bg-white transition-all min-h-[100px] pb-12"
+                                placeholder={ translate("sound.tts_placeholder") }></textarea>
+
                             <div class="absolute bottom-2 left-2 right-2 flex justify-between items-center px-2 py-1 bg-white/90 rounded-md border border-slate-100 shadow-sm">
                                 <div class="flex items-center gap-3">
                                     <div class="flex items-center gap-1">
-                                        <span class="text-[9px] font-black text-slate-400 uppercase">Lang</span>
+                                        <span class="text-[9px] font-black text-slate-400 uppercase">{ translate("sound.lang") }</span>
                                         <select name="lang" class="select select-ghost select-xs text-[10px] font-bold focus:bg-transparent">
                                             <option value="fr">🇫🇷 FR</option>
                                             <option value="en" selected>🇺🇸 EN</option>
@@ -650,42 +652,42 @@ templ TabSoundModal(sounds []services.SoundFileInfo, tabletID int64) {
                                     </div>
                                     <div class="h-4 w-[1px] bg-slate-200"></div>
                                     <label class="flex items-center gap-1 cursor-pointer">
-                                        <span class="text-[9px] font-black text-slate-400 uppercase">Loop</span>
+                                        <span class="text-[9px] font-black text-slate-400 uppercase">{ translate("sound.loop") }</span>
                                         <input type="checkbox" name="loop" class="checkbox checkbox-primary checkbox-xs" />
                                     </label>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-slate-400">VOL</span>
+                                    <span class="text-[10px] font-bold text-slate-400">{ translate("sound.vol") }</span>
                                     <input type="range" name="volume" min="0" max="100" value="80" class="range range-xs range-primary w-24">
                                 </div>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-sm btn-block btn-primary text-white font-bold uppercase text-[10px] tracking-widest">
-                            📢 Speak
+                            📢 { translate("sound.speak") }
                         </button>
                     </form>
                 </div>
             </div>
-            
+
             <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
-                <button class="btn btn-sm btn-ghost text-[10px] uppercase font-bold" onclick="this.closest('dialog').remove()">Fermer</button>
-                <button 
+                <button class="btn btn-sm btn-ghost text-[10px] uppercase font-bold" onclick="this.closest('dialog').remove()">{ translate("common.close") }</button>
+                <button
                     class="btn btn-sm btn-error btn-outline text-[10px] font-bold uppercase"
                     hx-post={ fmt.Sprintf("/tablets/%d/command/stop-sound", tabletID) }
                     hx-swap="none"
-                >🛑 Stop All</button>
+                >{ translate("action.stop_sound") }</button>
             </div>
         </div>
         <form method="dialog" class="modal-backdrop">
-            <button onclick="this.closest('dialog').remove()">close</button>
+            <button onclick="this.closest('dialog').remove()">{ translate("common.close") }</button>
         </form>
     </dialog>
 }
 
-templ TabSoundList(sounds []services.SoundFileInfo, tabletID int64) {
+templ TabSoundList(sounds []services.SoundFileInfo, tabletID int64, translate func(key string) string) {
     if len(sounds) == 0 {
         <div class="text-center py-10 opacity-30 border-2 border-dashed border-slate-200 rounded-2xl">
-            <p class="text-xs font-black uppercase tracking-widest">Library is empty</p>
+            <p class="text-xs font-black uppercase tracking-widest">{ translate("common.noData") }</p>
         </div>
     }
 
@@ -706,7 +708,7 @@ templ TabSoundList(sounds []services.SoundFileInfo, tabletID int64) {
                 <input type="hidden" name="soundUrl" id={ "url-" + safeID } value={ sound.URL } />
 
                 <div class="flex flex-col gap-1">
-                    <span class="text-[8px] font-black opacity-40 leading-none text-center">VOL</span>
+                    <span class="text-[8px] font-black opacity-40 leading-none text-center">{ translate("sound.vol") }</span>
                     <input 
                         type="range" 
                         name="volume" 
@@ -717,7 +719,7 @@ templ TabSoundList(sounds []services.SoundFileInfo, tabletID int64) {
                 </div>
 
                 <div class="flex flex-col items-center gap-1">
-                    <span class="text-[8px] font-black opacity-40 leading-none">LOOP</span>
+                    <span class="text-[8px] font-black opacity-40 leading-none">{ translate("sound.loop") }</span>
                     <input 
                         type="checkbox" 
                         name="loop" 
@@ -732,7 +734,7 @@ templ TabSoundList(sounds []services.SoundFileInfo, tabletID int64) {
                     hx-swap="none"
                     hx-include={ fmt.Sprintf("#url-%s, #vol-%s, #loop-%s", safeID, safeID, safeID) }
                 >
-                    PLAY
+                    { translate("sound.play") }
                 </button>
             </div>
         </div>

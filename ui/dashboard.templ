@@ -2,60 +2,62 @@ package ui
 
 import (
     "github.com/wared2003/freekiosk-hub/internal/models"
+    "github.com/wared2003/freekiosk-hub/internal/i18n"
     "fmt"
     "time"
 )
 
-templ Dashboard(tablets []models.TabletDisplay, fullPage bool) {
+templ Dashboard(tablets []models.TabletDisplay, fullPage bool, lang string) {
+    {{ t := func(key string) string { return i18n.TL(lang, key) } }}
     if fullPage {
-        @Layout("Dashboard") {
-            @DashboardContent(tablets)
+        @Layout("Dashboard", lang) {
+            @DashboardContent(tablets, t)
         }
     } else {
-        @DashboardContent(tablets)
+        @DashboardContent(tablets, t)
     }
 }
 
 // Le wrapper SSE fixe
-templ DashboardContent(tablets []models.TabletDisplay) {
+templ DashboardContent(tablets []models.TabletDisplay, t func(key string) string) {
     <div class="px-6" id="dashboard-container" hx-ext="sse" sse-connect="/sse/global">
         <header class="mb-8 flex justify-between items-end">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight text-slate-800">Devices Fleet</h1>
-                <p class="text-slate-500 text-sm">Live overview of { fmt.Sprint(len(tablets)) } units.</p>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-800">{ t("devices.fleet") }</h1>
+                <p class="text-slate-500 text-sm">{ fmt.Sprintf(t("devices.overview"), len(tablets)) }</p>
             </div>
             <div class="flex items-center gap-2 text-[10px] font-bold text-success opacity-70 mb-1">
                 <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
                 </span>
-                LIVE
+                { t("status.live") }
             </div>
         </header>
-        
+
         // On isole la grille ici
-        @DashboardGrid(tablets)
+        @DashboardGrid(tablets, t)
     </div>
 }
 
 // La partie rafraîchie par le SSE
-templ DashboardGrid(tablets []models.TabletDisplay) {
-    <div 
+templ DashboardGrid(tablets []models.TabletDisplay, t func(key string) string) {
+    <div
         id="tablet-grid"
-        hx-get="/?refresh=true" 
-        hx-trigger="sse:update" 
-        hx-target="this" 
+        hx-get="/?refresh=true"
+        hx-trigger="sse:update"
+        hx-target="this"
         hx-swap="outerHTML"
         class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
     >
         for _, td := range tablets {
-            @TabletCard(td)
+            @TabletCard(td, t)
         }
     </div>
 }
 
-templ TabletCard(td models.TabletDisplay) {
-    <div 
+templ TabletCard(td models.TabletDisplay, t func(key string) string) {
+    <div
         hx-get={ string(templ.URL(fmt.Sprintf("/tablets/%d", td.ID))) }
         hx-target="#main-container"
         hx-push-url="true"
@@ -71,19 +73,19 @@ templ TabletCard(td models.TabletDisplay) {
                 </div>
                 @StatusBadge(td)
             </div>
-            
+
             if td.Online {
                 <div class="mt-3">
                     <div class="flex justify-between text-[11px] mb-1 font-medium">
-                        <span>Battery</span>
-                        <span class={ getBatteryTextColor(td.LastReport.BatteryLevel) }>{ fmt.Sprint(td.LastReport.BatteryLevel) }%</span>
+                        <span>{ t("battery.label") }</span>
+                        <span class={ getBatteryTextColor(td.LastReport.BatteryLevel) }>{ fmt.Sprintf(t("battery.level"), td.LastReport.BatteryLevel) }</span>
                     </div>
-                    <progress 
-                        class={ "progress h-1.5 w-full " + getBatteryClass(td.LastReport.BatteryLevel) } 
-                        value={ fmt.Sprint(td.LastReport.BatteryLevel) } 
+                    <progress
+                        class={ "progress h-1.5 w-full " + getBatteryClass(td.LastReport.BatteryLevel) }
+                        value={ fmt.Sprint(td.LastReport.BatteryLevel) }
                         max="100"></progress>
                 </div>
-                
+
                 <div class="mt-4 flex items-center gap-1 text-[10px] opacity-40 font-semibold uppercase">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -92,7 +94,7 @@ templ TabletCard(td models.TabletDisplay) {
                 </div>
             } else {
                 <div class="mt-4 py-3 text-center bg-slate-50 rounded text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Offline, last seen { formatTime(td.LastSeen) }
+                    { fmt.Sprintf(t("status.offline"), formatTime(td.LastSeen)) }
                 </div>
             }
         </div>

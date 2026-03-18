@@ -9,6 +9,7 @@ import (
 
 	"github.com/wared2003/freekiosk-hub/internal/clients"
 	"github.com/wared2003/freekiosk-hub/internal/config"
+	"github.com/wared2003/freekiosk-hub/internal/i18n"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/internal/services"
 	"github.com/wared2003/freekiosk-hub/internal/sse"
@@ -17,7 +18,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-// ApiServer centralise les dépendances pour le routage
+// ApiServer 集中路由所需的依赖项
 type ApiServer struct {
 	Echo         *echo.Echo
 	DB           *sql.DB
@@ -28,9 +29,10 @@ type ApiServer struct {
 	KioskClient  clients.KioskClient
 	Cfg          config.Config
 	MediaService services.MediaService
+	MQTTService  *services.MQTTService // MQTT 服务，用于实时双向通信
 }
 
-// NewRouter initialise le serveur, les handlers et les routes
+// NewRouter 初始化服务器、处理器和路由
 func NewRouter(e *echo.Echo, db *sql.DB,
 	tr repositories.TabletRepository,
 	rr repositories.ReportRepository,
@@ -39,6 +41,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	ks clients.KioskClient,
 	cfg config.Config,
 	mes services.MediaService,
+	mqttSvc *services.MQTTService, // 新增 MQTT 服务参数
 
 ) *ApiServer {
 	s := &ApiServer{
@@ -51,6 +54,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		KioskClient:  ks,
 		Cfg:          cfg,
 		MediaService: mes,
+		MQTTService:  mqttSvc,
 	}
 
 	s.setupMiddlewares()
@@ -60,6 +64,9 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 }
 
 func (s *ApiServer) setupMiddlewares() {
+	// Language middleware for i18n
+	s.Echo.Use(i18n.LanguageMiddleware)
+
 	// Nouveau RequestLogger : Plus propre et structuré
 	s.Echo.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogStatus:   true,
@@ -111,6 +118,26 @@ func (s *ApiServer) setupRoutes() {
 
 	// --- 2. ROUTES PUBLIQUES / SYSTÈME ---
 	s.Echo.GET("/health", systemJsonH.HandleHealthCheck)
+
+	// MQTT 状态检查端点
+	s.Echo.GET("/health/mqtt", func(c echo.Context) error {
+		if s.MQTTService == nil {
+			return c.JSON(503, map[string]interface{}{
+				"status":  "unavailable",
+				"message": "MQTT 服务未配置",
+			})
+		}
+		if !s.MQTTService.IsConnected() {
+			return c.JSON(503, map[string]interface{}{
+				"status":  "disconnected",
+				"message": "MQTT 未连接到 Broker",
+			})
+		}
+		return c.JSON(200, map[string]interface{}{
+			"status":  "connected",
+			"message": "MQTT 服务正常运行",
+		})
+	})
 
 	s.Echo.GET("/", homeH.HandleIndex)
 	tablets := s.Echo.Group("/tablets")

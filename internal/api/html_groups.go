@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/wared2003/freekiosk-hub/internal/i18n"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/ui"
 
@@ -17,6 +18,15 @@ type GroupHandler struct {
 
 func NewGroupHandler(gr repositories.GroupRepository) *GroupHandler {
 	return &GroupHandler{groupRepo: gr}
+}
+
+// Get language from context (set by middleware)
+func getLang(c echo.Context) string {
+	lang, ok := c.Get("lang").(string)
+	if !ok {
+		lang = "en"
+	}
+	return lang
 }
 
 // GET /groups
@@ -38,17 +48,21 @@ func (h *GroupHandler) HandleGroups(c echo.Context) error {
 		tableData[g.ID] = tablets
 	}
 
+	lang := getLang(c)
+	t := func(key string) string { return i18n.TL(lang, key) }
+
 	if c.Request().Header.Get("HX-Request") == "true" {
-		return c.Render(http.StatusOK, "", ui.GroupsContent(groups, tableData))
+		return c.Render(http.StatusOK, "", ui.GroupsContent(groups, tableData, t))
 	}
-	return c.Render(http.StatusOK, "", ui.GroupsPage(groups, tableData))
+	return c.Render(http.StatusOK, "", ui.GroupsPage(groups, tableData, lang))
 }
 
 // GET /groups/new
 func (h *GroupHandler) HandleNewGroup(c echo.Context) error {
+	lang := getLang(c)
 	return c.Render(http.StatusOK, "", ui.GroupFormModal(&repositories.Group{
 		Color: "#6366f1",
-	}))
+	}, lang))
 }
 
 // GET /groups/edit/:id
@@ -65,7 +79,8 @@ func (h *GroupHandler) HandleEditGroup(c echo.Context) error {
 		return c.String(http.StatusNotFound, "Group not found")
 	}
 
-	return c.Render(http.StatusOK, "", ui.GroupFormModal(group))
+	lang := getLang(c)
+	return c.Render(http.StatusOK, "", ui.GroupFormModal(group, lang))
 }
 
 // POST /groups/save

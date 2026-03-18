@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/wared2003/freekiosk-hub/internal/i18n"
 	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/ui"
@@ -38,11 +39,19 @@ func (h *HtmlHomeHandler) HandleIndex(c echo.Context) error {
 		})
 	}
 
+	// Get language from context (set by middleware)
+	lang, ok := c.Get("lang").(string)
+	if !ok {
+		lang = "en"
+	}
+
+	t := func(key string) string { return i18n.TL(lang, key) }
+
 	if c.QueryParam("refresh") == "true" {
-		return ui.DashboardGrid(displayList).Render(c.Request().Context(), c.Response().Writer)
+		return ui.DashboardGrid(displayList, t).Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	FullPage := c.Request().Header.Get("HX-Request") != "true"
 
-	return c.Render(http.StatusOK, "", ui.Dashboard(displayList, FullPage))
+	return c.Render(http.StatusOK, "", ui.Dashboard(displayList, FullPage, lang))
 }

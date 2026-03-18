@@ -2,36 +2,38 @@ package ui
 
 import (
 	"fmt"
+	"github.com/wared2003/freekiosk-hub/internal/i18n"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 )
 
-templ GroupsPage(groups []repositories.Group, tableData map[int64][]repositories.Tablet) {
-	@Layout("Group Management") {
-			@GroupsContent(groups, tableData)
+templ GroupsPage(groups []repositories.Group, tableData map[int64][]repositories.Tablet, lang string) {
+	{{ t := func(key string) string { return i18n.TL(lang, key) } }}
+	@Layout("Groups", lang) {
+			@GroupsContent(groups, tableData, t)
 	}
 }
-templ GroupsContent(groups []repositories.Group, tableData map[int64][]repositories.Tablet) {
+templ GroupsContent(groups []repositories.Group, tableData map[int64][]repositories.Tablet, t func(key string) string) {
     <div class="max-w-6xl mx-auto p-6 animate-in fade-in duration-500">
         <div class="flex justify-between items-center mb-8">
             <div>
-                <h1 class="text-3xl font-black text-slate-800">Gestion des Groupes</h1>
-                <p class="text-slate-500 text-sm">Créez et organisez vos flottes de tablettes</p>
+                <h1 class="text-3xl font-black text-slate-800">{ t("nav.groups") }</h1>
+                <p class="text-slate-500 text-sm">{ t("group.devices") }</p>
             </div>
-            <button 
-                hx-get="/groups/new" 
-                hx-target="#modal-container" 
+            <button
+                hx-get="/groups/new"
+                hx-target="#modal-container"
                 class="btn btn-primary gap-2"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                 </svg>
-                Nouveau Groupe
+                { t("group.add") }
             </button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="groups-grid">
             for _, g := range groups {
-                @GroupCard(g, tableData[g.ID])
+                @GroupCard(g, tableData[g.ID], t)
             }
         </div>
 
@@ -39,7 +41,7 @@ templ GroupsContent(groups []repositories.Group, tableData map[int64][]repositor
     </div>
 }
 
-templ GroupCard(g repositories.Group, tablets []repositories.Tablet) {
+templ GroupCard(g repositories.Group, tablets []repositories.Tablet, t func(key string) string) {
     <div class="card bg-white shadow-sm border border-slate-100 hover:border-primary/30 transition-colors" id={ fmt.Sprintf("group-card-%d", g.ID) }>
         <div class="card-body p-5">
             <div class="flex justify-between items-start">
@@ -55,28 +57,28 @@ templ GroupCard(g repositories.Group, tablets []repositories.Tablet) {
                 <div class="dropdown dropdown-end">
                     <label tabindex="0" class="btn btn-ghost btn-xs btn-circle text-slate-400">•••</label>
                     <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-slate-100">
-                        <li><a hx-get={ fmt.Sprintf("/groups/edit/%d", g.ID) } hx-target="#modal-container">Modifier</a></li>
-                        <li><a hx-delete={ fmt.Sprintf("/groups/%d", g.ID) } hx-target={ fmt.Sprintf("#group-card-%d", g.ID) } hx-swap="outerHTML" class="text-error">Supprimer</a></li>
+                        <li><a hx-get={ fmt.Sprintf("/groups/edit/%d", g.ID) } hx-target="#modal-container">{ t("group.edit") }</a></li>
+                        <li><a hx-delete={ fmt.Sprintf("/groups/%d", g.ID) } hx-target={ fmt.Sprintf("#group-card-%d", g.ID) } hx-swap="outerHTML" class="text-error">{ t("group.delete") }</a></li>
                     </ul>
                 </div>
             </div>
 
             <div class="mt-4">
                 <div class="flex items-center gap-2 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <span>Tablettes</span>
+                    <span>{ t("group.label") }</span>
                     <span class="badge badge-xs">{ fmt.Sprint(len(tablets)) }</span>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     if len(tablets) > 0 {
-                        for _, t := range tablets {
-                            <a href={ templ.SafeURL("/tablets/" + fmt.Sprint(t.ID)) } 
+                        for _, tablet := range tablets {
+                            <a href={ templ.SafeURL("/tablets/" + fmt.Sprint(tablet.ID)) }
                                class="badge badge-outline hover:bg-slate-50 transition-colors gap-1 py-3 text-xs">
-                                <div class={ "w-1.5 h-1.5 rounded-full", templ.KV("bg-success", t.Online), templ.KV("bg-error", !t.Online) }></div>
-                                { t.Name }
+                                <div class={ "w-1.5 h-1.5 rounded-full", templ.KV("bg-success", tablet.Online), templ.KV("bg-error", !tablet.Online) }></div>
+                                { tablet.Name }
                             </a>
                         }
                     } else {
-                        <p class="text-xs italic text-slate-300">Aucune tablette dans ce groupe</p>
+                        <p class="text-xs italic text-slate-300">{ t("common.noData") }</p>
                     }
                 </div>
             </div>
@@ -84,45 +86,46 @@ templ GroupCard(g repositories.Group, tablets []repositories.Tablet) {
     </div>
 }
 
-templ GroupFormModal(g *repositories.Group) {
+templ GroupFormModal(g *repositories.Group, lang string) {
+    {{ t := func(key string) string { return i18n.TL(lang, key) } }}
     <dialog id="group_modal" class="modal modal-open">
         <div class="modal-box max-w-sm border border-slate-100">
             <h3 class="font-black text-xl mb-4 text-slate-800">
                 if g.ID == 0 {
-                    Créer un groupe
+                    { t("group.create") }
                 } else {
-                    Modifier { g.Name }
+                    { fmt.Sprintf(t("group.edit_title"), g.Name) }
                 }
             </h3>
-                        
+
             <form hx-post="/groups/save" hx-target="#main-container" class="space-y-4">
                 if g.ID != 0 {
                     <input type="hidden" name="id" value={ fmt.Sprint(g.ID) } />
                 }
-                
+
                 <div class="form-control">
-                    <label class="label text-xs font-bold uppercase text-slate-500">Nom du groupe</label>
+                    <label class="label text-xs font-bold uppercase text-slate-500">{ t("group.name") }</label>
                     <input name="name" type="text" value={ g.Name } class="input input-bordered w-full font-medium" required />
                 </div>
 
                 <div class="form-control">
-                    <label class="label text-xs font-bold uppercase text-slate-500">Description</label>
+                    <label class="label text-xs font-bold uppercase text-slate-500">{ t("group.description") }</label>
                     <textarea name="description" class="textarea textarea-bordered h-20">{ g.Description }</textarea>
                 </div>
 
                 <div class="form-control">
-                    <label class="label text-xs font-bold uppercase text-slate-500">Couleur visuelle</label>
+                    <label class="label text-xs font-bold uppercase text-slate-500">{ t("group.color") }</label>
                     <input name="color" type="color" value={ g.Color } class="w-full h-12 rounded-xl cursor-pointer bg-transparent" />
                 </div>
 
                 <div class="modal-action">
-                    <button type="button" class="btn btn-ghost" onclick="this.closest('dialog').remove()">Annuler</button>
-                    <button type="submit" class="btn btn-primary px-8">Enregistrer</button>
+                    <button type="button" class="btn btn-ghost" onclick="this.closest('dialog').remove()">{ t("common.cancel") }</button>
+                    <button type="submit" class="btn btn-primary px-8">{ t("common.save") }</button>
                 </div>
             </form>
         </div>
         <form method="dialog" class="modal-backdrop">
-            <button onclick="this.closest('dialog').remove()">close</button>
+            <button onclick="this.closest('dialog').remove()">{ t("common.close") }</button>
         </form>
     </dialog>
 }

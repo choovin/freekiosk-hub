@@ -2,11 +2,13 @@ package ui
 import (
 	"fmt"
 	"time"
+	"github.com/wared2003/freekiosk-hub/internal/i18n"
 )
 
-templ Layout(title string) {
+templ Layout(title string, lang string) {
+    {{ t := func(key string) string { return i18n.TL(lang, key) } }}
     <!DOCTYPE html>
-    <html lang="fr" data-theme="light">
+    <html lang={ lang } data-theme="light">
         <head>
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -33,52 +35,66 @@ templ Layout(title string) {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                                 </svg>
                             </div>
-                            <a hx-get="/" 
-                            hx-target="main" 
-                            hx-push-url="true" 
+                            <a hx-get="/"
+                            hx-target="main"
+                            hx-push-url="true"
                             class="text-xl font-black tracking-tighter uppercase ml-2 cursor-pointer">
                                 FreeKiosk<span class="text-primary">Hub</span>
                             </a>
                         </div>
-                        
+
                         <div class="flex-none gap-4">
                             <ul class="menu menu-horizontal px-1 font-medium gap-1">
                                 <li>
-                                    <a hx-get="/" 
-                                    hx-target="main" 
-                                    hx-push-url="true" 
+                                    <a hx-get="/"
+                                    hx-target="main"
+                                    hx-push-url="true"
                                     class="rounded-lg hover:bg-primary/10 transition-colors cursor-pointer">
-                                   Dashboard
+                                   { t("nav.dashboard") }
                                     </a>
                                 </li>
                                  <li>
-                                    <a hx-get="/groups" 
-                                    hx-target="main" 
-                                    hx-push-url="true" 
+                                    <a hx-get="/groups"
+                                    hx-target="main"
+                                    hx-push-url="true"
                                     class="rounded-lg hover:bg-primary/10 transition-colors cursor-pointer">
-                                    Groups
+                                    { t("nav.groups") }
                                     </a>
                                 </li>
                                 <li>
-                                    <a hx-get="/admin/import" 
-                                    hx-target="main" 
-                                    hx-push-url="true" 
+                                    <a hx-get="/admin/import"
+                                    hx-target="main"
+                                    hx-push-url="true"
                                     class="rounded-lg hover:bg-primary/10 transition-colors cursor-pointer">
-                                    Importation
+                                    { t("nav.import") }
                                     </a>
                                 </li>
                             </ul>
-                            <div class="avatar placeholder">
-                                <div class="bg-neutral text-neutral-content rounded-full w-8">
-                                    <span class="text-xs">FK</span>
+                            <div class="dropdown dropdown-end">
+                                <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">
+                                    <div class="bg-neutral text-neutral-content rounded-full w-8">
+                                        <span class="text-xs">FK</span>
+                                    </div>
                                 </div>
+                                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-slate-100">
+                                    <li><a href="?lang=en">🇺🇸 English</a></li>
+                                    <li><a href="?lang=zh">🇨🇳 中文</a></li>
+                                    <li><a href="?lang=fr">🇫🇷 Français</a></li>
+                                    <li><a href="?lang=es">🇪🇸 Español</a></li>
+                                    <li><a href="?lang=de">🇩🇪 Deutsch</a></li>
+                                    <li><a href="?lang=ja">🇯🇵 日本語</a></li>
+                                    <li><a href="?lang=ko">🇰🇷 한국어</a></li>
+                                    <li><a href="?lang=pt">🇵🇹 Português</a></li>
+                                    <li><a href="?lang=ru">🇷🇺 Русский</a></li>
+                                    <li><a href="?lang=ar">🇸🇦 العربية</a></li>
+                                </ul>
                             </div>
                         </div>
                     </div>
                 </div>
-                    <div id="toast-container" class="toast toast-end fixed bottom-6 right-6 z-[9999]"></div>            
+                    <div id="toast-container" class="toast toast-end fixed bottom-6 right-6 z-[9999]"></div>
                     <main class="max-w-7xl mx-auto py-8" id="main-container">
-                
+
                 { children... }
             </main>
 
@@ -102,8 +118,8 @@ templ Layout(title string) {
                .toast-out {
                     opacity: 0 !important;
                     transform: scale(0.9) translateY(20px) !important;
-                    transition: 
-                        opacity 0.3s ease-out, 
+                    transition:
+                        opacity 0.3s ease-out,
                         transform 0.4s cubic-bezier(0.4, 0, 1, 1),
                         margin 0.4s 0.1s ease-in !important; /* Pour réduire l'espace proprement */
                     pointer-events: none; /* Évite les clics fantômes pendant l'animation */

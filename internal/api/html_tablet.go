@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/wared2003/freekiosk-hub/internal/i18n"
 	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/internal/services"
@@ -51,16 +52,19 @@ func (h *HtmlTabletHandler) HandleDetails(c echo.Context) error {
 		Groups:     groups,
 	}
 
+	lang := getLang(c)
+	t := func(key string) string { return i18n.TL(lang, key) }
+
 	if c.Request().Header.Get("HX-Request") != "true" {
-		return c.Render(http.StatusOK, "", ui.TabletDetails(&td, history, true))
+		return c.Render(http.StatusOK, "", ui.TabletDetails(&td, history, true, lang))
 	}
 
 	// 2. Si c'est un refresh auto du SSE (on ajoute ?refresh=true dans le hx-get du template)
 	if c.QueryParam("refresh") == "true" {
-		return c.Render(http.StatusOK, "", ui.TabletUIInner(&td, history))
+		return c.Render(http.StatusOK, "", ui.TabletUIInner(&td, history, t))
 	}
 
-	return c.Render(http.StatusOK, "", ui.TabletDetails(&td, history, false))
+	return c.Render(http.StatusOK, "", ui.TabletDetails(&td, history, false, lang))
 }
 
 func (h *HtmlTabletHandler) HandleBeep(c echo.Context) error {
@@ -223,16 +227,19 @@ func (h *HtmlTabletHandler) HandleScreenStatus(c echo.Context) error {
 
 	report, err := h.kService.SetScreen(services.Target{TabletID: id}, shouldBeOn)
 	if err != nil {
-		ui.ScreenStatusBox(!shouldBeOn, id).Render(c.Request().Context(), c.Response().Writer)
+		lang := getLang(c)
+		ui.ScreenStatusBox(!shouldBeOn, id, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
 		return ui.Toast("Error: "+err.Error(), "error").Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	for _, res := range report.Results {
 		if res.Executed {
-			ui.ScreenStatusBox(shouldBeOn, id).Render(c.Request().Context(), c.Response().Writer)
+			lang := getLang(c)
+			ui.ScreenStatusBox(shouldBeOn, id, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
 			ui.Toast(fmt.Sprintf("%s :screen command send", res.Name), "success").Render(c.Request().Context(), c.Response().Writer)
 		} else {
-			ui.ScreenStatusBox(!shouldBeOn, id).Render(c.Request().Context(), c.Response().Writer)
+			lang := getLang(c)
+			ui.ScreenStatusBox(!shouldBeOn, id, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
 			ui.Toast(fmt.Sprintf("❌ %s: send screen command failed", res.Name), "error").Render(c.Request().Context(), c.Response().Writer)
 		}
 	}
@@ -259,16 +266,19 @@ func (h *HtmlTabletHandler) HandleScreenSaver(c echo.Context) error {
 
 	report, err := h.kService.SetScreensaver(services.Target{TabletID: id}, shouldBeOn)
 	if err != nil {
-		ui.ScreensaverStatusBox(!shouldBeOn, id).Render(c.Request().Context(), c.Response().Writer)
+		lang := getLang(c)
+		ui.ScreensaverStatusBox(!shouldBeOn, id, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
 		return ui.Toast("Error: "+err.Error(), "error").Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	for _, res := range report.Results {
 		if res.Executed {
-			ui.ScreensaverStatusBox(shouldBeOn, id).Render(c.Request().Context(), c.Response().Writer)
+			lang := getLang(c)
+			ui.ScreensaverStatusBox(shouldBeOn, id, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
 			ui.Toast(fmt.Sprintf("%s :screensaver command send", res.Name), "success").Render(c.Request().Context(), c.Response().Writer)
 		} else {
-			ui.ScreensaverStatusBox(!shouldBeOn, id).Render(c.Request().Context(), c.Response().Writer)
+			lang := getLang(c)
+			ui.ScreensaverStatusBox(!shouldBeOn, id, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
 			ui.Toast(fmt.Sprintf("❌ %s: send screensaver command failed", res.Name), "error").Render(c.Request().Context(), c.Response().Writer)
 		}
 	}
@@ -282,7 +292,8 @@ func (h *HtmlTabletHandler) HandleSoundModal(c echo.Context) error {
 		return ui.Toast("Impossible de charger la bibliothèque", "error").Render(c.Request().Context(), c.Response().Writer)
 	}
 
-	return ui.TabSoundModal(sounds, id).Render(c.Request().Context(), c.Response().Writer)
+	lang := getLang(c)
+	return ui.TabSoundModal(sounds, id, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func (h *HtmlTabletHandler) HandleUploadSound(c echo.Context) error {
@@ -304,8 +315,8 @@ func (h *HtmlTabletHandler) HandleUploadSound(c echo.Context) error {
 	}
 
 	sounds, _ := h.mediaService.List()
-
-	return ui.TabSoundList(sounds, id).Render(c.Request().Context(), c.Response().Writer)
+	lang := getLang(c)
+	return ui.TabSoundList(sounds, id, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func (h *HtmlTabletHandler) HandlePlaySound(c echo.Context) error {

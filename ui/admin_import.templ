@@ -1,29 +1,33 @@
 package ui
 
-templ AdminImport() {
-    @Layout("Importation Massive") {
+import (
+    "github.com/wared2003/freekiosk-hub/internal/i18n"
+)
+
+templ AdminImport(lang string) {
+    {{ t := func(key string) string { return i18n.TL(lang, key) } }}
+    @Layout("Import", lang) {
         <div class="p-6 max-w-2xl mx-auto">
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">
-                    <h2 class="card-title text-2xl mb-4">Importation des Tablettes</h2>
+                    <h2 class="card-title text-2xl mb-4">{ t("import.title") }</h2>
                     <p class="text-sm text-base-content/70 mb-6">
-                        Collez ici la liste des adresses IP (une par ligne). 
-                        Le Hub tentera de les contacter lors du prochain scan.
+                        { t("import.description") }
                     </p>
 
                     <form hx-post="/api/v1/tablets/import" hx-target="#result-message">
                         <div class="form-control">
-                            <textarea 
-                                name="ips" 
-                                class="textarea textarea-bordered h-64 font-mono" 
+                            <textarea
+                                name="ips"
+                                class="textarea textarea-bordered h-64 font-mono"
                                 placeholder="192.168.1.10&#10;192.168.1.11&#10;..."></textarea>
                         </div>
-                        
+
                         <div id="result-message" class="mt-4"></div>
 
                         <div class="card-actions justify-end mt-6">
                             <button type="submit" class="btn btn-primary">
-                                Lancer l'importation
+                                { t("import.submit") }
                             </button>
                         </div>
                     </form>

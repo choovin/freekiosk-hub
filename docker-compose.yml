@@ -1,0 +1,62 @@
+services:
+  freekiosk-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: freekiosk-hub
+    restart: unless-stopped
+
+    ports:
+      - "${SERVER_PORT:-8081}:8081"
+
+    environment:
+      # Server Configuration
+      - SERVER_PORT=8081
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+      # Database
+      - DB_PATH=/app/data/freekiosk.db
+
+      # Kiosk Communication
+      - KIOSK_PORT=${KIOSK_PORT:-8080}
+      - KIOSK_API_KEY=${KIOSK_API_KEY}
+
+      # Tailscale Integration
+      - TS_AUTHKEY=${TS_AUTHKEY}
+
+      # Performance
+      - POLL_INTERVAL=${POLL_INTERVAL:-30s}
+      - RETENTION_DAYS=${RETENTION_DAYS:-31}
+      - MAX_WORKERS=${MAX_WORKERS:-5}
+
+      # Media
+      - MEDIA_DIR=/app/media
+      - BASE_URL=${BASE_URL:-http://localhost:8081}
+
+    volumes:
+      # Persist database
+      - hub_data:/app/data
+      # Persist media files
+      - hub_media:/app/media
+
+    networks:
+      - freekiosk-network
+
+    # Optional: Tailscale sidecar for secure networking
+    # Uncomment if you want to run Tailscale inside the container
+    # cap_add:
+    #   - NET_ADMIN
+    #   - SYS_MODULE
+    # devices:
+    #   - /dev/net/tun:/dev/net/tun
+
+volumes:
+  hub_data:
+    name: freekiosk-hub-data
+  hub_media:
+    name: freekiosk-hub-media
+
+networks:
+  freekiosk-network:
+    driver: bridge
+    name: freekiosk-network
