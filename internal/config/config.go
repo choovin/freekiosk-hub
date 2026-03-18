@@ -22,6 +22,16 @@ type Config struct {
 	KioskApiKey   string
 	MediaDir      string
 	BaseURL       string
+
+	// MQTT 配置
+	MQTTBrokerURL  string
+	MQTTPort       int
+	MQTTClientID   string
+	MQTTUsername   string
+	MQTTPassword   string
+	MQTTUseTLS     bool
+	MQTTKeepAlive  time.Duration
+	MQTTCleanStart bool
 }
 
 func Load() *Config {
@@ -42,6 +52,16 @@ func Load() *Config {
 		KioskApiKey:   getEnv("KIOSK_API_KEY", ""),
 		MediaDir:      getEnv("MEDIA_DIR", "media"),
 		BaseURL:       getEnv("BASE_URL", "localhost:8081"),
+
+		// MQTT 配置
+		MQTTBrokerURL:  getEnv("MQTT_BROKER_URL", "localhost"),
+		MQTTPort:       parseInt(getEnv("MQTT_PORT", "1883")),
+		MQTTClientID:   getEnv("MQTT_CLIENT_ID", "freekiosk-hub"),
+		MQTTUsername:   os.Getenv("MQTT_USERNAME"),
+		MQTTPassword:   os.Getenv("MQTT_PASSWORD"),
+		MQTTUseTLS:     parseBool(getEnv("MQTT_USE_TLS", "false")),
+		MQTTKeepAlive:  parseDuration(getEnv("MQTT_KEEPALIVE", "60s")),
+		MQTTCleanStart: parseBool(getEnv("MQTT_CLEAN_START", "false")),
 	}
 
 	initLogger(cfg.LogLevel)
@@ -95,4 +115,8 @@ func parseInt(s string) int {
 		return 5
 	}
 	return i
+}
+
+func parseBool(s string) bool {
+	return s == "true" || s == "1" || s == "yes"
 }
