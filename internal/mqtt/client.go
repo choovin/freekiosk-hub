@@ -13,10 +13,17 @@ import (
 )
 
 // Client MQTT 5.0 客户端封装
+//
+// 提供与 EMQX Broker 的双向通信能力，支持:
+// - 设备状态接收
+// - 命令下发
+// - 共享订阅（负载均衡）
+// - 保留消息
 type Client struct {
 	config     *Config
 	connection *mqtt.ConnectionManager
 	handlers   map[string]MessageHandler
+	router     *mqttv5.StandardRouter
 	mu         sync.RWMutex
 }
 
@@ -35,28 +42,34 @@ func NewClient(config *Config) *Client {
 func (c *Client) Connect(ctx context.Context) error {
 	brokerURL := fmt.Sprintf("tcp://%s:%d", c.config.BrokerURL, c.config.Port)
 
-	// 创建消息路由器
-	router := mqttv5.NewStandardRouter()
-	router.DefaultHandler = func(p *mqttv5.Publish) {
+	// 创建消息路由器，设置默认处理器
+	c.router = mqttv5.NewStandardRouterWithDefault(func(p *mqttv5.Publish) {
 		c.handleMessage(p.Topic, p.Payload)
-	}
+	})
 
 	// 配置客户端
+	// 注意: autopaho.ClientConfig 内嵌了 paho.ClientConfig
 	clientConfig := mqtt.ClientConfig{
-		BrokerUrls:                    []*url.URL{mustParseURL(brokerURL)},
+		ServerUrls:                    []*url.URL{mustParseURL(brokerURL)},
 		KeepAlive:                     uint16(c.config.KeepAlive.Seconds()),
 		CleanStartOnInitialConnection: c.config.CleanStart,
 		SessionExpiryInterval:         uint32(3600), // 1小时会话过期
-		ConnectRetryDelay:             5 * time.Second,
+		ConnectTimeout:                10 * time.Second,
 		OnConnectionUp: func(cm *mqtt.ConnectionManager, connAck *mqttv5.Connack) {
 			log.Printf("[MQTT] 已连接到 %s", brokerURL)
 		},
-		OnConnectionLost: func(err error) {
-			log.Printf("[MQTT] 连接丢失: %v", err)
+		OnConnectionDown: func() bool {
+			log.Printf("[MQTT] 连接断开，尝试重连...")
+			return true // 返回 true 继续重连
 		},
-		ClientID: c.config.ClientID,
-		Router:   router,
+		OnConnectError: func(err error) {
+			log.Printf("[MQTT] 连接错误: %v", err)
+		},
 	}
+
+	// 配置 paho 客户端选项 (内嵌在 ClientConfig 中)
+	clientConfig.ClientID = c.config.ClientID
+	clientConfig.Router = c.router
 
 	// 配置认证
 	if c.config.Username != "" {
@@ -64,7 +77,7 @@ func (c *Client) Connect(ctx context.Context) error {
 		clientConfig.ConnectPassword = []byte(c.config.Password)
 	}
 
-	// 创建连接
+	// 创建连接管理器
 	cm, err := mqtt.NewConnection(ctx, clientConfig)
 	if err != nil {
 		return fmt.Errorf("创建 MQTT 连接失败: %w", err)
@@ -102,6 +115,8 @@ func (c *Client) Subscribe(ctx context.Context, topic string, handler MessageHan
 }
 
 // SubscribeShared 订阅共享 Topic（负载均衡）
+//
+// 共享订阅允许多个 Hub 实例共享消息负载，适用于集群部署
 func (c *Client) SubscribeShared(ctx context.Context, group, topic string, handler MessageHandler) error {
 	sharedTopic := fmt.Sprintf("$share/%s/%s", group, topic)
 	return c.Subscribe(ctx, sharedTopic, handler)
@@ -124,6 +139,9 @@ func (c *Client) Publish(ctx context.Context, topic string, payload []byte) erro
 }
 
 // PublishRetain 发布保留消息
+//
+// 保留消息会被 Broker 保存，新订阅者会立即收到最后一条保留消息
+// 适用于设备在线状态等场景
 func (c *Client) PublishRetain(ctx context.Context, topic string, payload []byte) error {
 	_, err := c.connection.Publish(ctx, &mqttv5.Publish{
 		Topic:   topic,
