@@ -77,7 +77,7 @@ func (c *Client) Connect(ctx context.Context) error {
 
 	// 配置 TLS 加密
 	if c.config.UseTLS {
-		clientConfig.TlsConfig = &tls.Config{
+		clientConfig.TlsCfg = &tls.Config{
 			// 生产环境应设置 InsecureSkipVerify = false 并配置 CA 证书
 			InsecureSkipVerify: true, // 开发环境允许跳过验证
 		}
