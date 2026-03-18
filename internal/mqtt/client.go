@@ -2,6 +2,7 @@ package mqtt
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/url"
@@ -39,8 +40,15 @@ func NewClient(config *Config) *Client {
 }
 
 // Connect 连接到 MQTT Broker
+//
+// 支持 TLS 加密连接和用户名密码认证
 func (c *Client) Connect(ctx context.Context) error {
-	brokerURL := fmt.Sprintf("tcp://%s:%d", c.config.BrokerURL, c.config.Port)
+	// 根据 TLS 配置选择协议
+	scheme := "tcp"
+	if c.config.UseTLS {
+		scheme = "ssl"
+	}
+	brokerURL := fmt.Sprintf("%s://%s:%d", scheme, c.config.BrokerURL, c.config.Port)
 
 	// 创建消息路由器，设置默认处理器
 	c.router = mqttv5.NewStandardRouterWithDefault(func(p *mqttv5.Publish) {
@@ -67,6 +75,15 @@ func (c *Client) Connect(ctx context.Context) error {
 		},
 	}
 
+	// 配置 TLS 加密
+	if c.config.UseTLS {
+		clientConfig.TlsConfig = &tls.Config{
+			// 生产环境应设置 InsecureSkipVerify = false 并配置 CA 证书
+			InsecureSkipVerify: true, // 开发环境允许跳过验证
+		}
+		log.Printf("[MQTT] 已启用 TLS 加密连接")
+	}
+
 	// 配置 paho 客户端选项 (内嵌在 ClientConfig 中)
 	clientConfig.ClientID = c.config.ClientID
 	clientConfig.Router = c.router
@@ -75,6 +92,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	if c.config.Username != "" {
 		clientConfig.ConnectUsername = c.config.Username
 		clientConfig.ConnectPassword = []byte(c.config.Password)
+		log.Printf("[MQTT] 已配置用户名密码认证: %s", c.config.Username)
 	}
 
 	// 创建连接管理器
