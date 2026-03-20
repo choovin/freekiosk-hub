@@ -31,6 +31,8 @@ type ApiServer struct {
 	MediaService services.MediaService
 	MQTTService  *services.MQTTService // MQTT 服务，用于实时双向通信
 	AuthSvc      services.AuthService  // 企业版: 认证服务
+	CmdSvc       services.CommandService // 企业版: 命令服务
+	StatusSvc    services.DeviceStatusService // 企业版: 状态服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -44,6 +46,8 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	mes services.MediaService,
 	mqttSvc *services.MQTTService, // 新增 MQTT 服务参数
 	authSvc services.AuthService, // 企业版: 认证服务
+	cmdSvc services.CommandService, // 企业版: 命令服务
+	statusSvc services.DeviceStatusService, // 企业版: 状态服务
 
 ) *ApiServer {
 	s := &ApiServer{
@@ -58,6 +62,8 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		MediaService: mes,
 		MQTTService:  mqttSvc,
 		AuthSvc:      authSvc,
+		CmdSvc:       cmdSvc,
+		StatusSvc:    statusSvc,
 	}
 
 	s.setupMiddlewares()
@@ -190,6 +196,37 @@ func (s *ApiServer) setupRoutes() {
 			authRoutes.POST("/token", authH.HandleGetToken)
 		}
 	}
+
+	// --- 6. 企业版命令 API ---
+	if s.CmdSvc != nil {
+		cmdH := NewCommandHandler(s.CmdSvc, s.StatusSvc)
+		tenantRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 设备命令
+			tenantRoutes.POST("/devices/:deviceId/commands", cmdH.HandleSendCommand)
+			tenantRoutes.GET("/devices/:deviceId/commands/history", cmdH.HandleGetCommandHistory)
+			tenantRoutes.GET("/commands/:commandId", cmdH.HandleGetCommandByID)
+			tenantRoutes.DELETE("/commands/:commandId", cmdH.HandleCancelCommand)
+
+			// 批量命令
+			tenantRoutes.POST("/commands/batch", cmdH.HandleSendBatchCommand)
+		}
+	}
+
+	// --- 7. 企业版状态 API ---
+	if s.StatusSvc != nil {
+		statusH := NewStatusHandler(s.StatusSvc)
+		statusRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			statusRoutes.GET("/devices/:deviceId/status", statusH.HandleGetDeviceStatus)
+			statusRoutes.GET("/devices/status", statusH.HandleGetAllDeviceStatuses)
+		}
+	}
+
+	// --- 8. WebSocket 实时通信 ---
+	wsHandler := NewWebSocketHandler(sse.WsHub)
+	s.Echo.GET("/api/v2/ws", wsHandler.HandleWebSocket)
+	s.Echo.GET("/api/v2/ws/connections", wsHandler.HandleGetConnectionCount)
 
 	// s.Echo.GET("/admin/import", adminPageH.HandleImportPage)
 

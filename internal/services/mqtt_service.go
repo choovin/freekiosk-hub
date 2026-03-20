@@ -218,7 +218,7 @@ func (s *MQTTService) SendCommandAsync(ctx context.Context, deviceID string, cmd
 
 // handleStatusMessage 处理设备状态消息
 func (s *MQTTService) handleStatusMessage(topic string, payload []byte) error {
-	var status models.DeviceStatus
+	var status models.DeviceStatusInfo
 	if err := json.Unmarshal(payload, &status); err != nil {
 		return fmt.Errorf("解析状态消息失败: %w", err)
 	}

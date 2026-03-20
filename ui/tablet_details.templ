@@ -5,7 +5,7 @@ import (
     "github.com/wared2003/freekiosk-hub/internal/repositories"
     "fmt"
     "encoding/json"
-	"github.com/wared2003/freekiosk-hub/internal/models"
+	"github.com/wared2003/freekiosk-hub/internal/dtos"
     "github.com/wared2003/freekiosk-hub/internal/services"
 )
 
@@ -62,7 +62,7 @@ func getFullHistoryJSON(history []repositories.TabletReport) (string, string) {
 
 // --- Logique des Templates ---
 
-templ TabletDetails(t *models.TabletDisplay, history []repositories.TabletReport, fullPage bool, lang string) {
+templ TabletDetails(t *dtos.TabletDisplay, history []repositories.TabletReport, fullPage bool, lang string) {
     {{ translate := func(key string) string { return i18n.TL(lang, key) } }}
     if fullPage {
         @Layout(fmt.Sprintf("Détails %s", t.Name), lang) {
@@ -73,7 +73,7 @@ templ TabletDetails(t *models.TabletDisplay, history []repositories.TabletReport
     }
 }
 
-templ TabletDetailsContent(t *models.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) {
+templ TabletDetailsContent(t *dtos.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) {
     <div id="modal-container"></div>
     <div hx-ext="sse" sse-connect={ fmt.Sprintf("/sse/tablet/%d", t.ID) }>
         <div
@@ -89,7 +89,7 @@ templ TabletDetailsContent(t *models.TabletDisplay, history []repositories.Table
     </div>
 }
 
-templ TabletUIInner(t *models.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) {
+templ TabletUIInner(t *dtos.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) {
     {{ historyData, rawJSON := getFullHistoryJSON(history) }}
     
     {{
@@ -225,7 +225,7 @@ templ SectionDisplay(last *repositories.TabletReport, translate func(key string)
     </div>
 }
 
-templ SectionWebview(tab *models.TabletDisplay) {
+templ SectionWebview(tab *dtos.TabletDisplay) {
     <div class="card bg-base-100 border border-base-200 shadow-sm">
         <div class="card-body p-5">
             <h3 class="text-xs font-bold uppercase tracking-widest opacity-40 text-primary mb-4">Webview</h3>

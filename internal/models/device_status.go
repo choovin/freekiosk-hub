@@ -2,11 +2,11 @@ package models
 
 import "time"
 
-// DeviceStatus 设备实时状态
+// DeviceStatusInfo 设备实时状态信息
 //
 // 通过 MQTT Topic: kiosk/{tenant_id}/{device_id}/status 发布
 // 使用保留消息确保新订阅者能立即获取最新状态
-type DeviceStatus struct {
+type DeviceStatusInfo struct {
 	// 设备标识
 	DeviceID string    `json:"deviceId"`
 	TenantID string    `json:"tenantId"`
@@ -71,50 +71,4 @@ type DeviceTelemetry struct {
 	NetworkTX    int64   `json:"networkTx"`    // 网络发送量 (bytes)
 	NetworkRX    int64   `json:"networkRx"`    // 网络接收量 (bytes)
 	Temperature  float64 `json:"temperature"`  // 设备温度 (℃)
-}
-
-// CommandType 命令类型
-type CommandType string
-
-const (
-	// 屏幕控制命令
-	CommandSetBrightness CommandType = "setBrightness" // 设置亮度
-	CommandSetScreen     CommandType = "setScreen"     // 开关屏幕
-
-	// 音频控制命令
-	CommandSetVolume CommandType = "setVolume" // 设置音量
-
-	// WebView 控制命令
-	CommandNavigate CommandType = "navigate" // 导航到 URL
-	CommandReload   CommandType = "reload"   // 刷新页面
-
-	// 系统控制命令
-	CommandReboot    CommandType = "reboot"    // 重启设备
-	CommandClearCache CommandType = "clearCache" // 清除缓存
-
-	// 应用控制命令
-	CommandUpdateApp CommandType = "updateApp" // 更新应用
-)
-
-// Command 下发给设备的命令
-type Command struct {
-	// 命令标识
-	ID        string      `json:"id"`
-	Type      CommandType `json:"type"`
-	Timestamp time.Time   `json:"timestamp"`
-
-	// 命令参数
-	Params map[string]interface{} `json:"params"`
-
-	// 超时设置
-	Timeout int `json:"timeout"` // 超时时间 (秒)
-}
-
-// CommandResult 命令执行结果
-type CommandResult struct {
-	CommandID string      `json:"commandId"` // 命令 ID
-	Success   bool        `json:"success"`   // 是否成功
-	Result    interface{} `json:"result,omitempty"`
-	Error     string      `json:"error,omitempty"`
-	Timestamp time.Time   `json:"timestamp"`
 }

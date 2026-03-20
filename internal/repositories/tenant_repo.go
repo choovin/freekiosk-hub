@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/wared2003/freekiosk-hub/internal/models"

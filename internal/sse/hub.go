@@ -22,6 +22,15 @@ var Instance = &Hub{
 	tabletClients: make(map[int64]map[chan bool]bool),
 }
 
+// WsHub is the global WebSocket hub for real-time communication
+var WsHub *WebSocketHub
+
+// InitWsHub initializes the WebSocket hub
+func InitWsHub() {
+	WsHub = NewWebSocketHub()
+	go WsHub.Run()
+}
+
 func (h *Hub) SubscribeGlobal() chan bool {
 	h.mu.Lock()
 	defer h.mu.Unlock()

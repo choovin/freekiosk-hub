@@ -10,12 +10,12 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"github.com/wared2003/freekiosk-hub/internal/dtos"
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
-	"github.com/wared2003/freekiosk-hub/internal/models"
 	"time"
 )
 
-func Dashboard(tablets []models.TabletDisplay, fullPage bool, lang string) templ.Component {
+func Dashboard(tablets []dtos.TabletDisplay, fullPage bool, lang string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -71,7 +71,7 @@ func Dashboard(tablets []models.TabletDisplay, fullPage bool, lang string) templ
 }
 
 // Le wrapper SSE fixe
-func DashboardContent(tablets []models.TabletDisplay, t func(key string) string) templ.Component {
+func DashboardContent(tablets []dtos.TabletDisplay, t func(key string) string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -148,7 +148,7 @@ func DashboardContent(tablets []models.TabletDisplay, t func(key string) string)
 }
 
 // La partie rafraîchie par le SSE
-func DashboardGrid(tablets []models.TabletDisplay, t func(key string) string) templ.Component {
+func DashboardGrid(tablets []dtos.TabletDisplay, t func(key string) string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -187,7 +187,7 @@ func DashboardGrid(tablets []models.TabletDisplay, t func(key string) string) te
 	})
 }
 
-func TabletCard(td models.TabletDisplay, t func(key string) string) templ.Component {
+func TabletCard(td dtos.TabletDisplay, t func(key string) string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -429,7 +429,7 @@ func formatTime(t time.Time) string {
 	return t.Format("15:04:05")
 }
 
-func StatusBadge(td models.TabletDisplay) templ.Component {
+func StatusBadge(td dtos.TabletDisplay) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {

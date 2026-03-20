@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/wared2003/freekiosk-hub/internal/dtos"
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
-	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/internal/services"
 	"github.com/wared2003/freekiosk-hub/ui"
@@ -46,7 +46,7 @@ func (h *HtmlTabletHandler) HandleDetails(c echo.Context) error {
 
 	groups, _ := h.groupRepo.GetGroupsByTablet(id)
 
-	td := models.TabletDisplay{
+	td := dtos.TabletDisplay{
 		Tablet:     *tablet,
 		LastReport: lastReport,
 		Groups:     groups,

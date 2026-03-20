@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
+	"github.com/wared2003/freekiosk-hub/internal/dtos"
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
-	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/ui"
 
@@ -28,11 +28,11 @@ func NewHtmlHomeHandler(tr repositories.TabletRepository, rr repositories.Report
 func (h *HtmlHomeHandler) HandleIndex(c echo.Context) error {
 	tablets, _ := h.tabletRepo.GetAll()
 
-	var displayList []models.TabletDisplay
+	var displayList []dtos.TabletDisplay
 	for _, t := range tablets {
 		report, _ := h.reportRepo.GetLatestByTablet(int64(t.ID), true)
 		groups, _ := h.groupRepo.GetGroupsByTablet(int64(t.ID))
-		displayList = append(displayList, models.TabletDisplay{
+		displayList = append(displayList, dtos.TabletDisplay{
 			Tablet:     t,
 			LastReport: report,
 			Groups:     groups,

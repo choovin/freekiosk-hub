@@ -23,6 +23,8 @@ import (
 
 	"github.com/wared2003/freekiosk-hub/internal/config"
 
+	"github.com/wared2003/freekiosk-hub/internal/sse"
+
 	"github.com/wared2003/freekiosk-hub/internal/clients"
 
 	"github.com/wared2003/freekiosk-hub/internal/api"
@@ -165,6 +167,10 @@ func main() {
 		}
 	}()
 
+	// 7. 初始化 WebSocket Hub (用于实时通知)
+	sse.InitWsHub()
+	slog.Info("✅ WebSocket Hub 已初始化")
+
 	// 6. Launch Background Monitor Service
 	if cfg.PollInterval > 0 {
 		go func() {
@@ -179,7 +185,7 @@ func main() {
 
 	e := echo.New()
 	e.Renderer = &api.TemplRenderer{}
-	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService)
+	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil)
 	e.Static("/media", cfg.MediaDir)
 	go func() {
 		slog.Info("🌐 Web Server starting", "port", cfg.ServerPort)

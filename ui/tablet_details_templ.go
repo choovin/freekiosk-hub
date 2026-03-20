@@ -11,8 +11,8 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/wared2003/freekiosk-hub/internal/dtos"
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
-	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/internal/services"
 )
@@ -71,7 +71,7 @@ func getFullHistoryJSON(history []repositories.TabletReport) (string, string) {
 }
 
 // --- Logique des Templates ---
-func TabletDetails(t *models.TabletDisplay, history []repositories.TabletReport, fullPage bool, lang string) templ.Component {
+func TabletDetails(t *dtos.TabletDisplay, history []repositories.TabletReport, fullPage bool, lang string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -126,7 +126,7 @@ func TabletDetails(t *models.TabletDisplay, history []repositories.TabletReport,
 	})
 }
 
-func TabletDetailsContent(t *models.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) templ.Component {
+func TabletDetailsContent(t *dtos.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -189,7 +189,7 @@ func TabletDetailsContent(t *models.TabletDisplay, history []repositories.Tablet
 	})
 }
 
-func TabletUIInner(t *models.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) templ.Component {
+func TabletUIInner(t *dtos.TabletDisplay, history []repositories.TabletReport, translate func(key string) string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -648,7 +648,7 @@ func SectionDisplay(last *repositories.TabletReport, translate func(key string) 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = infoBox("Brightness", fmt.Sprintf("%d%%", (last.ScreenBrightness*100)/255)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = infoBox(translate("metric.battery"), fmt.Sprintf("%d%%", (last.ScreenBrightness*100)/255)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -656,7 +656,7 @@ func SectionDisplay(last *repositories.TabletReport, translate func(key string) 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = infoBox("Auto Bright.", boolToText(last.AutoBrightnessEnabled, "ON", "OFF")).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = infoBox("Auto Bright.", boolToText(last.AutoBrightnessEnabled, translate("screen.on"), translate("screen.off"))).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -664,11 +664,11 @@ func SectionDisplay(last *repositories.TabletReport, translate func(key string) 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = detailRow("Rotation", boolToText(last.RotationEnabled, "Auto", "Fixe")).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = detailRow(translate("device.rotation"), boolToText(last.RotationEnabled, translate("device.auto"), translate("device.fixed"))).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = detailRow("Volume", fmt.Sprintf("%d %%", last.AudioVolume)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = detailRow(translate("device.volume"), fmt.Sprintf("%d %%", last.AudioVolume)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -680,7 +680,7 @@ func SectionDisplay(last *repositories.TabletReport, translate func(key string) 
 	})
 }
 
-func SectionWebview(tab *models.TabletDisplay) templ.Component {
+func SectionWebview(tab *dtos.TabletDisplay) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
