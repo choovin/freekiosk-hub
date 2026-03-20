@@ -32,6 +32,26 @@ type Config struct {
 	MQTTUseTLS     bool
 	MQTTKeepAlive  time.Duration
 	MQTTCleanStart bool
+
+	// PostgreSQL 配置 (企业版)
+	PostgresHost     string
+	PostgresPort     int
+	PostgresUser     string
+	PostgresPassword string
+	PostgresDatabase string
+	PostgresSSLMode  string
+	UsePostgres      bool
+
+	// JWT 认证配置
+	JWTSigningKey      string
+	JWTAccessTokenTTL  time.Duration
+	JWTRefreshTokenTTL time.Duration
+	JWTIssuer          string
+
+	// 证书签发配置
+	CACertificatePath string
+	CAKeyPath         string
+	CertValidityDays  int
 }
 
 func Load() *Config {
@@ -62,6 +82,26 @@ func Load() *Config {
 		MQTTUseTLS:     parseBool(getEnv("MQTT_USE_TLS", "false")),
 		MQTTKeepAlive:  parseDuration(getEnv("MQTT_KEEPALIVE", "60s")),
 		MQTTCleanStart: parseBool(getEnv("MQTT_CLEAN_START", "false")),
+
+		// PostgreSQL 配置 (企业版)
+		PostgresHost:     getEnv("POSTGRES_HOST", "localhost"),
+		PostgresPort:     parseInt(getEnv("POSTGRES_PORT", "5432")),
+		PostgresUser:     getEnv("POSTGRES_USER", "freekiosk"),
+		PostgresPassword: os.Getenv("POSTGRES_PASSWORD"),
+		PostgresDatabase: getEnv("POSTGRES_DATABASE", "freekiosk"),
+		PostgresSSLMode:  getEnv("POSTGRES_SSLMODE", "disable"),
+		UsePostgres:      parseBool(getEnv("USE_POSTGRES", "false")),
+
+		// JWT 认证配置
+		JWTSigningKey:      getEnv("JWT_SIGNING_KEY", ""),
+		JWTAccessTokenTTL:  parseDuration(getEnv("JWT_ACCESS_TOKEN_TTL", "1h")),
+		JWTRefreshTokenTTL: parseDuration(getEnv("JWT_REFRESH_TOKEN_TTL", "720h")), // 30 days
+		JWTIssuer:          getEnv("JWT_ISSUER", "freekiosk-hub"),
+
+		// 证书签发配置
+		CACertificatePath: getEnv("CA_CERTIFICATE_PATH", "certs/ca.crt"),
+		CAKeyPath:         getEnv("CA_KEY_PATH", "certs/ca.key"),
+		CertValidityDays:  parseInt(getEnv("CERT_VALIDITY_DAYS", "365")),
 	}
 
 	initLogger(cfg.LogLevel)

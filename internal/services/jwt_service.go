@@ -1,0 +1,183 @@
+package services
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	"github.com/wared2003/freekiosk-hub/internal/models"
+	"github.com/wared2003/freekiosk-hub/internal/repositories"
+)
+
+// JWTService handles JWT token generation and validation
+type JWTService interface {
+	GenerateAccessToken(deviceID, tenantID, deviceKey string) (string, time.Time, error)
+	GenerateRefreshToken(deviceID string) (string, error)
+	ValidateToken(tokenString string) (*JWTClaims, error)
+	RefreshTokens(ctx context.Context, refreshToken string) (*models.TokenPair, error)
+	HashToken(token string) string
+}
+
+// JWTClaims represents the custom JWT claims
+type JWTClaims struct {
+	DeviceID  string `json:"device_id"`
+	TenantID  string `json:"tenant_id"`
+	DeviceKey string `json:"device_key"`
+	jwt.RegisteredClaims
+}
+
+type jwtService struct {
+	signingKey      []byte
+	accessTokenTTL  time.Duration
+	refreshTokenTTL time.Duration
+	issuer          string
+	refreshTokenRepo repositories.RefreshTokenRepository
+}
+
+// NewJWTService creates a new JWT service
+func NewJWTService(
+	signingKey string,
+	accessTokenTTL, refreshTokenTTL time.Duration,
+	issuer string,
+	refreshTokenRepo repositories.RefreshTokenRepository,
+) JWTService {
+	return &jwtService{
+		signingKey:       []byte(signingKey),
+		accessTokenTTL:   accessTokenTTL,
+		refreshTokenTTL:  refreshTokenTTL,
+		issuer:           issuer,
+		refreshTokenRepo: refreshTokenRepo,
+	}
+}
+
+// GenerateAccessToken generates a new access token for a device
+func (s *jwtService) GenerateAccessToken(deviceID, tenantID, deviceKey string) (string, time.Time, error) {
+	now := time.Now()
+	expiresAt := now.Add(s.accessTokenTTL)
+
+	claims := &JWTClaims{
+		DeviceID:  deviceID,
+		TenantID:  tenantID,
+		DeviceKey: deviceKey,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.New().String(),
+			Subject:   deviceID,
+			Issuer:    s.issuer,
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
+			NotBefore: jwt.NewNumericDate(now),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(s.signingKey)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("failed to sign token: %w", err)
+	}
+
+	return tokenString, expiresAt, nil
+}
+
+// GenerateRefreshToken generates a new refresh token
+func (s *jwtService) GenerateRefreshToken(deviceID string) (string, error) {
+	// Generate a cryptographically secure random token
+	tokenBytes := uuid.New()
+	token := tokenBytes.String()
+	return token, nil
+}
+
+// ValidateToken validates a JWT token and returns the claims
+func (s *jwtService) ValidateToken(tokenString string) (*JWTClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return s.signingKey, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid token claims")
+	}
+
+	return claims, nil
+}
+
+// RefreshTokens validates a refresh token and generates new tokens
+func (s *jwtService) RefreshTokens(ctx context.Context, refreshToken string) (*models.TokenPair, error) {
+	// Hash the token to look it up
+	tokenHash := s.HashToken(refreshToken)
+
+	// Look up the refresh token
+	storedToken, err := s.refreshTokenRepo.GetByTokenHash(ctx, tokenHash)
+	if err != nil {
+		return nil, errors.New("invalid or expired refresh token")
+	}
+
+	// Check if token is expired
+	if storedToken.ExpiresAt.Before(time.Now()) {
+		return nil, errors.New("refresh token has expired")
+	}
+
+	// Revoke the old refresh token
+	if err := s.refreshTokenRepo.Revoke(ctx, storedToken.ID); err != nil {
+		return nil, fmt.Errorf("failed to revoke old token: %w", err)
+	}
+
+	// Generate new access token
+	// Note: We need to get device info from the database to include tenant_id and device_key
+	// For now, we'll use the device_id from the stored token
+	// In a real implementation, you'd fetch this from the device repository
+
+	// Generate new refresh token
+	newRefreshToken, err := s.GenerateRefreshToken(storedToken.DeviceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	// Store the new refresh token
+	newTokenHash := s.HashToken(newRefreshToken)
+	now := time.Now()
+	newStoredToken := &models.RefreshToken{
+		ID:                uuid.New().String(),
+		DeviceID:          storedToken.DeviceID,
+		TokenHash:         newTokenHash,
+		IssuedAt:          now,
+		ExpiresAt:         now.Add(s.refreshTokenTTL),
+		PreviousTokenHash: tokenHash,
+	}
+
+	if err := s.refreshTokenRepo.Create(ctx, newStoredToken); err != nil {
+		return nil, fmt.Errorf("failed to store refresh token: %w", err)
+	}
+
+	// Return the token pair (access token will be generated by the caller who has device info)
+	return &models.TokenPair{
+		RefreshToken: newRefreshToken,
+		ExpiresAt:    now.Add(s.refreshTokenTTL),
+		TokenType:    "Bearer",
+	}, nil
+}
+
+// HashToken creates a SHA-256 hash of a token for storage
+func (s *jwtService) HashToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+
+// JWTServiceConfig holds configuration for JWT service
+type JWTServiceConfig struct {
+	SigningKey      string
+	AccessTokenTTL  time.Duration
+	RefreshTokenTTL time.Duration
+	Issuer          string
+}

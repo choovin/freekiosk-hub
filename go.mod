@@ -6,9 +6,11 @@ require (
 	github.com/a-h/templ v0.3.977
 	github.com/eclipse/paho.golang v0.23.0
 	github.com/glebarez/go-sqlite v1.22.0
+	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.15.0
+	github.com/lib/pq v1.10.9
 	tailscale.com v1.94.1
 )
 

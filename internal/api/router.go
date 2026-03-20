@@ -30,6 +30,7 @@ type ApiServer struct {
 	Cfg          config.Config
 	MediaService services.MediaService
 	MQTTService  *services.MQTTService // MQTT 服务，用于实时双向通信
+	AuthSvc      services.AuthService  // 企业版: 认证服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -42,6 +43,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	cfg config.Config,
 	mes services.MediaService,
 	mqttSvc *services.MQTTService, // 新增 MQTT 服务参数
+	authSvc services.AuthService, // 企业版: 认证服务
 
 ) *ApiServer {
 	s := &ApiServer{
@@ -55,6 +57,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		Cfg:          cfg,
 		MediaService: mes,
 		MQTTService:  mqttSvc,
+		AuthSvc:      authSvc,
 	}
 
 	s.setupMiddlewares()
@@ -173,6 +176,19 @@ func (s *ApiServer) setupRoutes() {
 		groupRoutes.GET("/edit/:id", groupH.HandleEditGroup)
 		groupRoutes.POST("/save", groupH.HandleSaveGroup)
 		groupRoutes.DELETE("/:id", groupH.HandleDeleteGroup)
+	}
+
+	// --- 5. 企业版认证 API ---
+	if s.AuthSvc != nil {
+		authH := NewAuthHandler(s.AuthSvc)
+		authRoutes := s.Echo.Group("/api/v2/auth")
+		{
+			authRoutes.POST("/register", authH.HandleRegister)
+			authRoutes.POST("/refresh", authH.HandleRefreshToken)
+			authRoutes.GET("/validate/:deviceId", authH.HandleValidateDevice)
+			authRoutes.DELETE("/device/:deviceId", authH.HandleRevokeDevice)
+			authRoutes.POST("/token", authH.HandleGetToken)
+		}
 	}
 
 	// s.Echo.GET("/admin/import", adminPageH.HandleImportPage)
