@@ -3,16 +3,19 @@ package services
 import (
 	"context"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
+	"log/slog"
 )
 
 // CAService handles certificate authority operations
@@ -32,16 +35,143 @@ type caService struct {
 
 // NewCAService creates a new CA service
 func NewCAService(caCertPath, caKeyPath string, validityDays int, certRepo repositories.CertificateRepository) (CAService, error) {
-	// In production, load CA cert and key from files
-	// For development, we'll generate them
-	// This is a placeholder - actual implementation would load from files
-
-	return &caService{
-		caCert:       nil, // Would be loaded from caCertPath
-		caKey:        nil, // Would be loaded from caKeyPath
+	caService := &caService{
+		caCert:       nil,
+		caKey:        nil,
 		certRepo:     certRepo,
 		validityDays: validityDays,
-	}, nil
+	}
+
+	// Try to load CA certificate and key from files
+	if caKeyPath != "" {
+		if err := caService.loadCAFromFiles(caCertPath, caKeyPath); err != nil {
+			slog.Warn("⚠️ Failed to load CA from files, will generate new CA", "error", err)
+			// Generate a new CA for development
+			if err := caService.generateDevCA(); err != nil {
+				return nil, fmt.Errorf("failed to generate development CA: %w", err)
+			}
+		} else {
+			slog.Info("✅ CA loaded from files", "cert", caCertPath, "key", caKeyPath)
+		}
+	} else {
+		// No CA key path provided, generate for development
+		slog.Info("ℹ️ No CA key path configured, generating development CA")
+		if err := caService.generateDevCA(); err != nil {
+			return nil, fmt.Errorf("failed to generate development CA: %w", err)
+		}
+	}
+
+	return caService, nil
+}
+
+// loadCAFromFiles loads CA certificate and key from PEM files
+func (s *caService) loadCAFromFiles(certPath, keyPath string) error {
+	// Load CA certificate
+	certPEM, err := os.ReadFile(certPath)
+	if err != nil {
+		return fmt.Errorf("failed to read CA certificate: %w", err)
+	}
+
+	certBlock, _ := pem.Decode(certPEM)
+	if certBlock == nil {
+		return fmt.Errorf("failed to decode CA certificate PEM")
+	}
+
+	caCert, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return fmt.Errorf("failed to parse CA certificate: %w", err)
+	}
+	s.caCert = caCert
+
+	// Load CA private key
+	keyPEM, err := os.ReadFile(keyPath)
+	if err != nil {
+		return fmt.Errorf("failed to read CA key: %w", err)
+	}
+
+	keyBlock, _ := pem.Decode(keyPEM)
+	if keyBlock == nil {
+		return fmt.Errorf("failed to decode CA key PEM")
+	}
+
+	// Parse the private key based on type
+	var key interface{}
+	switch keyBlock.Type {
+	case "RSA PRIVATE KEY":
+		key, err = x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+		if err != nil {
+			return fmt.Errorf("failed to parse PKCS1 private key: %w", err)
+		}
+	case "EC PRIVATE KEY":
+		key, err = x509.ParseECPrivateKey(keyBlock.Bytes)
+		if err != nil {
+			return fmt.Errorf("failed to parse EC private key: %w", err)
+		}
+	case "PRIVATE KEY":
+		key, err = x509.ParsePKCS8PrivateKey(keyBlock.Bytes)
+		if err != nil {
+			return fmt.Errorf("failed to parse PKCS8 private key: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported private key type: %s", keyBlock.Type)
+	}
+
+	s.caKey = key
+	return nil
+}
+
+// generateDevCA generates a self-signed CA for development
+func (s *caService) generateDevCA() error {
+	slog.Info("🔐 Generating development CA...")
+
+	// Generate RSA key for CA
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return fmt.Errorf("failed to generate CA private key: %w", err)
+	}
+
+	// Create CA certificate template
+	now := time.Now()
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			CommonName:   "FreeKiosk Enterprise CA",
+			Organization: []string{"FreeKiosk Enterprise"},
+			Country:      []string{"US"},
+			Province:     []string{"California"},
+			Locality:     []string{"San Francisco"},
+		},
+		NotBefore:             now,
+		NotAfter:              now.AddDate(10, 0, 0), // 10 years
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign | x509.KeyUsageDigitalSignature,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		MaxPathLen:            0,
+	}
+
+	// Self-sign the CA certificate
+	derBytes, err := x509.CreateCertificate(rand.Reader, template, template, &privateKey.PublicKey, privateKey)
+	if err != nil {
+		return fmt.Errorf("failed to create CA certificate: %w", err)
+	}
+
+	caCert, err := x509.ParseCertificate(derBytes)
+	if err != nil {
+		return fmt.Errorf("failed to parse CA certificate: %w", err)
+	}
+
+	s.caCert = caCert
+	s.caKey = privateKey
+
+	// Encode CA cert to PEM for display
+	certPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: derBytes,
+	})
+	slog.Info("✅ Development CA generated", "cert_serial", template.SerialNumber)
+	slog.Debug("CA Certificate (first 100 chars)", "pem", string(certPEM[:min(100, len(certPEM))]))
+
+	return nil
 }
 
 // ValidateCSR parses and validates a CSR
@@ -70,6 +200,10 @@ func (s *caService) ValidateCSR(csrPem string) (*x509.CertificateRequest, error)
 
 // SignCertificate signs a CSR and returns a device certificate
 func (s *caService) SignCertificate(ctx context.Context, csr *x509.CertificateRequest, deviceID string) (*models.DeviceCertificate, error) {
+	if s.caKey == nil || s.caCert == nil {
+		return nil, fmt.Errorf("CA not initialized - call NewCAService first")
+	}
+
 	// Generate serial number
 	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
 	if err != nil {
@@ -92,10 +226,8 @@ func (s *caService) SignCertificate(ctx context.Context, csr *x509.CertificateRe
 		IsCA:                  false,
 	}
 
-	// Sign the certificate
-	// In production, we'd use s.caCert and s.caKey
-	// For development, we'll create a self-signed cert
-	derBytes, err := x509.CreateCertificate(rand.Reader, template, template, csr.PublicKey, s.caKey)
+	// Sign the certificate using the CA
+	derBytes, err := x509.CreateCertificate(rand.Reader, template, s.caCert, csr.PublicKey, s.caKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create certificate: %w", err)
 	}
@@ -120,6 +252,7 @@ func (s *caService) SignCertificate(ctx context.Context, csr *x509.CertificateRe
 		return nil, fmt.Errorf("failed to store certificate: %w", err)
 	}
 
+	slog.Info("✅ Certificate signed", "device_id", deviceID, "serial", serialNumber.String())
 	return cert, nil
 }
 

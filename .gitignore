@@ -1,3 +1,11 @@
+# Certificates & Keys (NEVER COMMIT)
+certs/
+*.crt
+*.key
+*.pem
+*.p12
+*.pfx
+
 # Binaires
 bin/
 freekiosk-hub
