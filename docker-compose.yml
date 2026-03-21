@@ -1,47 +1,77 @@
 services:
+  # EMQX MQTT Broker
+  emqx:
+    image: docker.1ms.run/emqx/emqx:5.1.0
+    container_name: freekiosk-emqx
+    restart: unless-stopped
+    environment:
+      - EMQX_NAME=emqx
+      - EMQX_HOST=0.0.0.0
+      - EMQX_LISTENER__TCP__EXTERNAL=1883
+      - EMQX_DASHBOARD__LISTENER__HTTP=18083
+      - EMQX_TRANSFORMATION__SYS__boot=1
+      - EMQX_TRANSFORMATION__SYS__syncing=1
+    ports:
+      - "1883:1883"    # MQTT TCP
+      - "8883:8883"    # MQTT TLS
+      - "8083:8083"    # WebSocket
+      - "8084:8084"    # WebSocket SSL
+      - "18083:18083"  # Dashboard
+    volumes:
+      - emqx_data:/opt/emqx/data
+      - emqx_log:/opt/emqx/log
+    networks:
+      - freekiosk-network
+    healthcheck:
+      test: ["CMD-SHELL", "emqx ctl status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # FreeKiosk Hub
   freekiosk-hub:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: freekiosk-hub
     restart: unless-stopped
-
     ports:
       - "${SERVER_PORT:-8081}:8081"
-
     environment:
       # Server Configuration
       - SERVER_PORT=8081
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-
       # Database
       - DB_PATH=/app/data/freekiosk.db
-
       # Kiosk Communication
       - KIOSK_PORT=${KIOSK_PORT:-8080}
       - KIOSK_API_KEY=${KIOSK_API_KEY}
-
+      # MQTT - 使用 emqx 服务名作为主机名
+      - MQTT_BROKER_URL=emqx
+      - MQTT_PORT=1883
+      - MQTT_USERNAME=${MQTT_USERNAME:-}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+      - MQTT_CLIENT_ID=freekiosk-hub
+      - USE_MQTT=true
       # Tailscale Integration
       - TS_AUTHKEY=${TS_AUTHKEY}
-
       # Performance
       - POLL_INTERVAL=${POLL_INTERVAL:-30s}
       - RETENTION_DAYS=${RETENTION_DAYS:-31}
       - MAX_WORKERS=${MAX_WORKERS:-5}
-
       # Media
       - MEDIA_DIR=/app/media
       - BASE_URL=${BASE_URL:-http://localhost:8081}
-
     volumes:
       # Persist database
       - hub_data:/app/data
       # Persist media files
       - hub_media:/app/media
-
     networks:
       - freekiosk-network
-
+    depends_on:
+      emqx:
+        condition: service_healthy
     # Optional: Tailscale sidecar for secure networking
     # Uncomment if you want to run Tailscale inside the container
     # cap_add:
@@ -55,6 +85,10 @@ volumes:
     name: freekiosk-hub-data
   hub_media:
     name: freekiosk-hub-media
+  emqx_data:
+    name: freekiosk-emqx-data
+  emqx_log:
+    name: freekiosk-emqx-log
 
 networks:
   freekiosk-network:
