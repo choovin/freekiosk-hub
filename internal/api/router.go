@@ -33,6 +33,8 @@ type ApiServer struct {
 	AuthSvc      services.AuthService  // 企业版: 认证服务
 	CmdSvc       services.CommandService // 企业版: 命令服务
 	StatusSvc    services.DeviceStatusService // 企业版: 状态服务
+	PolicySvc    services.PolicyService // 企业版: 策略服务
+	TenantSvc    services.TenantService  // 企业版: 租户服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -48,6 +50,8 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	authSvc services.AuthService, // 企业版: 认证服务
 	cmdSvc services.CommandService, // 企业版: 命令服务
 	statusSvc services.DeviceStatusService, // 企业版: 状态服务
+	policySvc services.PolicyService, // 企业版: 策略服务
+	tenantSvc services.TenantService, // 企业版: 租户服务
 
 ) *ApiServer {
 	s := &ApiServer{
@@ -64,6 +68,8 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		AuthSvc:      authSvc,
 		CmdSvc:       cmdSvc,
 		StatusSvc:    statusSvc,
+		PolicySvc:    policySvc,
+		TenantSvc:    tenantSvc,
 	}
 
 	s.setupMiddlewares()
@@ -220,6 +226,46 @@ func (s *ApiServer) setupRoutes() {
 		{
 			statusRoutes.GET("/devices/:deviceId/status", statusH.HandleGetDeviceStatus)
 			statusRoutes.GET("/devices/status", statusH.HandleGetAllDeviceStatuses)
+		}
+	}
+
+	// --- 8. 企业版策略 API ---
+	if s.PolicySvc != nil {
+		policyH := NewPolicyHandler(s.PolicySvc)
+		policyRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 策略管理
+			policyRoutes.POST("/policies", policyH.CreatePolicy)
+			policyRoutes.GET("/policies", policyH.ListPolicies)
+			policyRoutes.GET("/policies/:policyId", policyH.GetPolicy)
+			policyRoutes.PUT("/policies/:policyId", policyH.UpdatePolicy)
+			policyRoutes.DELETE("/policies/:policyId", policyH.DeletePolicy)
+
+			// 策略分配
+			policyRoutes.POST("/policies/:policyId/assign", policyH.AssignPolicy)
+
+			// 白名单管理
+			policyRoutes.POST("/policies/:policyId/whitelist", policyH.AddAppToWhitelist)
+			policyRoutes.DELETE("/policies/:policyId/whitelist/:packageName", policyH.RemoveAppFromWhitelist)
+
+			// 设备策略
+			policyRoutes.GET("/devices/:deviceId/policy", policyH.GetDevicePolicy)
+			policyRoutes.GET("/devices/:deviceId/whitelist", policyH.GetDeviceWhitelist)
+		}
+	}
+
+	// --- 9. 企业版租户 API ---
+	if s.TenantSvc != nil {
+		tenantH := NewTenantHandler(s.TenantSvc)
+		tenantRoutes := s.Echo.Group("/api/v2/tenants")
+		{
+			tenantRoutes.POST("", tenantH.HandleCreateTenant)
+			tenantRoutes.GET("", tenantH.HandleListTenants)
+			tenantRoutes.GET("/:tenantId", tenantH.HandleGetTenant)
+			tenantRoutes.PUT("/:tenantId", tenantH.HandleUpdateTenant)
+			tenantRoutes.DELETE("/:tenantId", tenantH.HandleDeleteTenant)
+			tenantRoutes.GET("/:tenantId/quota", tenantH.HandleGetQuota)
+			tenantRoutes.PUT("/:tenantId/quota", tenantH.HandleUpdateQuota)
 		}
 	}
 

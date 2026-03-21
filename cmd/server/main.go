@@ -167,6 +167,24 @@ func main() {
 		}
 	}()
 
+	// 7. Policy 服务初始化
+	policyRepo := repositories.NewSecurityPolicyRepository(db)
+	appWhitelistRepo := repositories.NewAppWhitelistRepository(db)
+	policySvc := services.NewPolicyService(policyRepo, appWhitelistRepo, services.PolicyServiceConfig{
+		DefaultPolicyID: "00000000-0000-0000-0000-000000000001",
+	})
+	slog.Info("✅ Policy 服务已初始化")
+
+	// 8. 租户服务初始化
+	tenantRepo := repositories.NewTenantRepository(db)
+	if err := tenantRepo.InitTable(ctx); err != nil {
+		slog.Error("❌ Failed to initialize tenants table", "error", err)
+		os.Exit(1)
+	}
+	deviceRepo := repositories.NewDeviceRepository(db)
+	tenantSvc := services.NewTenantService(tenantRepo, deviceRepo)
+	slog.Info("✅ 租户服务已初始化")
+
 	// 7. 初始化 WebSocket Hub (用于实时通知)
 	sse.InitWsHub()
 	slog.Info("✅ WebSocket Hub 已初始化")
@@ -185,7 +203,7 @@ func main() {
 
 	e := echo.New()
 	e.Renderer = &api.TemplRenderer{}
-	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil)
+	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc)
 	e.Static("/media", cfg.MediaDir)
 	go func() {
 		slog.Info("🌐 Web Server starting", "port", cfg.ServerPort)

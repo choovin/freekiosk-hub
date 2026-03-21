@@ -29,6 +29,9 @@ type DeviceRepository interface {
 	AddToGroup(ctx context.Context, deviceID, groupID string) error
 	RemoveFromGroup(ctx context.Context, deviceID, groupID string) error
 	GetGroups(ctx context.Context, deviceID string) ([]*models.DeviceGroup, error)
+
+	// Tenant operations
+	CountByTenant(ctx context.Context, tenantID string) (int64, error)
 }
 
 type deviceRepository struct {
@@ -174,4 +177,11 @@ func (r *deviceRepository) GetGroups(ctx context.Context, deviceID string) ([]*m
 	`
 	err := r.db.SelectContext(ctx, &groups, query, deviceID)
 	return groups, err
+}
+
+func (r *deviceRepository) CountByTenant(ctx context.Context, tenantID string) (int64, error) {
+	var count int64
+	query := `SELECT COUNT(*) FROM devices WHERE tenant_id = $1`
+	err := r.db.GetContext(ctx, &count, query, tenantID)
+	return count, err
 }
