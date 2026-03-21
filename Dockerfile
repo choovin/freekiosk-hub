@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.25-alpine AS builder
+FROM docker.1ms.run/library/golang:1.25-alpine AS builder
 
 WORKDIR /build
 
@@ -25,7 +25,7 @@ RUN templ generate
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /build/bin/freekiosk-hub ./cmd/server/main.go
 
 # Runtime stage
-FROM alpine:3.21
+FROM docker.1ms.run/library/alpine:3.21
 
 WORKDIR /app
 
