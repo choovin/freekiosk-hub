@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/wared2003/freekiosk-hub/internal/clients"
 	"github.com/wared2003/freekiosk-hub/internal/config"
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
@@ -35,6 +36,8 @@ type ApiServer struct {
 	StatusSvc    services.DeviceStatusService // 企业版: 状态服务
 	PolicySvc    services.PolicyService // 企业版: 策略服务
 	TenantSvc    services.TenantService  // 企业版: 租户服务
+	MetricsSvc   *services.MetricsService // 企业版: 指标服务
+	AuditSvc     *services.AuditService  // 企业版: 审计日志服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -52,6 +55,8 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	statusSvc services.DeviceStatusService, // 企业版: 状态服务
 	policySvc services.PolicyService, // 企业版: 策略服务
 	tenantSvc services.TenantService, // 企业版: 租户服务
+	metricsSvc *services.MetricsService, // 企业版: 指标服务
+	auditSvc *services.AuditService, // 企业版: 审计日志服务
 
 ) *ApiServer {
 	s := &ApiServer{
@@ -70,6 +75,8 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		StatusSvc:    statusSvc,
 		PolicySvc:    policySvc,
 		TenantSvc:    tenantSvc,
+		MetricsSvc:   metricsSvc,
+		AuditSvc:     auditSvc,
 	}
 
 	s.setupMiddlewares()
@@ -266,6 +273,21 @@ func (s *ApiServer) setupRoutes() {
 			tenantRoutes.DELETE("/:tenantId", tenantH.HandleDeleteTenant)
 			tenantRoutes.GET("/:tenantId/quota", tenantH.HandleGetQuota)
 			tenantRoutes.PUT("/:tenantId/quota", tenantH.HandleUpdateQuota)
+		}
+	}
+
+	// --- 10. 企业版 Prometheus 指标 ---
+	if s.MetricsSvc != nil {
+		s.Echo.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+	}
+
+	// --- 11. 企业版审计日志 API ---
+	if s.AuditSvc != nil {
+		auditH := NewAuditHandler(s.AuditSvc)
+		// 审计日志查询 (挂载在租户路径下)
+		auditRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			auditRoutes.GET("/audit-logs", auditH.HandleQueryAuditLogs)
 		}
 	}
 
