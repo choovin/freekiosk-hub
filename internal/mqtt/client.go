@@ -101,11 +101,17 @@ func (c *Client) Connect(ctx context.Context) error {
 		return fmt.Errorf("创建 MQTT 连接失败: %w", err)
 	}
 
+	// 使用独立context避免主启动流程被阻塞
+	connectCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	c.connection = cm
 
-	// 等待连接建立
-	if err := cm.AwaitConnection(ctx); err != nil {
-		return fmt.Errorf("建立 MQTT 连接失败: %w", err)
+	// 等待连接建立（最多等待5秒，不阻塞主启动流程）
+	if err := cm.AwaitConnection(connectCtx); err != nil {
+		// 连接失败不阻塞，由AutoReconnect在后台重试
+		log.Printf("[MQTT] 初始连接失败，将在后台重试: %v", err)
+		return nil
 	}
 
 	log.Printf("[MQTT] 客户端 %s 已连接", c.config.ClientID)
