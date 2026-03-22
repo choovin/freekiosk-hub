@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/jung-kurt/gofpdf"
 	"github.com/labstack/echo/v4"
@@ -39,7 +40,7 @@ type deviceQR struct {
 	device   *models.FieldTripDevice
 	groupKey string
 	payload  string
-	pngPath  string
+	pngData  []byte
 }
 
 // HandleExportPDF generates a PDF with QR codes for all devices in a group
@@ -76,13 +77,6 @@ func (h *ExportHandler) HandleExportPDF(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "no devices in this group")
 	}
 
-	// Create temp directory for QR images
-	tempDir, err := os.MkdirTemp("", "freekiosk-qr-*")
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create temp directory")
-	}
-	defer os.RemoveAll(tempDir)
-
 	// Generate QR payload for each device
 	deviceQRs := make([]deviceQR, 0, len(devices))
 	for i, device := range devices {
@@ -112,17 +106,11 @@ func (h *ExportHandler) HandleExportPDF(c echo.Context) error {
 			continue
 		}
 
-		// Write to temp file
-		pngPath := filepath.Join(tempDir, fmt.Sprintf("qr_%d.png", i))
-		if err := os.WriteFile(pngPath, pngData, 0644); err != nil {
-			continue
-		}
-
 		deviceQRs = append(deviceQRs, deviceQR{
 			device:   &devices[i], // Take address of array element to avoid range loop issues
 			groupKey: group.GroupKey,
 			payload:  payloadStr,
-			pngPath:  pngPath,
+			pngData:  pngData,
 		})
 	}
 
@@ -268,7 +256,12 @@ func (h *ExportHandler) add6UpPage(pdf *gofpdf.Fpdf, deviceQRs []deviceQR, group
 	// Title
 	pdf.SetFont("Arial", "B", 14)
 	pdf.SetXY(margin, margin)
-	pdf.CellFormat(180, 10, fmt.Sprintf("Group: %s (6-up layout)", groupName), "", 1, "C", false, 0, "")
+	pdf.CellFormat(180, 10, fmt.Sprintf("FreeKiosk 研学版 — %s 设备二维码", groupName), "", 1, "C", false, 0, "")
+
+	// Print date
+	pdf.SetFont("Arial", "", 9)
+	pdf.SetXY(margin, margin+6)
+	pdf.CellFormat(180, 5, fmt.Sprintf("打印日期: %s", time.Now().Format("2006-01-02")), "", 1, "C", false, 0, "")
 	pdf.Ln(5)
 
 	startY := pdf.GetY()
@@ -284,9 +277,12 @@ func (h *ExportHandler) add6UpPage(pdf *gofpdf.Fpdf, deviceQRs []deviceQR, group
 		x := margin + float64(col)*cellWidth
 		y := startY + float64(row)*cellHeight
 
-		// Add QR code centered in cell
+		// Add QR code centered in cell (use in-memory loading)
 		qrX := x + (cellWidth-qrSize)/2
-		pdf.ImageOptions(dqr.pngPath, qrX, y+5, qrSize, qrSize, false, gofpdf.ImageOptions{ImageType: "PNG"}, 0, "")
+		imgName := "qr_" + strconv.Itoa(i)
+		r := bytes.NewReader(dqr.pngData)
+		pdf.RegisterImageReader(imgName, "png", r)
+		pdf.ImageOptions(imgName, qrX, y+5, qrSize, qrSize, false, gofpdf.ImageOptions{ImageType: "PNG"}, 0, "")
 
 		// Add device name below QR
 		pdf.SetXY(x, y+qrSize+8)
@@ -297,7 +293,7 @@ func (h *ExportHandler) add6UpPage(pdf *gofpdf.Fpdf, deviceQRs []deviceQR, group
 	// Add footer
 	pdf.SetY(pageHeight - 15)
 	pdf.SetFont("Arial", "I", 7)
-	pdf.CellFormat(0, 5, "FreeKiosk Field Trip - QR Code Export", "", 1, "C", false, 0, "")
+	pdf.CellFormat(0, 5, "FreeKiosk 研学版", "", 1, "C", false, 0, "")
 }
 
 // add4UpPage adds a page with 4 QR codes (2 rows x 2 columns)
@@ -316,7 +312,12 @@ func (h *ExportHandler) add4UpPage(pdf *gofpdf.Fpdf, deviceQRs []deviceQR, group
 	// Title
 	pdf.SetFont("Arial", "B", 16)
 	pdf.SetXY(margin, margin)
-	pdf.CellFormat(180, 10, fmt.Sprintf("Group: %s (4-up layout)", groupName), "", 1, "C", false, 0, "")
+	pdf.CellFormat(180, 10, fmt.Sprintf("FreeKiosk 研学版 — %s 设备二维码", groupName), "", 1, "C", false, 0, "")
+
+	// Print date
+	pdf.SetFont("Arial", "", 9)
+	pdf.SetXY(margin, margin+6)
+	pdf.CellFormat(180, 5, fmt.Sprintf("打印日期: %s", time.Now().Format("2006-01-02")), "", 1, "C", false, 0, "")
 	pdf.Ln(5)
 
 	startY := pdf.GetY()
@@ -337,15 +338,18 @@ func (h *ExportHandler) add4UpPage(pdf *gofpdf.Fpdf, deviceQRs []deviceQR, group
 		pdf.SetFont("Arial", "B", 11)
 		pdf.CellFormat(cellWidth, 6, dqr.device.Name, "", 1, "C", false, 0, "")
 
-		// Add QR code centered in cell
+		// Add QR code centered in cell (use in-memory loading)
 		qrX := x + (cellWidth-qrSize)/2
-		pdf.ImageOptions(dqr.pngPath, qrX, y+8, qrSize, qrSize, false, gofpdf.ImageOptions{ImageType: "PNG"}, 0, "")
+		imgName := "qr_" + strconv.Itoa(i)
+		r := bytes.NewReader(dqr.pngData)
+		pdf.RegisterImageReader(imgName, "png", r)
+		pdf.ImageOptions(imgName, qrX, y+8, qrSize, qrSize, false, gofpdf.ImageOptions{ImageType: "PNG"}, 0, "")
 	}
 
 	// Add footer
 	pdf.SetY(pageHeight - 15)
 	pdf.SetFont("Arial", "I", 7)
-	pdf.CellFormat(0, 5, "FreeKiosk Field Trip - QR Code Export", "", 1, "C", false, 0, "")
+	pdf.CellFormat(0, 5, "FreeKiosk 研学版", "", 1, "C", false, 0, "")
 }
 
 // add1UpPage adds a page with 1 large QR code per page
@@ -354,36 +358,44 @@ func (h *ExportHandler) add1UpPage(pdf *gofpdf.Fpdf, deviceQRs []deviceQR, group
 	pageWidth, pageHeight := pdf.GetPageSize()
 	_ = pageWidth
 
-	for _, dqr := range deviceQRs {
+	for i, dqr := range deviceQRs {
 		pdf.AddPage()
 
 		// Title with device name
 		pdf.SetFont("Arial", "B", 20)
 		pdf.SetXY(margin, margin)
-		pdf.CellFormat(180, 15, fmt.Sprintf("Device: %s", dqr.device.Name), "", 1, "C", false, 0, "")
+		pdf.CellFormat(180, 15, fmt.Sprintf("设备: %s", dqr.device.Name), "", 1, "C", false, 0, "")
+
+		// Print date
+		pdf.SetFont("Arial", "", 10)
+		pdf.SetXY(margin, margin+18)
+		pdf.CellFormat(180, 6, fmt.Sprintf("打印日期: %s", time.Now().Format("2006-01-02")), "", 1, "C", false, 0, "")
 
 		pdf.SetFont("Arial", "", 12)
-		pdf.SetXY(margin, margin+20)
-		pdf.CellFormat(180, 8, fmt.Sprintf("Group: %s", groupName), "", 1, "C", false, 0, "")
+		pdf.SetXY(margin, margin+26)
+		pdf.CellFormat(180, 8, fmt.Sprintf("分组: %s", groupName), "", 1, "C", false, 0, "")
 
-		pdf.SetXY(margin, margin+30)
-		pdf.CellFormat(180, 8, fmt.Sprintf("Device ID: %s", dqr.device.ID), "", 1, "C", false, 0, "")
+		pdf.SetXY(margin, margin+36)
+		pdf.CellFormat(180, 8, fmt.Sprintf("设备 ID: %s", dqr.device.ID), "", 1, "C", false, 0, "")
 
-		// Large QR code centered
+		// Large QR code centered (use in-memory loading)
 		qrSize := 100.0
 		x := (210 - qrSize) / 2
 		y := 70.0
 
-		pdf.ImageOptions(dqr.pngPath, x, y, qrSize, qrSize, false, gofpdf.ImageOptions{ImageType: "PNG"}, 0, "")
+		imgName := "qr_" + strconv.Itoa(i)
+		r := bytes.NewReader(dqr.pngData)
+		pdf.RegisterImageReader(imgName, "png", r)
+		pdf.ImageOptions(imgName, x, y, qrSize, qrSize, false, gofpdf.ImageOptions{ImageType: "PNG"}, 0, "")
 
 		// Note about API key
 		pdf.SetXY(margin, y+qrSize+10)
 		pdf.SetFont("Arial", "I", 9)
-		pdf.CellFormat(180, 5, "Note: Scan this QR code with FreeKiosk app to register device.", "", 1, "C", false, 0, "")
+		pdf.CellFormat(180, 5, "提示: 请使用 FreeKiosk 应用扫描此二维码以注册设备", "", 1, "C", false, 0, "")
 
 		// Add footer
 		pdf.SetY(pageHeight - 15)
 		pdf.SetFont("Arial", "I", 8)
-		pdf.CellFormat(0, 5, "FreeKiosk Field Trip - QR Code Export", "", 1, "C", false, 0, "")
+		pdf.CellFormat(0, 5, "FreeKiosk 研学版", "", 1, "C", false, 0, "")
 	}
 }
