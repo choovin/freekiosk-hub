@@ -69,6 +69,14 @@ templ Layout(title string, lang string) {
                                     { t("nav.import") }
                                     </a>
                                 </li>
+                                <li>
+                                    <a hx-get="/fieldtrip"
+                                    hx-target="main"
+                                    hx-push-url="true"
+                                    class="rounded-lg hover:bg-primary/10 transition-colors cursor-pointer">
+                                    Field Trip
+                                    </a>
+                                </li>
                             </ul>
                             <div class="dropdown dropdown-end">
                                 <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">

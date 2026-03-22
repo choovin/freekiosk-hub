@@ -80,9 +80,9 @@ func (h *FieldTripUIHandler) HandleFieldTripPage(c echo.Context) error {
 	lang := ftGetLang(c)
 
 	if c.Request().Header.Get("HX-Request") == "true" {
-		return c.Render(http.StatusOK, "", FieldTripContent(groups, devices, func(key string) string { return i18n.TL(lang, key) }))
+		return c.String(http.StatusOK, FieldTripContent(groups, devices, func(key string) string { return i18n.TL(lang, key) }))
 	}
-	return c.Render(http.StatusOK, "", FieldTripPage(groups, devices, lang))
+	return c.String(http.StatusOK, FieldTripPage(groups, devices, lang))
 }
 
 // HandleNewGroup renders the new group form modal
@@ -96,7 +96,7 @@ func (h *FieldTripUIHandler) HandleNewGroup(c echo.Context) error {
 		BroadcastSound: "default",
 		UpdatePolicy:   "manual",
 	}
-	return c.Render(http.StatusOK, "", FieldTripGroupFormModal(group, lang))
+	return c.String(http.StatusOK, FieldTripGroupFormModal(group, lang))
 }
 
 // HandleEditGroup renders the edit group form modal
@@ -109,7 +109,7 @@ func (h *FieldTripUIHandler) HandleEditGroup(c echo.Context) error {
 	}
 
 	lang := ftGetLang(c)
-	return c.Render(http.StatusOK, "", FieldTripGroupFormModal(group, lang))
+	return c.String(http.StatusOK, FieldTripGroupFormModal(group, lang))
 }
 
 // HandleSaveGroup saves a new or existing group
@@ -175,7 +175,7 @@ func (h *FieldTripUIHandler) HandleBroadcast(c echo.Context) error {
 	groupID := c.FormValue("group_id")
 
 	if message == "" {
-		return c.Render(http.StatusOK, "", Toast("Message is required", "error"))
+		return c.String(http.StatusOK, Toast("Message is required", "error"))
 	}
 
 	now := time.Now().Unix()
@@ -190,11 +190,11 @@ func (h *FieldTripUIHandler) HandleBroadcast(c echo.Context) error {
 
 	if err := h.ftRepo.CreateBroadcast(broadcast); err != nil {
 		slog.Error("database error: failed to create broadcast", "err", err)
-		return c.Render(http.StatusOK, "", Toast("Failed to send broadcast", "error"))
+		return c.String(http.StatusOK, Toast("Failed to send broadcast", "error"))
 	}
 
 	slog.Info("broadcast sent", "id", broadcast.ID, "group", groupID)
-	return c.Render(http.StatusOK, "", Toast(fmt.Sprintf("Broadcast sent to %d devices", 0), "success"))
+	return c.String(http.StatusOK, Toast(fmt.Sprintf("Broadcast sent to %d devices", 0), "success"))
 }
 
 // HandleSetWhitelist sets the app whitelist for a device
@@ -203,11 +203,11 @@ func (h *FieldTripUIHandler) HandleSetWhitelist(c echo.Context) error {
 	app := c.FormValue("app")
 
 	slog.Info("whitelist update requested", "device", deviceID, "app", app)
-	return c.Render(http.StatusOK, "", Toast("Whitelist updated", "success"))
+	return c.String(http.StatusOK, Toast("Whitelist updated", "success"))
 }
 
 // HandleOTAUpload handles OTA APK upload
 func (h *FieldTripUIHandler) HandleOTAUpload(c echo.Context) error {
 	slog.Info("OTA upload requested")
-	return c.Render(http.StatusOK, "", Toast("OTA upload functionality coming soon", "error"))
+	return c.String(http.StatusOK, Toast("OTA upload functionality coming soon", "error"))
 }
