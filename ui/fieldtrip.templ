@@ -9,13 +9,12 @@ import (
 )
 
 templ FieldTripPage(groups []models.FieldTripGroup, allDevices []models.FieldTripDevice, lang string) {
-	{{ t := func(key string) string { return i18n.TL(lang, key) } }}
 	@Layout("Field Trip", lang) {
-		@FieldTripContent(groups, allDevices, t)
+		@FieldTripContent(groups, allDevices)
 	}
 }
 
-templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.FieldTripDevice, t func(key string) string) {
+templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.FieldTripDevice) {
 	<div class="max-w-7xl mx-auto p-6 animate-in fade-in duration-500">
 		<header class="mb-8">
 			<h1 class="text-3xl font-black text-slate-800">Field Trip Dashboard</h1>
@@ -45,7 +44,7 @@ templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.Field
 						} else {
 							<div class="space-y-4">
 								for _, group := range groups {
-									@FieldTripGroupCard(group, allDevices, t)
+								@FieldTripGroupCard(group, allDevices)
 								}
 							</div>
 						}
@@ -100,13 +99,7 @@ templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.Field
 												fmt.Sprintf("%.4f, %.4f", *device.LastLat, *device.LastLng)
 											}</span>
 										</div>
-										<span class="badge badge-sm {
-											if device.Status == "active" {
-												"badge-success"
-											} else {
-												"badge-error"
-											}
-										}">{ device.Status }</span>
+										<span class={ "badge badge-sm", templ.KV("badge-success", device.Status == "active"), templ.KV("badge-error", device.Status != "active") }>{ device.Status }</span>
 									</div>
 								} else {
 									<div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg text-sm">
@@ -148,7 +141,7 @@ templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.Field
 	</div>
 }
 
-templ FieldTripGroupCard(group models.FieldTripGroup, allDevices []models.FieldTripDevice, t func(key string) string) {
+templ FieldTripGroupCard(group models.FieldTripGroup, allDevices []models.FieldTripDevice) {
 	{{ devices := filterDevicesByGroup(allDevices, group.ID) }}
 	<div class="border border-slate-100 rounded-xl p-4 hover:border-primary/30 transition-colors" id={ fmt.Sprintf("ft-group-%s", group.ID) }>
 		<div class="flex justify-between items-start mb-3">
