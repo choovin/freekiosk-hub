@@ -50,18 +50,16 @@ func (s *BroadcastService) SendToGroup(groupID, message, sound string) error {
 		return err
 	}
 
-	// Publish to MQTT for each device
+	// Publish to MQTT topic for the group (all devices in group subscribe to this)
 	delivered := 0
 	failed := 0
-	for _, device := range devices {
-		if s.mqtt != nil {
-			topic := "freekiosk/fieldtrip/" + device.ID + "/broadcast"
-			if err := s.mqtt.Publish(topic, payloadBytes); err != nil {
-				slog.Warn("Failed to publish broadcast to device", "device_id", device.ID, "error", err)
-				failed++
-			} else {
-				delivered++
-			}
+	topic := "fieldtrip/" + groupID + "/broadcast"
+	if s.mqtt != nil {
+		if err := s.mqtt.Publish(topic, payloadBytes); err != nil {
+			slog.Warn("Failed to publish broadcast to group", "group_id", groupID, "error", err)
+			failed = len(devices)
+		} else {
+			delivered = len(devices)
 		}
 	}
 
@@ -101,9 +99,10 @@ func (s *BroadcastService) SendToAll(message, sound string) error {
 			continue
 		}
 		if s.mqtt != nil {
-			topic := "freekiosk/fieldtrip/" + device.ID + "/broadcast"
+			// Publish to device's group topic (all tablets subscribe to their group topic)
+			topic := "fieldtrip/" + device.GroupID + "/broadcast"
 			if err := s.mqtt.Publish(topic, payloadBytes); err != nil {
-				slog.Warn("Failed to publish broadcast to device", "device_id", device.ID, "error", err)
+				slog.Warn("Failed to publish broadcast to device group", "device_id", device.ID, "group_id", device.GroupID, "error", err)
 				failed++
 			} else {
 				delivered++
