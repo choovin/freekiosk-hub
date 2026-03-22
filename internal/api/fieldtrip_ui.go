@@ -10,10 +10,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/wared2003/freekiosk-hub/internal/i18n"
 	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/internal/services"
+	"github.com/wared2003/freekiosk-hub/ui"
 )
 
 // FieldTripUIHandler handles field trip HTML UI endpoints
@@ -45,16 +45,6 @@ func ftGetLang(c echo.Context) string {
 	return lang
 }
 
-// FieldTripContent renders field trip content partial
-func FieldTripContent(groups []models.FieldTripGroup, devices []models.FieldTripDevice, t func(string) string) string {
-	return fmt.Sprintf(`<div id="fieldtrip-content">%s %d groups, %d devices</div>`, t("Field Trip"), len(groups), len(devices))
-}
-
-// FieldTripPage renders the main Field Trip page
-func FieldTripPage(groups []models.FieldTripGroup, devices []models.FieldTripDevice, lang string) string {
-	return fmt.Sprintf(`<html><body><h1>Field Trip</h1><p>%d groups, %d devices</p></body></html>`, len(groups), len(devices))
-}
-
 // FieldTripGroupFormModal renders the group form modal
 func FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) string {
 	return fmt.Sprintf(`<div class="modal">Group form for: %s</div>`, group.Name)
@@ -81,10 +71,11 @@ func (h *FieldTripUIHandler) HandleFieldTripPage(c echo.Context) error {
 
 	lang := ftGetLang(c)
 
+	// HTMX requests get partial content, others get the full page
 	if c.Request().Header.Get("HX-Request") == "true" {
-		return c.String(http.StatusOK, FieldTripContent(groups, devices, func(key string) string { return i18n.TL(lang, key) }))
+		return ui.FieldTripContent(groups, devices).Render(c.Request().Context(), c.Response().Writer)
 	}
-	return c.String(http.StatusOK, FieldTripPage(groups, devices, lang))
+	return c.Render(http.StatusOK, "", ui.FieldTripPage(groups, devices, lang))
 }
 
 // HandleNewGroup renders the new group form modal
