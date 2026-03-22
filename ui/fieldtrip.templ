@@ -15,7 +15,7 @@ templ FieldTripPage(groups []models.FieldTripGroup, allDevices []models.FieldTri
 }
 
 templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.FieldTripDevice) {
-	<div class="max-w-7xl mx-auto p-6 animate-in fade-in duration-500">
+	<div class="max-w-7xl mx-auto p-6 animate-in fade-in duration-500 pb-28">
 		<header class="mb-8">
 			<h1 class="text-3xl font-black text-slate-800">Field Trip Dashboard</h1>
 			<p class="text-slate-500 text-sm">Manage device groups, send broadcasts, and monitor GPS locations</p>
@@ -48,37 +48,6 @@ templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.Field
 								}
 							</div>
 						}
-					</div>
-				</div>
-
-				<!-- Broadcast Section -->
-				<div class="card bg-white shadow-sm border border-slate-100">
-					<div class="card-body">
-						<h2 class="text-lg font-bold text-slate-800 mb-4">Broadcast Message</h2>
-						<form hx-post="/fieldtrip/broadcast" hx-target="#broadcast-result" class="space-y-4">
-							<div class="form-control">
-								<label class="label text-xs font-bold uppercase text-slate-500">Message</label>
-								<textarea name="message" class="textarea textarea-bordered h-24" placeholder="Type your broadcast message here..." required></textarea>
-							</div>
-							<div class="flex gap-4 items-end">
-								<div class="form-control flex-1">
-									<label class="label text-xs font-bold uppercase text-slate-500">Send to Group</label>
-									<select name="group_id" class="select select-bordered w-full">
-										<option value="">All Devices</option>
-										for _, group := range groups {
-											<option value={ group.ID }>{ group.Name }</option>
-										}
-									</select>
-								</div>
-								<button type="submit" class="btn btn-primary">
-									<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-									</svg>
-									Send
-								</button>
-							</div>
-						</form>
-						<div id="broadcast-result" class="mt-4"></div>
 					</div>
 				</div>
 			</div>
@@ -139,6 +108,66 @@ templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.Field
 
 		<div id="modal-container"></div>
 	</div>
+
+	<!-- Broadcast Bottom Bar — quick broadcast from anywhere on the dashboard -->
+	<div id="broadcast-bar" class="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4">
+		<div class="max-w-7xl mx-auto">
+			<div class="bg-slate-800/95 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-2xl px-4 py-3 flex gap-3 items-center">
+				<!-- Broadcast icon -->
+				<div class="flex-shrink-0 w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+					</svg>
+				</div>
+
+				<!-- Message input -->
+				<form hx-post="/api/v2/fieldtrip/broadcast" hx-target="#broadcast-bar-result" hx-swap="innerHTML" class="flex-1 flex gap-2 items-center">
+					<input
+						type="text"
+						name="message"
+						placeholder="快速广播：输入消息并发送..."
+						class="input input-sm bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 flex-1 min-w-0"
+						required
+						maxlength="200"
+						id="bb-message"
+					/>
+					<select name="group_id" class="select select-sm bg-slate-700/50 border-slate-600 text-white text-xs w-auto min-w-0">
+						<option value="">全部设备</option>
+						for _, group := range groups {
+							<option value={ group.ID }>{ group.Name }</option>
+						}
+					</select>
+					<button type="submit" class="btn btn-primary btn-sm flex-shrink-0 gap-1">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+						</svg>
+						发送
+					</button>
+				</form>
+
+				<!-- Result display -->
+				<div id="broadcast-bar-result" class="flex-shrink-0 text-sm font-medium"></div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	// Clear broadcast bar input after successful send
+	document.addEventListener('htmx:afterSwap', function(evt) {
+		if (evt.detail.target.id === 'broadcast-bar-result') {
+			const result = evt.detail.target;
+			const input = document.getElementById('bb-message');
+			if (result.textContent.includes('成功') || result.textContent.includes('sent')) {
+				setTimeout(() => {
+					if (input) input.value = '';
+					result.textContent = '';
+				}, 2000);
+			} else if (result.textContent.includes('失败') || result.textContent.includes('Failed') || result.textContent.includes('error')) {
+				setTimeout(() => { result.textContent = ''; }, 4000);
+			}
+		}
+	});
+	</script>
 }
 
 templ FieldTripGroupCard(group models.FieldTripGroup, allDevices []models.FieldTripDevice) {
@@ -195,7 +224,6 @@ func filterDevicesByGroup(devices []models.FieldTripDevice, groupID string) []mo
 }
 
 templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
-	{{ t := func(key string) string { return i18n.TL(lang, key) } }}
 	<dialog id="ft_group_modal" class="modal modal-open">
 		<div class="modal-box max-w-sm border border-slate-100">
 			<h3 class="font-black text-xl mb-4 text-slate-800">
@@ -244,6 +272,132 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 					<button type="submit" class="btn btn-primary px-8">Save</button>
 				</div>
 			</form>
+
+			// Bulk device creation section — only for existing groups
+			if group != nil && group.ID != "" {
+				<div class="border-t border-slate-100 mt-4 pt-4 space-y-3">
+					<button type="button" onclick="openBulkModal()" class="btn btn-outline btn-sm w-full gap-2">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+						</svg>
+						批量创建设备
+					</button>
+
+					// QR code export section
+					<div class="border-t border-slate-100 pt-3">
+						<p class="label text-xs font-bold uppercase text-slate-500 mb-2">批量导出 QR 码</p>
+						<div class="grid grid-cols-3 gap-2">
+							<a href={ fmt.Sprintf("/api/v2/fieldtrip/groups/%s/export?layout=6up", group.ID) } class="btn btn-primary btn-sm gap-1" download>
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+								</svg>
+								6-up
+							</a>
+							<a href={ fmt.Sprintf("/api/v2/fieldtrip/groups/%s/export?layout=4up", group.ID) } class="btn btn-primary btn-sm gap-1" download>
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+								</svg>
+								4-up
+							</a>
+							<a href={ fmt.Sprintf("/api/v2/fieldtrip/groups/%s/export?layout=1up", group.ID) } class="btn btn-primary btn-sm gap-1" download>
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+								</svg>
+								单设备
+							</a>
+						</div>
+						<p class="text-xs text-slate-400 mt-1">6-up: 2行3列, 4-up: 2行2列, 单设备: 1页1个</p>
+					</div>
+				</div>
+
+				// Bulk creation modal (div-based overlay, not nested dialog)
+				<div id="bulkModal" class="bulk-modal">
+					<div class="bulk-modal-backdrop" onclick="closeBulkModal()"></div>
+					<div class="bulk-modal-card">
+						<h3 class="font-black text-xl mb-4 text-slate-800">批量创建设备</h3>
+
+						<input type="hidden" id="bulkGroupKey" value={ group.GroupKey } />
+
+						<div class="space-y-3">
+							<div class="form-control">
+								<label class="label text-xs font-bold uppercase text-slate-500">设备名前缀</label>
+								<input type="text" id="bulkPrefix" class="input input-bordered w-full font-medium" placeholder="平板-" value="平板-" oninput="updateBulkPreview()" />
+							</div>
+							<div class="form-control">
+								<label class="label text-xs font-bold uppercase text-slate-500">数量 (1-100)</label>
+								<input type="number" id="bulkCount" class="input input-bordered w-full font-medium" min="1" max="100" value="10" oninput="updateBulkPreview()" />
+							</div>
+						</div>
+
+						<div class="mt-4">
+							<p class="label text-xs font-bold uppercase text-slate-500 mb-2">预览</p>
+							<ul id="bulkPreview" class="text-sm text-slate-600 space-y-1 max-h-32 overflow-y-auto bg-slate-50 rounded-lg p-3"></ul>
+						</div>
+
+						<div id="bulkResults" class="mt-4"></div>
+
+						<div class="flex gap-3 mt-4">
+							<button type="button" onclick="closeBulkModal()" class="btn btn-ghost flex-1">取消</button>
+							<button type="button" onclick="createBulkDevices()" class="btn btn-primary flex-1 gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+								</svg>
+								创建
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<script>
+				function openBulkModal() {
+					document.getElementById('bulkModal').classList.add('active');
+					updateBulkPreview();
+				}
+				function closeBulkModal() {
+					document.getElementById('bulkModal').classList.remove('active');
+					document.getElementById('bulkResults').innerHTML = '';
+				}
+				function updateBulkPreview() {
+					const prefix = document.getElementById('bulkPrefix').value;
+					const count = Math.min(100, Math.max(1, parseInt(document.getElementById('bulkCount').value) || 1));
+					const preview = document.getElementById('bulkPreview');
+					const names = [];
+					for (let i = 1; i <= count && i <= 10; i++) {
+						names.push(prefix + String(i).padStart(2, '0'));
+					}
+					preview.innerHTML = names.map(n => '<li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span>' + n + '</li>').join('');
+					if (count > 10) {
+						preview.innerHTML += '<li class="text-slate-400 text-xs mt-1">... 还有 ' + (count - 10) + ' 个</li>';
+					}
+				}
+				async function createBulkDevices() {
+					const prefix = document.getElementById('bulkPrefix').value;
+					const count = Math.min(100, Math.max(1, parseInt(document.getElementById('bulkCount').value) || 1));
+					const groupKey = document.getElementById('bulkGroupKey').value;
+					const resultsDiv = document.getElementById('bulkResults');
+					resultsDiv.innerHTML = '<div class="flex items-center gap-2 text-info"><span class="loading loading-spinner loading-sm"></span>正在创建...</div>';
+					let success = 0, failed = 0, failedNames = [];
+					const promises = [];
+					for (let i = 1; i <= count; i++) {
+						const name = prefix + String(i).padStart(2, '0');
+						promises.push(
+							fetch('/api/v2/fieldtrip/devices', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({ name: name, group_key: groupKey })
+							}).then(r => { if (r.ok) success++; else { failed++; failedNames.push(name); } }).catch(() => { failed++; failedNames.push(name); })
+						);
+					}
+					await Promise.all(promises);
+					if (failed === 0) {
+						resultsDiv.innerHTML = '<div class="alert alert-success text-sm"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>成功创建 ' + success + ' 个设备</div>';
+						setTimeout(() => { closeBulkModal(); window.location.reload(); }, 1500);
+					} else {
+						resultsDiv.innerHTML = '<div class="alert alert-error text-sm"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>成功 ' + success + ' 个，失败 ' + failed + ' 个' + (failedNames.length > 0 ? '：' + failedNames.join(', ') : '') + '</div>';
+					}
+				}
+				</script>
+			}
 		</div>
 		<form method="dialog" class="modal-backdrop">
 			<button onclick="this.closest('dialog').remove()">Close</button>
@@ -252,7 +406,6 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 }
 
 templ FieldTripWhitelistModal(deviceID string, whitelist []string, lang string) {
-	{{ t := func(key string) string { return i18n.TL(lang, key) } }}
 	<dialog id="whitelist_modal" class="modal modal-open">
 		<div class="modal-box max-w-md border border-slate-100">
 			<h3 class="font-black text-xl mb-4 text-slate-800">Set App Whitelist</h3>

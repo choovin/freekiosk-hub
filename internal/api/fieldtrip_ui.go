@@ -13,16 +13,18 @@ import (
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
 	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
+	"github.com/wared2003/freekiosk-hub/internal/services"
 )
 
 // FieldTripUIHandler handles field trip HTML UI endpoints
 type FieldTripUIHandler struct {
-	ftRepo *repositories.FieldTripRepository
+	ftRepo   *repositories.FieldTripRepository
+	bcastSvc *services.BroadcastService
 }
 
 // NewFieldTripUIHandler creates a new FieldTripUIHandler
-func NewFieldTripUIHandler(ftRepo *repositories.FieldTripRepository) *FieldTripUIHandler {
-	return &FieldTripUIHandler{ftRepo: ftRepo}
+func NewFieldTripUIHandler(ftRepo *repositories.FieldTripRepository, bcastSvc *services.BroadcastService) *FieldTripUIHandler {
+	return &FieldTripUIHandler{ftRepo: ftRepo, bcastSvc: bcastSvc}
 }
 
 // generateSecureGroupKey generates a secure random group key
@@ -169,32 +171,46 @@ func (h *FieldTripUIHandler) HandleDeleteDevice(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// HandleBroadcast sends a broadcast message
+// HandleBroadcast sends a broadcast message (form-based, returns HTML toast)
 func (h *FieldTripUIHandler) HandleBroadcast(c echo.Context) error {
 	message := c.FormValue("message")
 	groupID := c.FormValue("group_id")
 
 	if message == "" {
-		return c.String(http.StatusOK, Toast("Message is required", "error"))
+		return c.String(http.StatusOK, Toast("消息不能为空", "error"))
 	}
 
+	sound := "default"
 	now := time.Now().Unix()
 	broadcast := &models.Broadcast{
 		ID:        uuid.New().String(),
 		GroupID:   groupID,
 		Message:   message,
-		Sound:     "default",
+		Sound:     sound,
 		CreatedBy: "admin",
 		CreatedAt: now,
 	}
 
 	if err := h.ftRepo.CreateBroadcast(broadcast); err != nil {
 		slog.Error("database error: failed to create broadcast", "err", err)
-		return c.String(http.StatusOK, Toast("Failed to send broadcast", "error"))
+		return c.String(http.StatusOK, Toast("发送失败：数据库错误", "error"))
 	}
 
-	slog.Info("broadcast sent", "id", broadcast.ID, "group", groupID)
-	return c.String(http.StatusOK, Toast(fmt.Sprintf("Broadcast sent to %d devices", 0), "success"))
+	// Actually send via MQTT
+	if h.bcastSvc != nil {
+		var err error
+		if groupID != "" {
+			err = h.bcastSvc.SendToGroup(groupID, message, sound)
+		} else {
+			err = h.bcastSvc.SendToAll(message, sound)
+		}
+		if err != nil {
+			slog.Warn("Failed to send broadcast via MQTT", "error", err)
+			return c.String(http.StatusOK, Toast("消息已保存，但 MQTT 发送失败", "warning"))
+		}
+	}
+	slog.Info("broadcast sent via UI", "id", broadcast.ID, "group", groupID)
+	return c.String(http.StatusOK, Toast("广播已发送！", "success"))
 }
 
 // HandleSetWhitelist sets the app whitelist for a device

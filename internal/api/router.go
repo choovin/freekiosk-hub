@@ -140,7 +140,9 @@ func (s *ApiServer) setupRoutes() {
 	groupH := NewGroupHandler(s.GroupRepo)
 	bcastSvc := services.NewBroadcastService(s.FTRepo, s.MQTTService)
 	fieldtripH := NewFieldTripHandler(s.FTRepo, "" /* signing pubkey — empty for MVP */, bcastSvc)
-	fieldtripUIH := NewFieldTripUIHandler(s.FTRepo)
+	fieldtripUIH := NewFieldTripUIHandler(s.FTRepo, bcastSvc)
+	exportH := NewExportHandler(s.FTRepo)
+	downloadH := NewDownloadHandler("apk", s.Cfg.ServerPort)
 
 	systemJsonH := NewSystemJSONHandler(s.DB)
 
@@ -216,6 +218,9 @@ func (s *ApiServer) setupRoutes() {
 		fieldtripRoutes.POST("/devices/:id/whitelist", fieldtripUIH.HandleSetWhitelist)
 		fieldtripRoutes.POST("/ota/upload", fieldtripUIH.HandleOTAUpload)
 	}
+
+	// Download page for APK
+	s.Echo.GET("/download", downloadH.HandleDownloadPage)
 
 	// --- 5. 企业版认证 API ---
 	if s.AuthSvc != nil {
@@ -330,6 +335,7 @@ func (s *ApiServer) setupRoutes() {
 		fieldtrip.POST("/broadcast", fieldtripH.SendBroadcast)
 		fieldtrip.POST("/ota/upload", otaHandler.UploadOTA)
 		fieldtrip.GET("/ota/list", otaHandler.ListOTA)
+		fieldtrip.GET("/groups/:id/export", exportH.HandleExportPDF)
 	}
 	s.Echo.Static("/apk", "apk")
 

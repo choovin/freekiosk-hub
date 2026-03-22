@@ -25,6 +25,35 @@ templ Layout(title string, lang string) {
                     border-bottom: 1px solid rgba(0,0,0,0.1);
                 }
             </style>
+            <style>
+                /* Bulk device creation modal */
+                .bulk-modal {
+                    display: none;
+                    position: fixed;
+                    inset: 0;
+                    z-index:9999;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .bulk-modal.active {
+                    display: flex;
+                }
+                .bulk-modal-backdrop {
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(0,0,0,0.4);
+                }
+                .bulk-modal-card {
+                    position: relative;
+                    background: white;
+                    border-radius: 1rem;
+                    padding: 1.5rem;
+                    width: 100%;
+                    max-width: 420px;
+                    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+                    border: 1px solid rgba(0,0,0,0.05);
+                }
+            </style>
         </head>
         <body class="min-h-screen bg-slate-50 text-slate-900 font-sans">
             <div class="sticky top-0 z-50 glass-nav">
