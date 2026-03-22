@@ -250,6 +250,15 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 		<h1>下载 FreeKiosk 研学版</h1>
 		<p class="subtitle">扫描二维码下载安装包</p>
 
+		<!-- APK 直接下载按钮（新增） -->
+		<div class="mb-6">
+			<a href="%s"
+				class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-all scale-[1.02]">
+				<span>⬇️</span>
+				<span>下载安装 APK</span>
+			</a>
+		</div>
+
 		<div class="qr-container">
 			<img src="%s" alt="QR Code" />
 		</div>
@@ -279,7 +288,7 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 		}
 	</script>
 </body>
-</html>`, qrCodeDataURL, apkInfo.Version, apkInfo.DownloadURL, sizeStr)
+</html>`, apkInfo.DownloadURL, qrCodeDataURL, apkInfo.Version, apkInfo.DownloadURL, sizeStr)
 
 	return c.String(http.StatusOK, downloadPageHTML)
 }
