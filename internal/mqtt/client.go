@@ -26,6 +26,7 @@ type Client struct {
 	handlers   map[string]MessageHandler
 	router     *mqttv5.StandardRouter
 	mu         sync.RWMutex
+	connected  bool // tracks actual connection state via OnConnectionUp/Down callbacks
 }
 
 // MessageHandler 消息处理函数类型
@@ -65,9 +66,15 @@ func (c *Client) Connect(ctx context.Context) error {
 		ConnectTimeout:                10 * time.Second,
 		OnConnectionUp: func(cm *mqtt.ConnectionManager, connAck *mqttv5.Connack) {
 			log.Printf("[MQTT] 已连接到 %s", brokerURL)
+			c.mu.Lock()
+			c.connected = true
+			c.mu.Unlock()
 		},
 		OnConnectionDown: func() bool {
 			log.Printf("[MQTT] 连接断开，尝试重连...")
+			c.mu.Lock()
+			c.connected = false
+			c.mu.Unlock()
 			return true // 返回 true 继续重连
 		},
 		OnConnectError: func(err error) {
@@ -191,9 +198,11 @@ func (c *Client) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-// IsConnected 检查是否已连接
+// IsConnected 检查是否已连接（基于回调追踪的实际连接状态）
 func (c *Client) IsConnected() bool {
-	return c.connection != nil
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.connected
 }
 
 // handleMessage 处理接收到的消息
