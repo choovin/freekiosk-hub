@@ -39,6 +39,8 @@ type BindRequest struct {
 type BindResponse struct {
 	DeviceID       string `json:"device_id"`
 	GroupID        string `json:"group_id"`
+	GroupName      string `json:"group_name"`
+	DeviceName     string `json:"device_name"`
 	SigningPubKey  string `json:"signing_pubkey"`
 	BroadcastSound string `json:"broadcast_sound"`
 	UpdatePolicy   string `json:"update_policy"`

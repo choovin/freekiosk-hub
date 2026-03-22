@@ -389,6 +389,8 @@ func (h *FieldTripHandler) BindDevice(c echo.Context) error {
 	resp := models.BindResponse{
 		DeviceID:       device.ID,
 		GroupID:        group.ID,
+		GroupName:      group.Name,
+		DeviceName:     device.Name,
 		SigningPubKey:  h.SigningPubKey,
 		BroadcastSound: group.BroadcastSound,
 		UpdatePolicy:   group.UpdatePolicy,
