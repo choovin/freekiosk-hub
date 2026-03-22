@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/wared2003/freekiosk-hub/internal/models"
 )
@@ -73,6 +76,14 @@ func (r *FieldTripRepository) InitSchema() error {
 			delivered_at INTEGER
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_pc_device ON pending_commands(device_id, status)`,
+		// device_key_cache stores plaintext API keys for QR PDF export
+		// The key is only valid for 30 days after device creation
+		`CREATE TABLE IF NOT EXISTS device_key_cache (
+			device_id TEXT PRIMARY KEY REFERENCES fieldtrip_devices(id) ON DELETE CASCADE,
+			plaintext_key TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			expires_at INTEGER NOT NULL
+		)`,
 	}
 	for _, q := range queries {
 		if _, err := r.db.Exec(q); err != nil {
@@ -244,4 +255,33 @@ func (r *FieldTripRepository) PopPendingCommands(deviceID string) ([]models.Pend
 		}
 	}
 	return cmds, nil
+}
+
+// CacheAPIKey stores a plaintext API key for a device (expires in 30 days)
+func (r *FieldTripRepository) CacheAPIKey(deviceID, plaintextKey string) error {
+	now := time.Now().Unix()
+	expiresAt := now + 30*24*60*60 // 30 days
+	_, err := r.db.Exec(`INSERT OR REPLACE INTO device_key_cache (device_id, plaintext_key, created_at, expires_at) VALUES (?, ?, ?, ?)`,
+		deviceID, plaintextKey, now, expiresAt)
+	return err
+}
+
+// GetCachedAPIKey retrieves a plaintext API key if it exists and not expired
+func (r *FieldTripRepository) GetCachedAPIKey(deviceID string) (string, error) {
+	var key string
+	var expiresAt int64
+	err := r.db.QueryRow(`SELECT plaintext_key, expires_at FROM device_key_cache WHERE device_id = ?`, deviceID).Scan(&key, &expiresAt)
+	if err != nil {
+		return "", err
+	}
+	if time.Now().Unix() > expiresAt {
+		return "", fmt.Errorf("API key expired for device %s", deviceID)
+	}
+	return key, nil
+}
+
+// DeleteAPIKeyCache removes the cached API key for a device
+func (r *FieldTripRepository) DeleteAPIKeyCache(deviceID string) error {
+	_, err := r.db.Exec(`DELETE FROM device_key_cache WHERE device_id = ?`, deviceID)
+	return err
 }

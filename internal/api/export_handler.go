@@ -17,12 +17,13 @@ import (
 
 // ExportHandler handles QR code PDF export
 type ExportHandler struct {
-	Repo *repositories.FieldTripRepository
+	Repo        *repositories.FieldTripRepository
+	ServerPort  string
 }
 
 // NewExportHandler creates a new ExportHandler
-func NewExportHandler(repo *repositories.FieldTripRepository) *ExportHandler {
-	return &ExportHandler{Repo: repo}
+func NewExportHandler(repo *repositories.FieldTripRepository, serverPort string) *ExportHandler {
+	return &ExportHandler{Repo: repo, ServerPort: serverPort}
 }
 
 // QRPayload represents the JSON payload stored in QR codes
@@ -85,13 +86,16 @@ func (h *ExportHandler) HandleExportPDF(c echo.Context) error {
 	// Generate QR payload for each device
 	deviceQRs := make([]deviceQR, 0, len(devices))
 	for i, device := range devices {
-		// Create QR payload - note: API key is not stored in plaintext
-		// The QR code format follows BindRequest structure
-		// For full functionality, the system would need to store encrypted plaintext keys
+		// Retrieve cached plaintext API key for QR code
+		apiKey := "[KEY_NOT_FOUND]"
+		if cachedKey, err := h.Repo.GetCachedAPIKey(device.ID); err == nil {
+			apiKey = cachedKey
+		}
+
 		payload := QRPayload{
 			DeviceID: device.ID,
 			GroupKey: group.GroupKey,
-			APIKey:   "[RECREATE_KEY]", // Placeholder - plaintext key not stored
+			APIKey:   apiKey,
 			HubURL:   device.HubURL,
 		}
 
@@ -153,6 +157,92 @@ func (h *ExportHandler) HandleExportPDF(c echo.Context) error {
 	c.Response().Write(buf.Bytes())
 
 	return nil
+}
+
+// HandleGetGroupQR returns the group QR payload as JSON
+// GET /api/v2/fieldtrip/groups/:id/qr
+func (h *ExportHandler) HandleGetGroupQR(c echo.Context) error {
+	groupID := c.Param("id")
+	if groupID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing group id")
+	}
+
+	group, err := h.Repo.GetGroupByID(groupID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "group not found")
+	}
+
+	payload := map[string]interface{}{
+		"type":       "group",
+		"hub_url":    h.Repo.GetHubURL(),
+		"group_id":   group.ID,
+		"group_key":  group.GroupKey,
+		"group_name": group.Name,
+	}
+
+	return c.JSON(http.StatusOK, payload)
+}
+
+// HandleGetAPKQR returns the APK download URL as a QR code PNG
+// GET /api/v2/fieldtrip/apk-qr
+func (h *ExportHandler) HandleGetAPKQR(c echo.Context) error {
+	apkInfo, err := h.getLatestAPK()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "no APK available")
+	}
+
+	pngData, err := qrcode.Encode(apkInfo.DownloadURL, qrcode.Medium, 256)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to generate QR code")
+	}
+
+	c.Response().Header().Set("Content-Type", "image/png")
+	c.Response().Write(pngData)
+	return nil
+}
+
+// getLatestAPK finds the most recently modified APK file in the apk directory
+func (h *ExportHandler) getLatestAPK() (*apkInfo, error) {
+	dir := "apk"
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return nil, fmt.Errorf("APK directory does not exist: %s", dir)
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read APK directory: %w", err)
+	}
+
+	var latestFile os.FileInfo
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+		if latestFile == nil || info.ModTime().After(latestFile.ModTime()) {
+			latestFile = info
+		}
+	}
+
+	if latestFile == nil {
+		return nil, fmt.Errorf("no APK files found")
+	}
+
+	filename := latestFile.Name()
+	downloadURL := fmt.Sprintf("http://localhost:%s/apk/%s", h.ServerPort, filename)
+
+	return &apkInfo{
+		Filename:    filename,
+		DownloadURL: downloadURL,
+	}, nil
+}
+
+type apkInfo struct {
+	Filename    string
+	DownloadURL string
 }
 
 // add6UpPage adds a page with 6 QR codes (2 rows x 3 columns)

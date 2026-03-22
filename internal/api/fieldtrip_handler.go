@@ -189,6 +189,11 @@ func (h *FieldTripHandler) CreateDevice(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create device")
 	}
 
+	// Cache the plaintext API key for QR PDF export (expires in 30 days)
+	if err := h.Repo.CacheAPIKey(device.ID, apiKey); err != nil {
+		slog.Warn("Failed to cache API key", "device_id", device.ID, "error", err)
+	}
+
 	// Return QR payload with sensitive data
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"device_id": device.ID,

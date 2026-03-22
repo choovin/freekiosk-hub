@@ -141,7 +141,7 @@ func (s *ApiServer) setupRoutes() {
 	bcastSvc := services.NewBroadcastService(s.FTRepo, s.MQTTService)
 	fieldtripH := NewFieldTripHandler(s.FTRepo, "" /* signing pubkey — empty for MVP */, bcastSvc)
 	fieldtripUIH := NewFieldTripUIHandler(s.FTRepo, bcastSvc)
-	exportH := NewExportHandler(s.FTRepo)
+	exportH := NewExportHandler(s.FTRepo, s.Cfg.ServerPort)
 	downloadH := NewDownloadHandler("apk", s.Cfg.ServerPort)
 
 	systemJsonH := NewSystemJSONHandler(s.DB)
@@ -323,6 +323,8 @@ func (s *ApiServer) setupRoutes() {
 		fieldtrip.POST("/groups", fieldtripH.CreateGroup)
 		fieldtrip.GET("/groups", fieldtripH.ListGroups)
 		fieldtrip.DELETE("/groups/:id", fieldtripH.DeleteGroup)
+		fieldtrip.GET("/groups/:id/qr", exportH.HandleGetGroupQR)
+		fieldtrip.GET("/groups/:id/export", exportH.HandleExportPDF)
 		fieldtrip.POST("/devices", fieldtripH.CreateDevice)
 		fieldtrip.GET("/devices", fieldtripH.ListDevices)
 		fieldtrip.DELETE("/devices/:id", fieldtripH.DeleteDevice)
@@ -335,7 +337,7 @@ func (s *ApiServer) setupRoutes() {
 		fieldtrip.POST("/broadcast", fieldtripH.SendBroadcast)
 		fieldtrip.POST("/ota/upload", otaHandler.UploadOTA)
 		fieldtrip.GET("/ota/list", otaHandler.ListOTA)
-		fieldtrip.GET("/groups/:id/export", exportH.HandleExportPDF)
+		fieldtrip.GET("/apk-qr", exportH.HandleGetAPKQR)
 	}
 	s.Echo.Static("/apk", "apk")
 
