@@ -324,14 +324,19 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 								<input type="text" id="bulkPrefix" class="input input-bordered w-full font-medium" placeholder="平板-" value="平板-" oninput="updateBulkPreview()" />
 							</div>
 							<div class="form-control">
-								<label class="label text-xs font-bold uppercase text-slate-500">数量 (1-100)</label>
-								<input type="number" id="bulkCount" class="input input-bordered w-full font-medium" min="1" max="100" value="10" oninput="updateBulkPreview()" />
+								<label class="label text-xs font-bold uppercase text-slate-500">数量 (1-500)</label>
+								<!-- Stepper 按钮组 -->
+								<div class="flex items-center gap-2">
+									<button type="button" onclick="decrementCount()" class="btn btn-outline btn-sm btn-square">−</button>
+									<input type="number" id="bulkCount" class="input input-bordered w-20 text-center font-medium" min="1" max="500" value="10" oninput="updateBulkPreview()" readonly />
+									<button type="button" onclick="incrementCount()" class="btn btn-outline btn-sm btn-square">+</button>
+								</div>
 							</div>
 						</div>
 
 						<div class="mt-4">
 							<p class="label text-xs font-bold uppercase text-slate-500 mb-2">预览</p>
-							<ul id="bulkPreview" class="text-sm text-slate-600 space-y-1 max-h-32 overflow-y-auto bg-slate-50 rounded-lg p-3"></ul>
+							<div id="bulkPreview" class="text-sm text-slate-600 max-h-32 overflow-y-auto bg-slate-50 rounded-lg p-3"></div>
 						</div>
 
 						<div id="bulkResults" class="mt-4"></div>
@@ -357,22 +362,35 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 					document.getElementById('bulkModal').classList.remove('active');
 					document.getElementById('bulkResults').innerHTML = '';
 				}
+				function incrementCount() {
+					const input = document.getElementById('bulkCount');
+					const val = parseInt(input.value) || 1;
+					if (val < 500) input.value = val + 1;
+					updateBulkPreview();
+				}
+				function decrementCount() {
+					const input = document.getElementById('bulkCount');
+					const val = parseInt(input.value) || 1;
+					if (val > 1) input.value = val - 1;
+					updateBulkPreview();
+				}
 				function updateBulkPreview() {
 					const prefix = document.getElementById('bulkPrefix').value;
-					const count = Math.min(100, Math.max(1, parseInt(document.getElementById('bulkCount').value) || 1));
+					const count = Math.min(500, Math.max(1, parseInt(document.getElementById('bulkCount').value) || 1));
 					const preview = document.getElementById('bulkPreview');
 					const names = [];
 					for (let i = 1; i <= count && i <= 10; i++) {
 						names.push(prefix + String(i).padStart(2, '0'));
 					}
-					preview.innerHTML = names.map(n => '<li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span>' + n + '</li>').join('');
-					if (count > 10) {
-						preview.innerHTML += '<li class="text-slate-400 text-xs mt-1">... 还有 ' + (count - 10) + ' 个</li>';
+					if (count <= 3) {
+						preview.innerHTML = names.join(', ');
+					} else {
+						preview.innerHTML = names.slice(0, 3).join(', ') + ', ... ' + prefix + String(count).padStart(2, '0');
 					}
 				}
 				async function createBulkDevices() {
 					const prefix = document.getElementById('bulkPrefix').value;
-					const count = Math.min(100, Math.max(1, parseInt(document.getElementById('bulkCount').value) || 1));
+					const count = Math.min(500, Math.max(1, parseInt(document.getElementById('bulkCount').value) || 1));
 					const groupKey = document.getElementById('bulkGroupKey').value;
 					const groupId = document.getElementById('bulkGroupId').value;
 					const resultsDiv = document.getElementById('bulkResults');
