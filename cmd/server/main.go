@@ -108,6 +108,7 @@ func main() {
 	reportRepo := repositories.NewReportRepository(db)
 	groupRepo := repositories.NewGroupRepository(db)
 	kioskClient := clients.NewKioskClient(httpClient)
+	ftRepo := repositories.NewFieldTripRepository(db, cfg.BaseURL)
 
 	// Ensure tables exist
 	if err := tabletRepo.InitTable(); err != nil {
@@ -120,6 +121,10 @@ func main() {
 	}
 	if err := groupRepo.InitTable(); err != nil {
 		slog.Error("Échec initialisation table groups", "err", err)
+		os.Exit(1)
+	}
+	if err := ftRepo.InitSchema(); err != nil {
+		slog.Error("Échec initialisation table fieldtrip", "err", err)
 		os.Exit(1)
 	}
 	slog.Info("✅ Database schema is ready")
@@ -215,7 +220,7 @@ func main() {
 
 	e := echo.New()
 	e.Renderer = &api.TemplRenderer{}
-	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc)
+	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, ftRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc)
 	e.Static("/media", cfg.MediaDir)
 	go func() {
 		slog.Info("🌐 Web Server starting", "port", cfg.ServerPort)

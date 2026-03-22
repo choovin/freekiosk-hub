@@ -26,6 +26,7 @@ type ApiServer struct {
 	TabletRepo   repositories.TabletRepository
 	ReportRepo   repositories.ReportRepository
 	GroupRepo    repositories.GroupRepository
+	FTRepo       *repositories.FieldTripRepository
 	MonitorSvc   services.MonitorService
 	KioskClient  clients.KioskClient
 	Cfg          config.Config
@@ -45,6 +46,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	tr repositories.TabletRepository,
 	rr repositories.ReportRepository,
 	gr repositories.GroupRepository,
+	ftRepo *repositories.FieldTripRepository,
 	ms services.MonitorService,
 	ks clients.KioskClient,
 	cfg config.Config,
@@ -65,6 +67,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		TabletRepo:   tr,
 		ReportRepo:   rr,
 		GroupRepo:    gr,
+		FTRepo:       ftRepo,
 		MonitorSvc:   ms,
 		KioskClient:  ks,
 		Cfg:          cfg,
@@ -135,6 +138,8 @@ func (s *ApiServer) setupRoutes() {
 	homeH := NewHtmlHomeHandler(s.TabletRepo, s.ReportRepo, s.GroupRepo)
 	tabletH := NewHtmlTabletHandler(s.TabletRepo, s.ReportRepo, s.GroupRepo, kService, s.MediaService)
 	groupH := NewGroupHandler(s.GroupRepo)
+	fieldtripH := NewFieldTripHandler(s.FTRepo, "" /* signing pubkey — empty for MVP */)
+	fieldtripUIH := NewFieldTripUIHandler(s.FTRepo)
 
 	systemJsonH := NewSystemJSONHandler(s.DB)
 
@@ -195,6 +200,20 @@ func (s *ApiServer) setupRoutes() {
 		groupRoutes.GET("/edit/:id", groupH.HandleEditGroup)
 		groupRoutes.POST("/save", groupH.HandleSaveGroup)
 		groupRoutes.DELETE("/:id", groupH.HandleDeleteGroup)
+	}
+
+	// Field Trip UI routes
+	fieldtripRoutes := s.Echo.Group("/fieldtrip")
+	{
+		fieldtripRoutes.GET("", fieldtripUIH.HandleFieldTripPage)
+		fieldtripRoutes.GET("/groups/new", fieldtripUIH.HandleNewGroup)
+		fieldtripRoutes.GET("/groups/:id/edit", fieldtripUIH.HandleEditGroup)
+		fieldtripRoutes.POST("/groups/save", fieldtripUIH.HandleSaveGroup)
+		fieldtripRoutes.DELETE("/groups/:id", fieldtripUIH.HandleDeleteGroup)
+		fieldtripRoutes.DELETE("/devices/:id", fieldtripUIH.HandleDeleteDevice)
+		fieldtripRoutes.POST("/broadcast", fieldtripUIH.HandleBroadcast)
+		fieldtripRoutes.POST("/devices/:id/whitelist", fieldtripUIH.HandleSetWhitelist)
+		fieldtripRoutes.POST("/ota/upload", fieldtripUIH.HandleOTAUpload)
 	}
 
 	// --- 5. 企业版认证 API ---
@@ -290,6 +309,28 @@ func (s *ApiServer) setupRoutes() {
 			auditRoutes.GET("/audit-logs", auditH.HandleQueryAuditLogs)
 		}
 	}
+
+	// --- Field Trip API v2 ---
+	otaHandler := NewOTAHandler("apk")
+	fieldtrip := s.Echo.Group("/api/v2/fieldtrip")
+	{
+		fieldtrip.POST("/groups", fieldtripH.CreateGroup)
+		fieldtrip.GET("/groups", fieldtripH.ListGroups)
+		fieldtrip.DELETE("/groups/:id", fieldtripH.DeleteGroup)
+		fieldtrip.POST("/devices", fieldtripH.CreateDevice)
+		fieldtrip.GET("/devices", fieldtripH.ListDevices)
+		fieldtrip.DELETE("/devices/:id", fieldtripH.DeleteDevice)
+		fieldtrip.PATCH("/devices/:id", fieldtripH.UpdateDevice)
+		fieldtrip.POST("/devices/bind", fieldtripH.BindDevice)
+		fieldtrip.POST("/devices/:id/location", fieldtripH.ReportLocation)
+		fieldtrip.GET("/devices/:id/location/history", fieldtripH.GetLocationHistory)
+		fieldtrip.GET("/commands", fieldtripH.PollCommands)
+		fieldtrip.POST("/devices/:id/whitelist", fieldtripH.SetWhitelist)
+		fieldtrip.POST("/broadcast", fieldtripH.SendBroadcast)
+		fieldtrip.POST("/ota/upload", otaHandler.UploadOTA)
+		fieldtrip.GET("/ota/list", otaHandler.ListOTA)
+	}
+	s.Echo.Static("/apk", "apk")
 
 	// --- 8. WebSocket 实时通信 ---
 	wsHandler := NewWebSocketHandler(sse.WsHub)
