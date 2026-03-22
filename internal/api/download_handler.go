@@ -288,7 +288,7 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 		}
 	</script>
 </body>
-</html>`, apkInfo.DownloadURL, qrCodeDataURL, apkInfo.Version, apkInfo.DownloadURL, sizeStr)
+</html>`, apkInfo.URL, qrCodeDataURL, apkInfo.Version, apkInfo.DownloadURL, sizeStr)
 
 	return c.String(http.StatusOK, downloadPageHTML)
 }
