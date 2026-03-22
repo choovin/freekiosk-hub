@@ -39,6 +39,9 @@ RUN addgroup -g 1000 appgroup && \
 # Copy binary from builder
 COPY --from=builder /build/bin/freekiosk-hub /app/freekiosk-hub
 
+# Copy i18n translation files
+COPY --from=builder /build/internal/i18n/locales /app/locales
+
 # Create directories for data and media
 RUN mkdir -p /app/data /app/media && \
     chown -R appuser:appgroup /app

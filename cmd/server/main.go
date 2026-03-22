@@ -53,7 +53,12 @@ func main() {
 
 	// Initialize i18n translations
 	i18nStore := i18n.GetStore()
-	if err := i18nStore.LoadTranslations("internal/i18n/locales"); err != nil {
+	// Use /app/locales for Docker, internal/i18n/locales for local development
+	localePath := "internal/i18n/locales"
+	if _, err := os.Stat("/app/locales"); err == nil {
+		localePath = "/app/locales"
+	}
+	if err := i18nStore.LoadTranslations(localePath); err != nil {
 		slog.Warn("Could not load all translations", "error", err)
 	}
 	// Set default language (can be overridden per-request via middleware)
