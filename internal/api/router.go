@@ -326,6 +326,7 @@ func (s *ApiServer) setupRoutes() {
 		fieldtrip.GET("/groups/:id/qr", exportH.HandleGetGroupQR)
 		fieldtrip.GET("/groups/:id/export", exportH.HandleExportPDF)
 		fieldtrip.POST("/devices", fieldtripH.CreateDevice)
+		fieldtrip.POST("/devices/bulk", fieldtripH.BulkCreateDevices)
 		fieldtrip.GET("/devices", fieldtripH.ListDevices)
 		fieldtrip.DELETE("/devices/:id", fieldtripH.DeleteDevice)
 		fieldtrip.PATCH("/devices/:id", fieldtripH.UpdateDevice)

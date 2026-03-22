@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -202,6 +203,81 @@ func (h *FieldTripHandler) CreateDevice(c echo.Context) error {
 		"group_key": input.GroupKey,
 		"api_key":   apiKey,
 		"hub_url":   device.HubURL,
+	})
+}
+
+// BulkCreateDevices creates multiple devices at once
+// POST /api/v2/fieldtrip/devices/bulk
+func (h *FieldTripHandler) BulkCreateDevices(c echo.Context) error {
+	var input struct {
+		GroupID string `json:"group_id"`
+		Count   int    `json:"count"`
+		Prefix  string `json:"prefix"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+	if input.GroupID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "group_id is required")
+	}
+	if input.Count <= 0 || input.Count > 200 {
+		return echo.NewHTTPError(http.StatusBadRequest, "count must be between 1 and 200")
+	}
+	if input.Prefix == "" {
+		input.Prefix = "平板-"
+	}
+
+	// Verify group exists
+	group, err := h.Repo.GetGroupByID(input.GroupID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "group not found")
+	}
+
+	var devices []map[string]interface{}
+	for i := 1; i <= input.Count; i++ {
+		name := fmt.Sprintf("%s%02d", input.Prefix, i)
+
+		apiKey, err := generateAPIKey()
+		if err != nil {
+			slog.Error("Failed to generate API key", "error", err)
+			continue
+		}
+
+		now := time.Now().Unix()
+		device := &models.FieldTripDevice{
+			ID:            uuid.New().String(),
+			Name:          name,
+			GroupID:       group.ID,
+			ApiKeyHash:    hashAPIKey(apiKey),
+			HubURL:        h.Repo.GetHubURL(),
+			Status:        "pending",
+			SigningPubKey: h.SigningPubKey,
+			CreatedAt:     now,
+			UpdatedAt:     now,
+		}
+
+		if err := h.Repo.CreateDevice(device); err != nil {
+			slog.Error("Failed to create device", "name", name, "error", err)
+			continue
+		}
+
+		// Cache the plaintext API key for QR PDF export
+		if err := h.Repo.CacheAPIKey(device.ID, apiKey); err != nil {
+			slog.Warn("Failed to cache API key", "device_id", device.ID, "error", err)
+		}
+
+		devices = append(devices, map[string]interface{}{
+			"device_id": device.ID,
+			"name":      device.Name,
+			"api_key":   apiKey,
+			"group_key": group.GroupKey,
+			"hub_url":   device.HubURL,
+		})
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"count":   len(devices),
+		"devices": devices,
 	})
 }
 
