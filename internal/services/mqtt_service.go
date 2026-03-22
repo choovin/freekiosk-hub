@@ -122,6 +122,12 @@ func (s *MQTTService) IsConnected() bool {
 	return s.client.IsConnected()
 }
 
+// Publish publishes a message to a topic without waiting for response
+func (s *MQTTService) Publish(topic string, payload []byte) error {
+	ctx := context.Background()
+	return s.client.Publish(ctx, topic, payload)
+}
+
 // SendCommand 发送命令到设备
 //
 // 发送命令并等待设备响应

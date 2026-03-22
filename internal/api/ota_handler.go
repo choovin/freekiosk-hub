@@ -24,6 +24,19 @@ func NewOTAHandler(apkDir string) *OTAHandler {
 	}
 }
 
+// extractVersion extracts version from OTA filename
+// e.g., "ota_12345_com.example.app_v1.2.3.apk" -> "1.2.3"
+func extractVersion(filename string) string {
+	// Find the _v marker and extract version before .apk
+	if idx := strings.Index(filename, "_v"); idx >= 0 {
+		versionPart := filename[idx+2:]
+		if endIdx := strings.LastIndex(versionPart, ".apk"); endIdx >= 0 {
+			return versionPart[:endIdx]
+		}
+	}
+	return ""
+}
+
 // UploadOTA handles APK file upload
 // POST /api/v2/fieldtrip/ota/upload
 func (h *OTAHandler) UploadOTA(c echo.Context) error {
@@ -75,6 +88,7 @@ func (h *OTAHandler) UploadOTA(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"filename": filename,
+		"version":  extractVersion(filename),
 		"size":     info.Size(),
 		"url":      fmt.Sprintf("/apk/%s", filename),
 	})
@@ -104,9 +118,10 @@ func (h *OTAHandler) ListOTA(c echo.Context) error {
 			continue
 		}
 		files = append(files, map[string]interface{}{
-			"name": entry.Name(),
-			"size": info.Size(),
-			"url":  fmt.Sprintf("/apk/%s", entry.Name()),
+			"name":    entry.Name(),
+			"version": extractVersion(entry.Name()),
+			"size":    info.Size(),
+			"url":     fmt.Sprintf("/apk/%s", entry.Name()),
 		})
 	}
 

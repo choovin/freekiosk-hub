@@ -13,19 +13,22 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
+	"github.com/wared2003/freekiosk-hub/internal/services"
 )
 
 // FieldTripHandler handles field trip API endpoints
 type FieldTripHandler struct {
 	Repo          *repositories.FieldTripRepository
 	SigningPubKey string
+	BcastSvc      *services.BroadcastService
 }
 
 // NewFieldTripHandler creates a new FieldTripHandler
-func NewFieldTripHandler(repo *repositories.FieldTripRepository, signingPubKey string) *FieldTripHandler {
+func NewFieldTripHandler(repo *repositories.FieldTripRepository, signingPubKey string, bcastSvc *services.BroadcastService) *FieldTripHandler {
 	return &FieldTripHandler{
 		Repo:          repo,
 		SigningPubKey: signingPubKey,
+		BcastSvc:      bcastSvc,
 	}
 }
 
@@ -55,7 +58,7 @@ func hashAPIKey(apiKey string) string {
 
 // validateApiKey validates the provided API key against the expected hash
 func (h *FieldTripHandler) validateApiKey(c echo.Context, expectedHash string) error {
-	providedKey := c.Request().Header.Get("X-API-Key")
+	providedKey := c.Request().Header.Get("X-Api-Key")
 	if providedKey == "" {
 		return echo.NewHTTPError(http.StatusUnauthorized, "missing API key")
 	}
@@ -189,6 +192,8 @@ func (h *FieldTripHandler) CreateDevice(c echo.Context) error {
 	// Return QR payload with sensitive data
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"device_id": device.ID,
+		"name":      device.Name,
+		"group_id":  group.ID,
 		"group_key": input.GroupKey,
 		"api_key":   apiKey,
 		"hub_url":   device.HubURL,
@@ -477,6 +482,19 @@ func (h *FieldTripHandler) SendBroadcast(c echo.Context) error {
 
 	if err := h.Repo.CreateBroadcast(broadcast); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create broadcast")
+	}
+
+	// Send via MQTT if BroadcastService is available
+	if h.BcastSvc != nil {
+		if input.GroupID != "" {
+			if err := h.BcastSvc.SendToGroup(input.GroupID, input.Message, input.Sound); err != nil {
+				slog.Warn("Failed to send broadcast via MQTT", "error", err)
+			}
+		} else {
+			if err := h.BcastSvc.SendToAll(input.Message, input.Sound); err != nil {
+				slog.Warn("Failed to send broadcast to all via MQTT", "error", err)
+			}
+		}
 	}
 
 	return c.JSON(http.StatusCreated, broadcast)

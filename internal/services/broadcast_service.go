@@ -9,15 +9,15 @@ import (
 
 // BroadcastService handles broadcast message delivery
 type BroadcastService struct {
-	repo    *repositories.FieldTripRepository
-	mqttPub func(topic string, payload []byte) error
+	repo *repositories.FieldTripRepository
+	mqtt *MQTTService
 }
 
 // NewBroadcastService creates a new BroadcastService
-func NewBroadcastService(repo *repositories.FieldTripRepository, mqttPub func(string, []byte) error) *BroadcastService {
+func NewBroadcastService(repo *repositories.FieldTripRepository, mqtt *MQTTService) *BroadcastService {
 	return &BroadcastService{
-		repo:    repo,
-		mqttPub: mqttPub,
+		repo: repo,
+		mqtt: mqtt,
 	}
 }
 
@@ -54,9 +54,9 @@ func (s *BroadcastService) SendToGroup(groupID, message, sound string) error {
 	delivered := 0
 	failed := 0
 	for _, device := range devices {
-		if s.mqttPub != nil {
+		if s.mqtt != nil {
 			topic := "freekiosk/fieldtrip/" + device.ID + "/broadcast"
-			if err := s.mqttPub(topic, payloadBytes); err != nil {
+			if err := s.mqtt.Publish(topic, payloadBytes); err != nil {
 				slog.Warn("Failed to publish broadcast to device", "device_id", device.ID, "error", err)
 				failed++
 			} else {
@@ -100,9 +100,9 @@ func (s *BroadcastService) SendToAll(message, sound string) error {
 		if device.Status != "active" {
 			continue
 		}
-		if s.mqttPub != nil {
+		if s.mqtt != nil {
 			topic := "freekiosk/fieldtrip/" + device.ID + "/broadcast"
-			if err := s.mqttPub(topic, payloadBytes); err != nil {
+			if err := s.mqtt.Publish(topic, payloadBytes); err != nil {
 				slog.Warn("Failed to publish broadcast to device", "device_id", device.ID, "error", err)
 				failed++
 			} else {

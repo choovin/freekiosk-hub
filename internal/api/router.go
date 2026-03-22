@@ -138,7 +138,8 @@ func (s *ApiServer) setupRoutes() {
 	homeH := NewHtmlHomeHandler(s.TabletRepo, s.ReportRepo, s.GroupRepo)
 	tabletH := NewHtmlTabletHandler(s.TabletRepo, s.ReportRepo, s.GroupRepo, kService, s.MediaService)
 	groupH := NewGroupHandler(s.GroupRepo)
-	fieldtripH := NewFieldTripHandler(s.FTRepo, "" /* signing pubkey — empty for MVP */)
+	bcastSvc := services.NewBroadcastService(s.FTRepo, s.MQTTService)
+	fieldtripH := NewFieldTripHandler(s.FTRepo, "" /* signing pubkey — empty for MVP */, bcastSvc)
 	fieldtripUIH := NewFieldTripUIHandler(s.FTRepo)
 
 	systemJsonH := NewSystemJSONHandler(s.DB)
