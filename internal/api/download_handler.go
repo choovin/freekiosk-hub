@@ -28,7 +28,7 @@ func NewDownloadHandler(apkDir string, serverPort string) *DownloadHandler {
 // APKInfo holds information about the latest APK
 type APKInfo struct {
 	Filename    string
-	Version    string
+	Version     string
 	URL        string
 	Size       int64
 	DownloadURL string // Full URL with host:port
@@ -98,8 +98,7 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 	apkInfo, err := h.getLatestAPK()
 	if err != nil {
 		// Return a page indicating no APK is available
-		return c.String(http.StatusOK, fmt.Sprintf(`
-<!DOCTYPE html>
+		noAPKHTML := `<!DOCTYPE html>
 <html lang="zh">
 <head>
 	<meta charset="UTF-8">
@@ -138,7 +137,8 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 		<p>请先上传 APK 文件后再访问此页面</p>
 	</div>
 </body>
-</html>`, h.APKDir))
+</html>`
+		return c.String(http.StatusOK, noAPKHTML)
 	}
 
 	// Generate QR code
@@ -152,8 +152,8 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 	// Format file size
 	sizeStr := formatFileSize(apkInfo.Size)
 
-	return c.String(http.StatusOK, fmt.Sprintf(`
-<!DOCTYPE html>
+	// Build download page with QR code and APK info
+	downloadPageHTML := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="zh">
 <head>
 	<meta charset="UTF-8">
@@ -279,7 +279,9 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 		}
 	</script>
 </body>
-</html>`, qrCodeDataURL, apkInfo.Version, apkInfo.DownloadURL, sizeStr))
+</html>`, qrCodeDataURL, apkInfo.Version, apkInfo.DownloadURL, sizeStr)
+
+	return c.String(http.StatusOK, downloadPageHTML)
 }
 
 // formatFileSize converts bytes to human-readable string
