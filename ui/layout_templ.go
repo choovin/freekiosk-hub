@@ -43,7 +43,7 @@ func Layout(title string, lang string) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(lang)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout.templ`, Line: 11, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 11, Col: 21}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -56,20 +56,20 @@ func Layout(title string, lang string) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout.templ`, Line: 15, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 15, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " | FreeKiosk Hub</title><link href=\"https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css\" rel=\"stylesheet\" type=\"text/css\"><script src=\"https://cdn.tailwindcss.com\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/sse.js\"></script><script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script><style>\n                .glass-nav {\n                    background: rgba(255, 255, 255, 0.8);\n                    backdrop-filter: blur(10px);\n                    border-bottom: 1px solid rgba(0,0,0,0.1);\n                }\n            </style></head><body class=\"min-h-screen bg-slate-50 text-slate-900 font-sans\"><div class=\"sticky top-0 z-50 glass-nav\"><div class=\"navbar max-w-7xl mx-auto px-4\"><div class=\"flex-1 gap-2\"><div class=\"bg-primary text-primary-content p-2 rounded-xl shadow-lg\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z\"></path></svg></div><a hx-get=\"/\" hx-target=\"main\" hx-push-url=\"true\" class=\"text-xl font-black tracking-tighter uppercase ml-2 cursor-pointer\">FreeKiosk<span class=\"text-primary\">Hub</span></a></div><div class=\"flex-none gap-4\"><ul class=\"menu menu-horizontal px-1 font-medium gap-1\"><li><a hx-get=\"/\" hx-target=\"main\" hx-push-url=\"true\" class=\"rounded-lg hover:bg-primary/10 transition-colors cursor-pointer\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " | FreeKiosk Hub</title><link href=\"https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css\" rel=\"stylesheet\" type=\"text/css\"><script src=\"https://cdn.tailwindcss.com\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/sse.js\"></script><script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script><style>\n                .glass-nav {\n                    background: rgba(255, 255, 255, 0.8);\n                    backdrop-filter: blur(10px);\n                    border-bottom: 1px solid rgba(0,0,0,0.1);\n                }\n            </style><style>\n                /* Bulk device creation modal */\n                .bulk-modal {\n                    display: none;\n                    position: fixed;\n                    inset: 0;\n                    z-index:9999;\n                    align-items: center;\n                    justify-content: center;\n                }\n                .bulk-modal.active {\n                    display: flex;\n                }\n                .bulk-modal-backdrop {\n                    position: absolute;\n                    inset: 0;\n                    background: rgba(0,0,0,0.4);\n                }\n                .bulk-modal-card {\n                    position: relative;\n                    background: white;\n                    border-radius: 1rem;\n                    padding: 1.5rem;\n                    width: 100%;\n                    max-width: 420px;\n                    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);\n                    border: 1px solid rgba(0,0,0,0.05);\n                }\n            </style></head><body class=\"min-h-screen bg-slate-50 text-slate-900 font-sans\"><div class=\"sticky top-0 z-50 glass-nav\"><div class=\"navbar max-w-7xl mx-auto px-4\"><div class=\"flex-1 gap-2\"><div class=\"bg-primary text-primary-content p-2 rounded-xl shadow-lg\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z\"></path></svg></div><a hx-get=\"/\" hx-target=\"main\" hx-push-url=\"true\" class=\"text-xl font-black tracking-tighter uppercase ml-2 cursor-pointer\">FreeKiosk<span class=\"text-primary\">Hub</span></a></div><div class=\"flex-none gap-4\"><ul class=\"menu menu-horizontal px-1 font-medium gap-1\"><li><a hx-get=\"/\" hx-target=\"main\" hx-push-url=\"true\" class=\"rounded-lg hover:bg-primary/10 transition-colors cursor-pointer\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(t("nav.dashboard"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout.templ`, Line: 53, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 82, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -82,7 +82,7 @@ func Layout(title string, lang string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(t("nav.groups"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout.templ`, Line: 61, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 90, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -95,13 +95,13 @@ func Layout(title string, lang string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(t("nav.import"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout.templ`, Line: 69, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 98, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</a></li></ul><div class=\"dropdown dropdown-end\"><div tabindex=\"0\" role=\"button\" class=\"btn btn-ghost btn-circle avatar placeholder\"><div class=\"bg-neutral text-neutral-content rounded-full w-8\"><span class=\"text-xs\">FK</span></div></div><ul tabindex=\"0\" class=\"dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-slate-100\"><li><a href=\"?lang=en\">🇺🇸 English</a></li><li><a href=\"?lang=zh\">🇨🇳 中文</a></li><li><a href=\"?lang=fr\">🇫🇷 Français</a></li><li><a href=\"?lang=es\">🇪🇸 Español</a></li><li><a href=\"?lang=de\">🇩🇪 Deutsch</a></li><li><a href=\"?lang=ja\">🇯🇵 日本語</a></li><li><a href=\"?lang=ko\">🇰🇷 한국어</a></li><li><a href=\"?lang=pt\">🇵🇹 Português</a></li><li><a href=\"?lang=ru\">🇷🇺 Русский</a></li><li><a href=\"?lang=ar\">🇸🇦 العربية</a></li></ul></div></div></div></div><div id=\"toast-container\" class=\"toast toast-end fixed bottom-6 right-6 z-[9999]\"></div><main class=\"max-w-7xl mx-auto py-8\" id=\"main-container\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</a></li><li><a hx-get=\"/fieldtrip\" hx-target=\"main\" hx-push-url=\"true\" class=\"rounded-lg hover:bg-primary/10 transition-colors cursor-pointer\">Field Trip</a></li></ul><div class=\"dropdown dropdown-end\"><div tabindex=\"0\" role=\"button\" class=\"btn btn-ghost btn-circle avatar placeholder\"><div class=\"bg-neutral text-neutral-content rounded-full w-8\"><span class=\"text-xs\">FK</span></div></div><ul tabindex=\"0\" class=\"dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-slate-100\"><li><a href=\"?lang=en\">🇺🇸 English</a></li><li><a href=\"?lang=zh\">🇨🇳 中文</a></li><li><a href=\"?lang=fr\">🇫🇷 Français</a></li><li><a href=\"?lang=es\">🇪🇸 Español</a></li><li><a href=\"?lang=de\">🇩🇪 Deutsch</a></li><li><a href=\"?lang=ja\">🇯🇵 日本語</a></li><li><a href=\"?lang=ko\">🇰🇷 한국어</a></li><li><a href=\"?lang=pt\">🇵🇹 Português</a></li><li><a href=\"?lang=ru\">🇷🇺 Русский</a></li><li><a href=\"?lang=ar\">🇸🇦 العربية</a></li></ul></div></div></div></div><div id=\"toast-container\" class=\"toast toast-end fixed bottom-6 right-6 z-[9999]\"></div><main class=\"max-w-7xl mx-auto py-8\" id=\"main-container\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -109,7 +109,7 @@ func Layout(title string, lang string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main><footer class=\"footer footer-center p-4 text-slate-400 text-xs\"><aside><p>FreeKiosk Hub</p></aside></footer><style>\n                .toast-card {\n                    animation: toast-in 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;\n                    pointer-events: auto; /* On réactive les clics pour le bouton fermer */\n                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);\n                }\n\n                @keyframes toast-in {\n                    from { transform: translateY(20px); opacity: 0; scale: 0.9; }\n                    to { transform: translateY(0); opacity: 1; scale: 1; }\n                }\n\n               .toast-out {\n                    opacity: 0 !important;\n                    transform: scale(0.9) translateY(20px) !important;\n                    transition:\n                        opacity 0.3s ease-out,\n                        transform 0.4s cubic-bezier(0.4, 0, 1, 1),\n                        margin 0.4s 0.1s ease-in !important; /* Pour réduire l'espace proprement */\n                    pointer-events: none; /* Évite les clics fantômes pendant l'animation */\n                }\n            </style></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main><footer class=\"footer footer-center p-4 text-slate-400 text-xs\"><aside><div class=\"flex items-center gap-4\"><p>FreeKiosk Hub</p><span>|</span> <a href=\"http://localhost:18083\" target=\"_blank\" class=\"flex items-center gap-1 hover:text-primary transition-colors\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2\"></path></svg> EMQX Dashboard</a></div></aside></footer><style>\n                .toast-card {\n                    animation: toast-in 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;\n                    pointer-events: auto; /* On réactive les clics pour le bouton fermer */\n                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);\n                }\n\n                @keyframes toast-in {\n                    from { transform: translateY(20px); opacity: 0; scale: 0.9; }\n                    to { transform: translateY(0); opacity: 1; scale: 1; }\n                }\n\n               .toast-out {\n                    opacity: 0 !important;\n                    transform: scale(0.9) translateY(20px) !important;\n                    transition:\n                        opacity 0.3s ease-out,\n                        transform 0.4s cubic-bezier(0.4, 0, 1, 1),\n                        margin 0.4s 0.1s ease-in !important; /* Pour réduire l'espace proprement */\n                    pointer-events: none; /* Évite les clics fantômes pendant l'animation */\n                }\n            </style></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -156,7 +156,7 @@ func Toast(message string, status string) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(toastID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout.templ`, Line: 136, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 182, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -169,7 +169,7 @@ func Toast(message string, status string) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var8).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout.templ`, Line: 1, Col: 0}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 1, Col: 0}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -197,7 +197,7 @@ func Toast(message string, status string) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(message)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout.templ`, Line: 147, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 193, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {

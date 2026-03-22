@@ -11,9 +11,11 @@ require (
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
+	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/labstack/echo/v4 v4.15.0
 	github.com/lib/pq v1.10.9
 	github.com/prometheus/client_golang v1.23.0
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	tailscale.com v1.94.1
 )
 

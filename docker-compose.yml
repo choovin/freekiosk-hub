@@ -11,6 +11,13 @@ services:
       - EMQX_DASHBOARD__LISTENER__HTTP=18083
       - EMQX_TRANSFORMATION__SYS__boot=1
       - EMQX_TRANSFORMATION__SYS__syncing=1
+      # MQTT 认证配置 - 使用内置数据库认证
+      - EMQX_AUTH__BUILTIN__DB__ENABLED=true
+      - EMQX_AUTH__BUILTIN__DB__HASH_METHOD=sha256
+      - EMQX_AUTH__BUILTIN__DB__USER_USERNAME=sailfish
+      - EMQX_AUTH__BUILTIN__DB__USER_PASSWORD=sailfish020
+      # 允许匿名认证（无凭据连接）
+      - EMQX_AUTH__BUILTIN__DB__ALLOW_ANONYMOUS=true
     ports:
       - "1883:1883"    # MQTT TCP
       - "8883:8883"    # MQTT TLS
@@ -49,8 +56,8 @@ services:
       # MQTT - 使用 emqx 服务名作为主机名
       - MQTT_BROKER_URL=emqx
       - MQTT_PORT=1883
-      - MQTT_USERNAME=${MQTT_USERNAME:-}
-      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+      - MQTT_USERNAME=sailfish
+      - MQTT_PASSWORD=sailfish020
       - MQTT_CLIENT_ID=freekiosk-hub
       - USE_MQTT=true
       # Tailscale Integration
