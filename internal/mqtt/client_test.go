@@ -106,13 +106,13 @@ func TestTopicBuilder(t *testing.T) {
 // TestDeviceStatusHandler 测试设备状态处理器
 func TestDeviceStatusHandler(t *testing.T) {
 	// 创建状态通道
-	statusChan := make(chan *models.DeviceStatus, 1)
+	statusChan := make(chan *models.DeviceStatusInfo, 1)
 
 	// 创建处理器
 	handler := mqtt.NewDeviceStatusHandler(statusChan)
 
 	// 创建测试状态
-	testStatus := models.DeviceStatus{
+	testStatus := models.DeviceStatusInfo{
 		DeviceID:         "device001",
 		TenantID:         "tenant001",
 		UpdatedAt:        time.Now(),
@@ -267,7 +267,7 @@ func TestCommandResponseHandler(t *testing.T) {
 	testResult := models.CommandResult{
 		CommandID: commandID,
 		Success:   true,
-		Result:    "操作成功",
+		Result:    map[string]interface{}{"message": "操作成功"},
 		Timestamp: time.Now(),
 	}
 

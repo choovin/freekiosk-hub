@@ -11,17 +11,17 @@ import (
 // DeviceStatusHandler 设备状态消息处理器
 type DeviceStatusHandler struct {
 	// 状态消息通道
-	statusChan chan<- *models.DeviceStatus
+	statusChan chan<- *models.DeviceStatusInfo
 }
 
 // NewDeviceStatusHandler 创建状态处理器
-func NewDeviceStatusHandler(statusChan chan<- *models.DeviceStatus) *DeviceStatusHandler {
+func NewDeviceStatusHandler(statusChan chan<- *models.DeviceStatusInfo) *DeviceStatusHandler {
 	return &DeviceStatusHandler{statusChan: statusChan}
 }
 
 // Handle 处理状态消息
 func (h *DeviceStatusHandler) Handle(topic string, payload []byte) error {
-	var status models.DeviceStatus
+	var status models.DeviceStatusInfo
 	if err := json.Unmarshal(payload, &status); err != nil {
 		return fmt.Errorf("解析状态消息失败: %w", err)
 	}
