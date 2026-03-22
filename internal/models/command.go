@@ -28,6 +28,7 @@ const (
 	CommandSpeak          CommandType = "speak"
 	CommandWakeUp         CommandType = "wakeUp"
 	CommandSleep          CommandType = "sleep"
+	CommandSetPin         CommandType = "setPin"
 )
 
 // Command 表示发送给设备的命令

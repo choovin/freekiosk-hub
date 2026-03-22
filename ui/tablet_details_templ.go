@@ -2345,4 +2345,103 @@ func TabSoundList(sounds []services.SoundFileInfo, tabletID int64, translate fun
 	})
 }
 
+// SetPinModal displays the PIN change modal for a single device
+func SetPinModal(tabletID int64, tabletName string, translate func(key string) string) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var125 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var125 == nil {
+			templ_7745c5c3_Var125 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "<dialog id=\"setpin_modal\" class=\"modal modal-open\"><div class=\"modal-box border border-slate-200 shadow-2xl max-w-sm\"><h3 class=\"font-bold text-lg mb-2\">Change PIN</h3><p class=\"text-sm text-slate-500 mb-4\">Device: ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var126 string
+		templ_7745c5c3_Var126, templ_7745c5c3_Err = templ.JoinStringErrs(tabletName)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/tablet_details.templ`, Line: 749, Col: 71}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var126))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "</p><form hx-post=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var127 string
+		templ_7745c5c3_Var127, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/tablets/%d/set-pin", tabletID))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/tablet_details.templ`, Line: 751, Col: 72}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var127))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "\" hx-swap=\"none\" onsubmit=\"setpin_modal.close()\"><div class=\"form-control\"><label class=\"label\"><span class=\"label-text font-semibold\">New PIN (4 digits)</span></label> <input type=\"text\" name=\"pin\" placeholder=\"1234\" pattern=\"[0-9]{4}\" maxlength=\"4\" inputmode=\"numeric\" class=\"input input-bordered w-full focus:input-primary text-center text-2xl tracking-widest font-mono\" required autofocus> <label class=\"label\"><span class=\"label-text-alt text-slate-400\">Must be exactly 4 numeric digits</span></label></div><div class=\"modal-action\"><button type=\"button\" class=\"btn btn-ghost\" onclick=\"this.closest('dialog').remove()\">Cancel</button> <button type=\"submit\" class=\"btn btn-primary\">Change PIN</button></div></form></div><form method=\"dialog\" class=\"modal-backdrop\"><button onclick=\"this.closest('dialog').remove()\">close</button></form></dialog>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// BulkSetPinModal displays the PIN change modal for multiple devices
+func BulkSetPinModal(deviceIDs string, translate func(key string) string) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var128 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var128 == nil {
+			templ_7745c5c3_Var128 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, "<dialog id=\"bulk_setpin_modal\" class=\"modal modal-open\"><div class=\"modal-box border border-slate-200 shadow-2xl max-w-sm\"><h3 class=\"font-bold text-lg mb-2\">Bulk Change PIN</h3><p class=\"text-sm text-slate-500 mb-4\">Change PIN for selected devices</p><form hx-post=\"/tablets/bulk/set-pin\" hx-swap=\"none\" onsubmit=\"bulk_setpin_modal.close()\"><input type=\"hidden\" name=\"device_ids\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var129 string
+		templ_7745c5c3_Var129, templ_7745c5c3_Err = templ.JoinStringErrs(deviceIDs)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/tablet_details.templ`, Line: 792, Col: 72}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var129))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "\"><div class=\"form-control\"><label class=\"label\"><span class=\"label-text font-semibold\">New PIN (4 digits)</span></label> <input type=\"text\" name=\"pin\" placeholder=\"1234\" pattern=\"[0-9]{4}\" maxlength=\"4\" inputmode=\"numeric\" class=\"input input-bordered w-full focus:input-primary text-center text-2xl tracking-widest font-mono\" required autofocus> <label class=\"label\"><span class=\"label-text-alt text-slate-400\">Must be exactly 4 numeric digits</span></label></div><div class=\"modal-action\"><button type=\"button\" class=\"btn btn-ghost\" onclick=\"this.closest('dialog').remove()\">Cancel</button> <button type=\"submit\" class=\"btn btn-primary\">Change PIN</button></div></form></div><form method=\"dialog\" class=\"modal-backdrop\"><button onclick=\"this.closest('dialog').remove()\">close</button></form></dialog>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
 var _ = templruntime.GeneratedTemplate

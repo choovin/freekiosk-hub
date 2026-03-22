@@ -37,6 +37,16 @@ type MQTTService struct {
 	tenantID string
 }
 
+// MQTTServiceInterface MQTT 服务接口
+type MQTTServiceInterface interface {
+	SendCommand(ctx context.Context, deviceID string, cmdType models.CommandType, params map[string]interface{}, timeout time.Duration) (*models.CommandResult, error)
+	SendCommandAsync(ctx context.Context, deviceID string, cmdType models.CommandType, params map[string]interface{}) (string, error)
+	IsConnected() bool
+}
+
+// Ensure MQTTService implements MQTTServiceInterface
+var _ MQTTServiceInterface = (*MQTTService)(nil)
+
 // MQTTServiceConfig MQTT 服务配置
 type MQTTServiceConfig struct {
 	BrokerURL  string

@@ -136,7 +136,7 @@ func (s *ApiServer) setupRoutes() {
 	kService := services.NewKioskService(s.TabletRepo, s.GroupRepo, s.KioskClient, s.Cfg.KioskPort)
 
 	homeH := NewHtmlHomeHandler(s.TabletRepo, s.ReportRepo, s.GroupRepo)
-	tabletH := NewHtmlTabletHandler(s.TabletRepo, s.ReportRepo, s.GroupRepo, kService, s.MediaService)
+	tabletH := NewHtmlTabletHandler(s.TabletRepo, s.ReportRepo, s.GroupRepo, kService, s.MediaService, s.MQTTService)
 	groupH := NewGroupHandler(s.GroupRepo)
 	bcastSvc := services.NewBroadcastService(s.FTRepo, s.MQTTService)
 	fieldtripH := NewFieldTripHandler(s.FTRepo, "" /* signing pubkey — empty for MVP */, bcastSvc)
@@ -193,6 +193,12 @@ func (s *ApiServer) setupRoutes() {
 		tablets.POST("/:id/command/play-sound", tabletH.HandlePlaySound)
 		tablets.POST("/:id/command/gtsl-tts", tabletH.HandleGtslTTSSound)
 		tablets.POST("/:id/command/stop-sound", tabletH.HandleStopSound)
+
+		// PIN management
+		tablets.GET("/:id/set-pin-modal", tabletH.HandleSetPinModal)
+		tablets.POST("/:id/set-pin", tabletH.HandleSetPin)
+		tablets.GET("/bulk/set-pin-modal", tabletH.HandleBulkSetPinModal)
+		tablets.POST("/bulk/set-pin", tabletH.HandleBulkSetPin)
 
 	}
 

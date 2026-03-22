@@ -1,14 +1,19 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/wared2003/freekiosk-hub/internal/dtos"
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
+	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/internal/services"
 	"github.com/wared2003/freekiosk-hub/ui"
@@ -22,10 +27,11 @@ type HtmlTabletHandler struct {
 	groupRepo    repositories.GroupRepository
 	kService     services.KioskService
 	mediaService services.MediaService
+	mqttService  services.MQTTServiceInterface
 }
 
-func NewHtmlTabletHandler(tr repositories.TabletRepository, rr repositories.ReportRepository, gr repositories.GroupRepository, ks services.KioskService, mes services.MediaService) *HtmlTabletHandler {
-	return &HtmlTabletHandler{tabletRepo: tr, reportRepo: rr, groupRepo: gr, kService: ks, mediaService: mes}
+func NewHtmlTabletHandler(tr repositories.TabletRepository, rr repositories.ReportRepository, gr repositories.GroupRepository, ks services.KioskService, mes services.MediaService, ms services.MQTTServiceInterface) *HtmlTabletHandler {
+	return &HtmlTabletHandler{tabletRepo: tr, reportRepo: rr, groupRepo: gr, kService: ks, mediaService: mes, mqttService: ms}
 }
 
 func (h *HtmlTabletHandler) HandleDetails(c echo.Context) error {
@@ -408,4 +414,180 @@ func (h *HtmlTabletHandler) HandleGtslTTSSound(c echo.Context) error {
 	}
 
 	return nil
+}
+
+// HandleSetPinModal 显示 PIN 修改模态框
+func (h *HtmlTabletHandler) HandleSetPinModal(c echo.Context) error {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return ui.Toast("Invalid tablet ID", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	tablet, err := h.tabletRepo.GetByID(id)
+	if err != nil {
+		return ui.Toast("Tablet not found", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	lang := getLang(c)
+	return ui.SetPinModal(tablet.ID, tablet.Name, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
+}
+
+// HandleSetPin 处理 PIN 修改请求
+func (h *HtmlTabletHandler) HandleSetPin(c echo.Context) error {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return ui.Toast("Invalid tablet ID", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	newPin := c.FormValue("pin")
+	if newPin == "" {
+		return ui.Toast("PIN cannot be empty", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	// Validate PIN format (4-digit numeric)
+	if len(newPin) != 4 || !isNumeric(newPin) {
+		return ui.Toast("PIN must be 4 digits", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	tablet, err := h.tabletRepo.GetByID(id)
+	if err != nil {
+		return ui.Toast("Tablet not found", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	// Send PIN change command via MQTT
+	if h.mqttService != nil && h.mqttService.IsConnected() {
+		// Use device ID (tablet name) for MQTT command
+		deviceID := tablet.Name
+		if deviceID == "" {
+			deviceID = fmt.Sprintf("device_%d", tablet.ID)
+		}
+
+		ctx, cancel := context.WithTimeout(c.Request().Context(), 30*time.Second)
+		defer cancel()
+
+		_, err := h.mqttService.SendCommand(ctx, deviceID, models.CommandSetPin, map[string]interface{}{
+			"pin": newPin,
+		}, 30*time.Second)
+
+		if err != nil {
+			slog.Warn("Failed to send PIN change command via MQTT", "error", err)
+			return ui.Toast("Failed to send PIN change command", "error").Render(c.Request().Context(), c.Response().Writer)
+		}
+
+		slog.Info("PIN change command sent", "tablet_id", tablet.ID, "device_id", deviceID)
+		return ui.Toast(fmt.Sprintf("PIN change sent to %s", tablet.Name), "success").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	// MQTT not available - try HTTP fallback
+	report, err := h.kService.SendRemoteCommand(services.Target{TabletID: id}, fmt.Sprintf("setPin:%s", newPin))
+	if err != nil {
+		return ui.Toast("Failed to change PIN: "+err.Error(), "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	for _, res := range report.Results {
+		if res.Executed {
+			ui.Toast(fmt.Sprintf("PIN changed for %s", res.Name), "success").Render(c.Request().Context(), c.Response().Writer)
+		} else {
+			ui.Toast(fmt.Sprintf("Failed to change PIN for %s", res.Name), "error").Render(c.Request().Context(), c.Response().Writer)
+		}
+	}
+
+	return nil
+}
+
+// HandleBulkSetPinModal 显示批量 PIN 修改模态框
+func (h *HtmlTabletHandler) HandleBulkSetPinModal(c echo.Context) error {
+	deviceIDs := c.QueryParam("device_ids")
+	lang := getLang(c)
+	return ui.BulkSetPinModal(deviceIDs, func(key string) string { return i18n.TL(lang, key) }).Render(c.Request().Context(), c.Response().Writer)
+}
+
+// HandleBulkSetPin 处理批量 PIN 修改请求
+func (h *HtmlTabletHandler) HandleBulkSetPin(c echo.Context) error {
+	deviceIDsStr := c.FormValue("device_ids")
+	if deviceIDsStr == "" {
+		return ui.Toast("No devices selected", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	newPin := c.FormValue("pin")
+	if newPin == "" {
+		return ui.Toast("PIN cannot be empty", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	// Validate PIN format (4-digit numeric)
+	if len(newPin) != 4 || !isNumeric(newPin) {
+		return ui.Toast("PIN must be 4 digits", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	// Parse device IDs
+	var deviceIDs []int64
+	for _, idStr := range strings.Split(deviceIDsStr, ",") {
+		id, err := strconv.ParseInt(strings.TrimSpace(idStr), 10, 64)
+		if err == nil {
+			deviceIDs = append(deviceIDs, id)
+		}
+	}
+
+	if len(deviceIDs) == 0 {
+		return ui.Toast("No valid devices selected", "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	successCount := 0
+	failCount := 0
+
+	for _, id := range deviceIDs {
+		tablet, err := h.tabletRepo.GetByID(id)
+		if err != nil {
+			failCount++
+			continue
+		}
+
+		deviceID := tablet.Name
+		if deviceID == "" {
+			deviceID = fmt.Sprintf("device_%d", tablet.ID)
+		}
+
+		if h.mqttService != nil && h.mqttService.IsConnected() {
+			ctx, cancel := context.WithTimeout(c.Request().Context(), 30*time.Second)
+			_, err := h.mqttService.SendCommand(ctx, deviceID, models.CommandSetPin, map[string]interface{}{
+				"pin": newPin,
+			}, 30*time.Second)
+			cancel()
+
+			if err == nil {
+				successCount++
+			} else {
+				failCount++
+			}
+		} else {
+			// HTTP fallback
+			_, err := h.kService.SendRemoteCommand(services.Target{TabletID: id}, fmt.Sprintf("setPin:%s", newPin))
+			if err == nil {
+				successCount++
+			} else {
+				failCount++
+			}
+		}
+	}
+
+	if successCount > 0 {
+		ui.Toast(fmt.Sprintf("PIN change sent to %d device(s)", successCount), "success").Render(c.Request().Context(), c.Response().Writer)
+	}
+	if failCount > 0 {
+		ui.Toast(fmt.Sprintf("Failed for %d device(s)", failCount), "error").Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	return nil
+}
+
+// isNumeric checks if a string contains only digits
+func isNumeric(s string) bool {
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
