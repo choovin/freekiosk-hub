@@ -148,5 +148,15 @@
   "device.waiting": "Waiting for device connection...",
   "group.create": "Create a Group",
   "group.edit_title": "Edit {name}",
-  "group.color": "Color"
+  "group.color": "Color",
+  "auth.login": "Login",
+  "auth.welcome": "Welcome to FreeKiosk Hub",
+  "auth.username": "Username",
+  "auth.password": "Password",
+  "auth.username_placeholder": "Enter your username",
+  "auth.password_placeholder": "Enter your password",
+  "auth.login_button": "Sign In",
+  "auth.invalid_credentials": "Invalid username or password",
+  "auth.default_credentials": "Default credentials:",
+  "auth.logout": "Logout"
 }

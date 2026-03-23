@@ -148,5 +148,15 @@
   "device.waiting": "等待设备连接...",
   "group.create": "创建分组",
   "group.edit_title": "编辑 %s",
-  "group.color": "颜色"
+  "group.color": "颜色",
+  "auth.login": "登录",
+  "auth.welcome": "欢迎使用 FreeKiosk Hub",
+  "auth.username": "用户名",
+  "auth.password": "密码",
+  "auth.username_placeholder": "请输入用户名",
+  "auth.password_placeholder": "请输入密码",
+  "auth.login_button": "登录",
+  "auth.invalid_credentials": "用户名或密码错误",
+  "auth.default_credentials": "默认账号密码：",
+  "auth.logout": "退出登录"
 }

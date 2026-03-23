@@ -52,6 +52,10 @@ type Config struct {
 	CACertificatePath string
 	CAKeyPath         string
 	CertValidityDays  int
+
+	// Web 认证配置
+	WebUsername string
+	WebPassword string
 }
 
 func Load() *Config {
@@ -102,6 +106,10 @@ func Load() *Config {
 		CACertificatePath: getEnv("CA_CERTIFICATE_PATH", "certs/ca.crt"),
 		CAKeyPath:         getEnv("CA_KEY_PATH", "certs/ca.key"),
 		CertValidityDays:  parseInt(getEnv("CERT_VALIDITY_DAYS", "365")),
+
+		// Web 认证配置
+		WebUsername: getEnv("WEB_USERNAME", "admin"),
+		WebPassword: getEnv("WEB_PASSWORD", "admin123"),
 	}
 
 	initLogger(cfg.LogLevel)

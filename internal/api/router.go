@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	echoswagger "github.com/swaggo/echo-swagger"
 	"github.com/wared2003/freekiosk-hub/internal/clients"
 	"github.com/wared2003/freekiosk-hub/internal/config"
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
@@ -140,14 +139,20 @@ func (s *ApiServer) setupRoutes() {
 	tabletH := NewHtmlTabletHandler(s.TabletRepo, s.ReportRepo, s.GroupRepo, kService, s.MediaService, s.MQTTService)
 	groupH := NewGroupHandler(s.GroupRepo)
 	bcastSvc := services.NewBroadcastService(s.FTRepo, s.MQTTService)
-	fieldtripH := NewFieldTripHandler(s.FTRepo, "" /* signing pubkey — empty for MVP */, bcastSvc)
+	fieldtripH := NewFieldTripHandler(s.FTRepo, "" /* signing pubkey — empty for MVP */, bcastSvc, s.Cfg.MQTTBrokerURL, s.Cfg.MQTTPort)
 	fieldtripUIH := NewFieldTripUIHandler(s.FTRepo, bcastSvc)
 	exportH := NewExportHandler(s.FTRepo, s.Cfg.ServerPort)
 	downloadH := NewDownloadHandler("apk", s.Cfg.ServerPort)
 
 	systemJsonH := NewSystemJSONHandler(s.DB)
 
-	// --- 2. ROUTES PUBLIQUES / SYSTÈME ---
+	// --- 1. 登录认证路由 (公开) ---
+	authH := NewHtmlAuthHandler(s.Cfg.WebUsername, s.Cfg.WebPassword)
+	s.Echo.GET("/login", authH.HandleLogin)
+	s.Echo.POST("/login", authH.HandleLoginSubmit)
+	s.Echo.POST("/logout", authH.HandleLogout)
+
+	// --- 2. 公共路由 (健康检查) ---
 	s.Echo.GET("/health", systemJsonH.HandleHealthCheck)
 
 	// MQTT 状态检查端点
@@ -170,8 +175,12 @@ func (s *ApiServer) setupRoutes() {
 		})
 	})
 
-	s.Echo.GET("/", homeH.HandleIndex)
-	tablets := s.Echo.Group("/tablets")
+	// --- 3. 受保护的路由 (需要认证) ---
+	protected := s.Echo.Group("")
+	protected.Use(AuthMiddleware)
+
+	protected.GET("/", homeH.HandleIndex)
+	tablets := protected.Group("/tablets")
 	{
 		tablets.GET("/:id", tabletH.HandleDetails)
 		tablets.GET("/:id/groups-selection", groupH.HandleTabletGroupsSelection)
@@ -203,7 +212,7 @@ func (s *ApiServer) setupRoutes() {
 
 	}
 
-	groupRoutes := s.Echo.Group("/groups")
+	groupRoutes := protected.Group("/groups")
 	{
 		groupRoutes.GET("", groupH.HandleGroups)
 		groupRoutes.GET("/new", groupH.HandleNewGroup)
@@ -213,7 +222,7 @@ func (s *ApiServer) setupRoutes() {
 	}
 
 	// Field Trip UI routes
-	fieldtripRoutes := s.Echo.Group("/fieldtrip")
+	fieldtripRoutes := protected.Group("/fieldtrip")
 	{
 		fieldtripRoutes.GET("", fieldtripUIH.HandleFieldTripPage)
 		fieldtripRoutes.GET("/groups/new", fieldtripUIH.HandleNewGroup)
@@ -227,7 +236,7 @@ func (s *ApiServer) setupRoutes() {
 	}
 
 	// Download page for APK
-	s.Echo.GET("/download", downloadH.HandleDownloadPage)
+	protected.GET("/download", downloadH.HandleDownloadPage)
 
 	// --- 5. 企业版认证 API ---
 	if s.AuthSvc != nil {
@@ -323,10 +332,11 @@ func (s *ApiServer) setupRoutes() {
 		c.Response().Header().Set("Content-Type", "text/html")
 		return c.File("docs/index.html")
 	})
-	s.Echo.GET("/swagger/doc.json", echoswagger.EchoWrapHandler(
-		echoswagger.URL("/swagger/doc.json"),
-		echoswagger.InstanceName("freekiosk-hub"),
-	))
+	// 直接服务 swagger.json 文件
+	s.Echo.GET("/swagger/doc.json", func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "application/json")
+		return c.File("docs/swagger.json")
+	})
 	s.Echo.Static("/swagger-ui", "docs")
 
 	// --- 11. 企业版审计日志 API ---
@@ -384,7 +394,7 @@ func (s *ApiServer) setupRoutes() {
 	// apiV1.POST("/tablets/:ip/scan", tabletJsonH.HandleManualScan)
 
 	//sse
-	s.Echo.GET("/sse/global", func(c echo.Context) error {
+	protected.GET("/sse/global", func(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "text/event-stream")
 		c.Response().Header().Set("Cache-Control", "no-cache")
 		c.Response().Header().Set("Connection", "keep-alive")
@@ -406,7 +416,7 @@ func (s *ApiServer) setupRoutes() {
 		}
 	})
 
-	s.Echo.GET("/sse/tablet/:id", func(c echo.Context) error {
+	protected.GET("/sse/tablet/:id", func(c echo.Context) error {
 		id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 
 		c.Response().Header().Set("Content-Type", "text/event-stream")

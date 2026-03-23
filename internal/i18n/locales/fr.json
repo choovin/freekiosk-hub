@@ -148,5 +148,15 @@
   "device.waiting": "En attente de la connexion de l'appareil...",
   "group.create": "Créer un groupe",
   "group.edit_title": "Modifier {name}",
-  "group.color": "Couleur"
+  "group.color": "Couleur",
+  "auth.login": "Connexion",
+  "auth.welcome": "Bienvenue sur FreeKiosk Hub",
+  "auth.username": "Nom d'utilisateur",
+  "auth.password": "Mot de passe",
+  "auth.username_placeholder": "Entrez votre nom d'utilisateur",
+  "auth.password_placeholder": "Entrez votre mot de passe",
+  "auth.login_button": "Se connecter",
+  "auth.invalid_credentials": "Nom d'utilisateur ou mot de passe invalide",
+  "auth.default_credentials": "Identifiants par défaut :",
+  "auth.logout": "Déconnexion"
 }
