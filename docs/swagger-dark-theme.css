@@ -1,0 +1,546 @@
+/*!
+ * Swagger UI Dark Theme - "Midnight" (美团/滴滴风格)
+ * 专为中文开发者设计的高对比度深色主题
+ *
+ * 配色方案参考: VS Code Dark+, Atom One Dark, GitHub Dark
+ * 适合长时间阅读，减少眼睛疲劳
+ */
+
+/* ========================
+   基础变量覆盖
+   ======================== */
+:root {
+  --dark-primary: #e06c75;
+  --dark-success: #98c379;
+  --dark-warning: #e5c07b;
+  --dark-info: #61afef;
+  --dark-danger: #f14c4c;
+
+  /* 背景色系 */
+  --dark-bg-000: #21252b;
+  --dark-bg-100: #282c34;
+  --dark-bg-200: #2c313a;
+  --dark-bg-300: #323842;
+  --dark-bg-400: #3c4049;
+
+  /* 边框色 */
+  --dark-border: #454b57;
+
+  /* 文字色 */
+  --dark-text-100: #abb2bf;
+  --dark-text-200: #7f848e;
+  --dark-text-300: #5c6370;
+
+  /* 滚动条 */
+  --dark-scrollbar: #4a4f5c;
+  --dark-scrollbar-hover: #5c6370;
+
+  color-scheme: dark;
+}
+
+/* ========================
+   全局样式
+   ======================== */
+.swagger-ui {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, var(--dark-bg-000) 0%, var(--dark-bg-100) 100%);
+  min-height: 100vh;
+}
+
+.swagger-ui .info {
+  margin: 40px 0;
+}
+
+.swagger-ui .info .title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  letter-spacing: 1px;
+}
+
+.swagger-ui .info .description {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--dark-text-100);
+  margin-top: 15px;
+}
+
+/* ========================
+   标题样式
+   ======================== */
+.swagger-ui .title,
+.swagger-ui h1,
+.swagger-ui h2,
+.swagger-ui h3,
+.swagger-ui h4,
+.swagger-ui h5 {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+/* ========================
+   标签页样式
+   ======================== */
+.swagger-ui .opblock-tag {
+  background: var(--dark-bg-200);
+  border: 1px solid var(--dark-border);
+  border-radius: 8px 8px 0 0;
+  margin: 0;
+  padding: 15px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff !important;
+  transition: all 0.2s ease;
+}
+
+.swagger-ui .opblock-tag:hover {
+  background: var(--dark-bg-300);
+}
+
+.swagger-ui .opblock-tag small {
+  color: var(--dark-text-200) !important;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* ========================
+   操作块样式
+   ======================== */
+.swagger-ui .opblock {
+  background: var(--dark-bg-100);
+  border: 1px solid var(--dark-border);
+  border-radius: 8px;
+  margin: 0 0 -1px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+}
+
+.swagger-ui .opblock:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transform: translateY(-1px);
+}
+
+.swagger-ui .opblock.opblock-get {
+  border-left: 4px solid var(--dark-info);
+}
+
+.swagger-ui .opblock.opblock-post {
+  border-left: 4px solid var(--dark-success);
+}
+
+.swagger-ui .opblock.opblock-put {
+  border-left: 4px solid var(--dark-warning);
+}
+
+.swagger-ui .opblock.opblock-delete {
+  border-left: 4px solid var(--dark-danger);
+}
+
+.swagger-ui .opblock.opblock-patch {
+  border-left: 4px solid #c678dd;
+}
+
+/* ========================
+   路径和方法标签
+   ======================== */
+.swagger-ui .opblock .opblock-summary-path {
+  padding: 10px 0;
+}
+
+.swagger-ui .opblock .opblock-summary-path a {
+  color: var(--dark-info) !important;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.swagger-ui .opblock .opblock-summary-method {
+  background: var(--dark-bg-400);
+  border: none;
+  border-radius: 6px;
+  color: #ffffff !important;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  min-width: 70px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.swagger-ui .opblock.opblock-get .opblock-summary-method {
+  background: linear-gradient(135deg, #61afef 0%, #4aa3d9 100%);
+}
+
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
+  background: linear-gradient(135deg, #98c379 0%, #7fb366 100%);
+}
+
+.swagger-ui .opblock.opblock-put .opblock-summary-method {
+  background: linear-gradient(135deg, #e5c07b 0%, #d4b366 100%);
+  color: #282c34 !important;
+}
+
+.swagger-ui .opblock.opblock-delete .opblock-summary-method {
+  background: linear-gradient(135deg, #f14c4c 0%, #d93a3a 100%);
+}
+
+.swagger-ui .opblock.opblock-patch .opblock-summary-method {
+  background: linear-gradient(135deg, #c678dd 0%, #b05dbd 100%);
+}
+
+/* ========================
+   参数样式
+   ======================== */
+.swagger-ui .parameters {
+  background: var(--dark-bg-000);
+  border-top: 1px solid var(--dark-border);
+  padding: 15px 20px;
+}
+
+.swagger-ui .parameter__name {
+  color: var(--dark-text-100) !important;
+  font-weight: 500;
+}
+
+.swagger-ui .parameter__name.required::after {
+  color: var(--dark-danger) !important;
+  content: " *";
+}
+
+.swagger-ui .parameter__type {
+  color: var(--dark-text-200) !important;
+}
+
+.swagger-ui input,
+.swagger-ui select,
+.swagger-ui textarea {
+  background: var(--dark-bg-000) !important;
+  border: 1px solid var(--dark-border) !important;
+  border-radius: 6px !important;
+  color: var(--dark-text-100) !important;
+  padding: 10px 12px !important;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.swagger-ui input:focus,
+.swagger-ui select:focus,
+.swagger-ui textarea:focus {
+  border-color: var(--dark-info) !important;
+  box-shadow: 0 0 0 3px rgba(97, 175, 239, 0.2) !important;
+  outline: none !important;
+}
+
+.swagger-ui input::placeholder,
+.swagger-ui textarea::placeholder {
+  color: var(--dark-text-300) !important;
+}
+
+/* ========================
+   请求体样式
+   ======================== */
+.swagger-ui .request-body {
+  background: var(--dark-bg-000);
+  border-top: 1px solid var(--dark-border);
+  padding: 15px 20px;
+}
+
+.swagger-ui .request-body textarea {
+  background: var(--dark-bg-000) !important;
+  border: 1px solid var(--dark-border) !important;
+  border-radius: 6px !important;
+  color: #abb2bf !important;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 12px 15px !important;
+}
+
+/* ========================
+   响应样式
+   ======================== */
+.swagger-ui .responses-wrapper {
+  background: var(--dark-bg-000);
+  border-top: 1px solid var(--dark-border);
+}
+
+.swagger-ui .response-col_status {
+  color: var(--dark-text-100) !important;
+  font-weight: 600;
+}
+
+.swagger-ui .response-col_status.good {
+  color: var(--dark-success) !important;
+}
+
+.swagger-ui .response-col_status.bad {
+  color: var(--dark-danger) !important;
+}
+
+/* ========================
+   按钮样式
+   ======================== */
+.swagger-ui .btn {
+  background: var(--dark-bg-300) !important;
+  border: 1px solid var(--dark-border) !important;
+  border-radius: 6px !important;
+  color: var(--dark-text-100) !important;
+  font-weight: 500;
+  padding: 10px 20px !important;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.swagger-ui .btn:hover {
+  background: var(--dark-bg-400) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.swagger-ui .btn.execute {
+  background: linear-gradient(135deg, var(--dark-info) 0%, #4aa3d9 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(97, 175, 239, 0.3);
+}
+
+.swagger-ui .btn.execute:hover {
+  box-shadow: 0 4px 16px rgba(97, 175, 239, 0.4);
+}
+
+/* ========================
+   模型样式
+   ======================== */
+.swagger-ui .model {
+  background: var(--dark-bg-100);
+  border: 1px solid var(--dark-border);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+}
+
+.swagger-ui .model-title {
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.swagger-ui .model-schema {
+  color: var(--dark-text-100) !important;
+}
+
+.swagger-ui .prop-type {
+  color: #c678dd !important;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+}
+
+.swagger-ui .prop-format {
+  color: var(--dark-text-300) !important;
+}
+
+/* ========================
+   HTTP 方法 Badge
+   ======================== */
+.swagger-ui .-http-badge {
+  background: var(--dark-bg-300);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  text-transform: uppercase;
+}
+
+.swagger-ui .http-badge.get { background: var(--dark-info); }
+.swagger-ui .http-badge.post { background: var(--dark-success); }
+.swagger-ui .http-badge.put { background: var(--dark-warning); color: #282c34 !important; }
+.swagger-ui .http-badge.delete { background: var(--dark-danger); }
+.swagger-ui .http-badge.patch { background: #c678dd; }
+
+/* ========================
+   版本信息
+   ======================== */
+.swagger-ui .version-stamp {
+  background: var(--dark-bg-200);
+  border: 1px solid var(--dark-border);
+  border-radius: 20px;
+  padding: 5px 15px;
+}
+
+.swagger-ui .version-stamp span {
+  color: var(--dark-text-200) !important;
+  font-size: 12px;
+}
+
+/* ========================
+   滚动条样式
+   ======================== */
+.swagger-ui ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.swagger-ui ::-webkit-scrollbar-track {
+  background: var(--dark-bg-100);
+}
+
+.swagger-ui ::-webkit-scrollbar-thumb {
+  background: var(--dark-scrollbar);
+  border-radius: 4px;
+}
+
+.swagger-ui ::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-scrollbar-hover);
+}
+
+/* ========================
+   Loading 动画
+   ======================== */
+.swagger-ui .loading-container .loading:after {
+  border: 3px solid var(--dark-border);
+  border-top-color: var(--dark-info);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: swagger-spin 0.8s linear infinite;
+}
+
+@keyframes swagger-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ========================
+   认证下拉样式
+   ======================== */
+.swagger-ui .auth-wrapper {
+  background: var(--dark-bg-200);
+  border: 1px solid var(--dark-border);
+  border-radius: 8px;
+  padding: 10px 15px;
+}
+
+.swagger-ui .auth-btn {
+  background: var(--dark-bg-300) !important;
+  border: 1px solid var(--dark-border) !important;
+  border-radius: 6px !important;
+  color: var(--dark-text-100) !important;
+}
+
+/* ========================
+   折叠面板
+   ======================== */
+.swagger-ui .nested__wrapper {
+  background: var(--dark-bg-000);
+  border-left: 2px solid var(--dark-border);
+  margin-left: 20px;
+  padding: 10px 15px;
+}
+
+/* ========================
+   错误响应
+   ======================== */
+.swagger-ui .responses-table .response-header {
+  background: var(--dark-bg-200);
+  border-bottom: 1px solid var(--dark-border);
+  padding: 10px 15px;
+}
+
+.swagger-ui .response-content-type {
+  background: var(--dark-bg-100);
+  border: 1px solid var(--dark-border);
+  border-radius: 4px;
+  padding: 5px 10px;
+}
+
+/* ========================
+   Header 样式
+   ======================== */
+.swagger-ui .scheme-container {
+  background: var(--dark-bg-200);
+  border: 1px solid var(--dark-border);
+  border-radius: 8px;
+  padding: 15px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* ========================
+   服务器选择器
+   ======================== */
+.swagger-ui .servers {
+  background: var(--dark-bg-100);
+  border: 1px solid var(--dark-border);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 0;
+}
+
+.swagger-ui .servers-title {
+  color: var(--dark-text-200) !important;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.swagger-ui .server-title {
+  color: var(--dark-text-100) !important;
+}
+
+/* ========================
+   媒体查询 - 响应式
+   ======================== */
+@media (max-width: 768px) {
+  .swagger-ui .info .title {
+    font-size: 28px;
+  }
+
+  .swagger-ui .opblock .opblock-summary-method {
+    font-size: 10px;
+    padding: 4px 8px;
+    min-width: 50px;
+  }
+
+  .swagger-ui .opblock .opblock-summary-path a {
+    font-size: 13px;
+  }
+}
+
+/* ========================
+   Markdown 内容
+   ======================== */
+.swagger-ui .markdown pre {
+  background: var(--dark-bg-000);
+  border: 1px solid var(--dark-border);
+  border-radius: 6px;
+  padding: 15px;
+  overflow-x: auto;
+}
+
+.swagger-ui .markdown code {
+  background: var(--dark-bg-200);
+  border-radius: 4px;
+  color: var(--dark-info);
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 13px;
+  padding: 2px 6px;
+}
+
+.swagger-ui .markdown pre code {
+  background: transparent;
+  color: var(--dark-text-100);
+  padding: 0;
+}
+
+/* ========================
+   Cookie 警告
+   ======================== */
+.swagger-ui .cookies {
+  background: var(--dark-bg-200);
+  border: 1px solid var(--dark-border);
+  color: var(--dark-text-100);
+  padding: 15px;
+  border-radius: 8px;
+}

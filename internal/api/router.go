@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	echoswagger "github.com/swaggo/echo-swagger"
 	"github.com/wared2003/freekiosk-hub/internal/clients"
 	"github.com/wared2003/freekiosk-hub/internal/config"
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
@@ -311,6 +312,22 @@ func (s *ApiServer) setupRoutes() {
 	if s.MetricsSvc != nil {
 		s.Echo.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 	}
+
+	// --- 11. Swagger API 文档 ---
+	// 使用自定义深色主题的 Swagger UI
+	s.Echo.GET("/swagger", func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "text/html")
+		return c.File("docs/index.html")
+	})
+	s.Echo.GET("/swagger/", func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "text/html")
+		return c.File("docs/index.html")
+	})
+	s.Echo.GET("/swagger/doc.json", echoswagger.EchoWrapHandler(
+		echoswagger.URL("/swagger/doc.json"),
+		echoswagger.InstanceName("freekiosk-hub"),
+	))
+	s.Echo.Static("/swagger-ui", "docs")
 
 	// --- 11. 企业版审计日志 API ---
 	if s.AuditSvc != nil {

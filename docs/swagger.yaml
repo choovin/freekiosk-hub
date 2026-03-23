@@ -1,0 +1,71 @@
+definitions:
+  internal_api.CommandRequest:
+    type: object
+  internal_api.CommandResponse:
+    properties:
+      command_id:
+        example: cmd-uuid-1234
+        type: string
+      duration:
+        example: 150
+        type: integer
+      error:
+        example: ""
+        type: string
+      result:
+        additionalProperties: true
+        type: object
+      success:
+        example: true
+        type: boolean
+    type: object
+  internal_api.ErrorResponse:
+    properties:
+      error:
+        example: error message
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v2/tenants/{tenantId}/devices/{deviceId}/commands:
+    post:
+      consumes:
+      - application/json
+      description: 向指定设备发送控制命令（如屏幕开关、导航、音频等）
+      parameters:
+      - description: 租户ID
+        in: path
+        name: tenantId
+        required: true
+        type: string
+      - description: 设备ID
+        in: path
+        name: deviceId
+        required: true
+        type: string
+      - description: 命令请求
+        in: body
+        name: command
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api.CommandRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api.CommandResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api.ErrorResponse'
+      summary: 发送设备命令
+      tags:
+      - 命令管理
+swagger: "2.0"

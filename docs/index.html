@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreeKiosk Hub API 文档</title>
+
+  <!-- 导入深色主题 -->
+  <link rel="stylesheet" href="/swagger-ui/swagger-dark-theme.css">
+
+  <!-- Swagger UI CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css">
+
+  <!-- OAuth 样式 -->
+  <style>
+    .swagger-ui .scheme-container {
+      background: #282c34;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+
+  <script>
+    window.onload = function() {
+      // 初始化 Swagger UI
+      SwaggerUIBundle({
+        url: "/swagger/doc.json",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "StandaloneLayout",
+        docExpansion: "list",
+        operationsSorter: "method",
+        tagsSorter: "alpha",
+        persistAuthorization: true,
+
+        // 深色主题配置
+        theme: "dark",
+
+        // 自定义样式
+        customCss: `
+          /* 加载自定义深色主题 */
+          @import url('/swagger-ui/swagger-dark-theme.css');
+
+          /* 额外覆盖样式 */
+          .swagger-ui .topbar { display: none; }
+          .swagger-ui .info .title { font-size: 32px; }
+        `,
+
+        // 显示信息
+        info: {
+          title: "FreeKiosk Hub API",
+          description: "企业级 Kiosk 设备管理平台 API 文档\n\n提供设备管理、命令下发、状态监控等功能",
+          version: "1.0.0",
+          contact: {
+            name: "FreeKiosk Team",
+            url: "https://github.com/wared2003/freekiosk-hub"
+          },
+          license: {
+            name: "MIT",
+            url: "https://opensource.org/licenses/MIT"
+          }
+        },
+
+        // 服务器列表
+        servers: [
+          { url: "/", description: "本地服务器" },
+          { url: "http://localhost:8081", description: "本地开发服务器" }
+        ],
+
+        // 认证
+        securityDefinitions: {
+          BearerAuth: {
+            type: "apiKey",
+            in: "header",
+            name: "Authorization",
+            description: "JWT Bearer Token (格式: Bearer <token>)"
+          },
+          ApiKeyAuth: {
+            type: "apiKey",
+            in: "header",
+            name: "X-API-Key",
+            description: "API Key 认证"
+          }
+        },
+
+        // 请求拦截器 - 添加认证信息
+        requestInterceptor: function(request) {
+          // 可以在这里添加全局认证信息
+          return request;
+        }
+      });
+    };
+  </script>
+</body>
+</html>

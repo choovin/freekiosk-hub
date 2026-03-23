@@ -26,7 +26,18 @@ func NewCommandHandler(cmdSvc services.CommandService, statusSvc services.Device
 }
 
 // HandleSendCommand 发送命令到设备
-// POST /api/v2/tenants/:tenantId/devices/:deviceId/commands
+// @Summary 发送设备命令
+// @Description 向指定设备发送控制命令（如屏幕开关、导航、音频等）
+// @Tags 命令管理
+// @Accept json
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param deviceId path string true "设备ID"
+// @Param command body CommandRequest true "命令请求"
+// @Success 200 {object} CommandResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/devices/{deviceId}/commands [post]
 func (h *CommandHandler) HandleSendCommand(c echo.Context) error {
 	tenantID := c.Param("tenantId")
 	deviceID := c.Param("deviceId")
@@ -300,4 +311,26 @@ func parseIntParam(s string) (int, error) {
 	var result int
 	_, err := fmt.Sscanf(s, "%d", &result)
 	return result, err
+}
+
+// CommandRequest 发送命令请求
+type CommandRequest struct {
+	Type     string                 `json:"type" example:"setScreen" validate:"required"`
+	Params   map[string]interface{} `json:"params,omitempty" example:"{\"on\": true}"`
+	Timeout  int                    `json:"timeout,omitempty" example:"30"`
+	Priority int                    `json:"priority,omitempty" example:"0"`
+}
+
+// CommandResponse 发送命令响应
+type CommandResponse struct {
+	CommandID string                 `json:"command_id" example:"cmd-uuid-1234"`
+	Success   bool                   `json:"success" example:"true"`
+	Result    map[string]interface{} `json:"result,omitempty"`
+	Error     string                 `json:"error,omitempty" example:""`
+	Duration  int64                 `json:"duration" example:"150"`
+}
+
+// ErrorResponse 错误响应
+type ErrorResponse struct {
+	Error string `json:"error" example:"error message"`
 }
