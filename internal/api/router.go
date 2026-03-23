@@ -141,8 +141,8 @@ func (s *ApiServer) setupRoutes() {
 	bcastSvc := services.NewBroadcastService(s.FTRepo, s.MQTTService)
 	fieldtripH := NewFieldTripHandler(s.FTRepo, "" /* signing pubkey — empty for MVP */, bcastSvc, s.Cfg.MQTTBrokerURL, s.Cfg.MQTTPort)
 	fieldtripUIH := NewFieldTripUIHandler(s.FTRepo, bcastSvc)
-	exportH := NewExportHandler(s.FTRepo, s.Cfg.ServerPort)
-	downloadH := NewDownloadHandler("apk", s.Cfg.ServerPort)
+	exportH := NewExportHandler(s.FTRepo, s.Cfg.ServerPort, s.Cfg.BaseURL)
+	downloadH := NewDownloadHandler("apk", s.Cfg.ServerPort, s.Cfg.BaseURL)
 
 	systemJsonH := NewSystemJSONHandler(s.DB)
 
@@ -366,6 +366,7 @@ func (s *ApiServer) setupRoutes() {
 		fieldtrip.POST("/devices/bind", fieldtripH.BindDevice)
 		fieldtrip.POST("/devices/:id/location", fieldtripH.ReportLocation)
 		fieldtrip.GET("/devices/:id/location/history", fieldtripH.GetLocationHistory)
+		fieldtrip.GET("/devices/:id/qr", fieldtripH.HandleGetDeviceQR)
 		fieldtrip.GET("/commands", fieldtripH.PollCommands)
 		fieldtrip.POST("/devices/:id/whitelist", fieldtripH.SetWhitelist)
 		fieldtrip.POST("/broadcast", fieldtripH.SendBroadcast)

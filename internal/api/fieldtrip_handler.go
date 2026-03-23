@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/skip2/go-qrcode"
 	"github.com/wared2003/freekiosk-hub/internal/models"
 	"github.com/wared2003/freekiosk-hub/internal/repositories"
 	"github.com/wared2003/freekiosk-hub/internal/services"
@@ -22,14 +23,18 @@ type FieldTripHandler struct {
 	Repo          *repositories.FieldTripRepository
 	SigningPubKey string
 	BcastSvc      *services.BroadcastService
+	MqttBrokerURL string // MQTT broker URL for tablets
+	MqttPort      int    // MQTT broker port
 }
 
 // NewFieldTripHandler creates a new FieldTripHandler
-func NewFieldTripHandler(repo *repositories.FieldTripRepository, signingPubKey string, bcastSvc *services.BroadcastService) *FieldTripHandler {
+func NewFieldTripHandler(repo *repositories.FieldTripRepository, signingPubKey string, bcastSvc *services.BroadcastService, mqttBrokerURL string, mqttPort int) *FieldTripHandler {
 	return &FieldTripHandler{
 		Repo:          repo,
 		SigningPubKey: signingPubKey,
 		BcastSvc:      bcastSvc,
+		MqttBrokerURL: mqttBrokerURL,
+		MqttPort:      mqttPort,
 	}
 }
 
@@ -475,6 +480,8 @@ func (h *FieldTripHandler) BindDevice(c echo.Context) error {
 		SigningPubKey:  h.SigningPubKey,
 		BroadcastSound: group.BroadcastSound,
 		UpdatePolicy:   group.UpdatePolicy,
+		MqttBrokerURL:  h.MqttBrokerURL,
+		MqttPort:       h.MqttPort,
 	}
 
 	return c.JSON(http.StatusOK, resp)
@@ -710,6 +717,57 @@ func (h *FieldTripHandler) SendBroadcast(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, broadcast)
+}
+
+// HandleGetDeviceQR returns a single device's QR code as PNG
+// GET /api/v2/fieldtrip/devices/:id/qr
+func (h *FieldTripHandler) HandleGetDeviceQR(c echo.Context) error {
+	deviceID := c.Param("id")
+	if deviceID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing device id")
+	}
+
+	// Get device
+	device, err := h.Repo.GetDeviceByID(deviceID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "device not found")
+	}
+
+	// Get group
+	group, err := h.Repo.GetGroupByID(device.GroupID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "group not found")
+	}
+
+	// Get cached API key
+	apiKey := "[KEY_NOT_FOUND]"
+	if cachedKey, err := h.Repo.GetCachedAPIKey(device.ID); err == nil {
+		apiKey = cachedKey
+	}
+
+	// Create QR payload
+	payload := QRPayload{
+		DeviceID: device.ID,
+		GroupKey: group.GroupKey,
+		APIKey:   apiKey,
+		HubURL:   device.HubURL,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to generate QR payload")
+	}
+
+	// Generate QR code PNG (256x256)
+	pngData, err := qrcode.Encode(string(payloadBytes), qrcode.Medium, 256)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to generate QR code")
+	}
+
+	// Return PNG image
+	c.Response().Header().Set("Content-Type", "image/png")
+	c.Response().Write(pngData)
+	return nil
 }
 
 // CreateGroupInput 创建分组输入

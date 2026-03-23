@@ -19,11 +19,12 @@ import (
 type ExportHandler struct {
 	Repo        *repositories.FieldTripRepository
 	ServerPort  string
+	BaseURL     string
 }
 
 // NewExportHandler creates a new ExportHandler
-func NewExportHandler(repo *repositories.FieldTripRepository, serverPort string) *ExportHandler {
-	return &ExportHandler{Repo: repo, ServerPort: serverPort}
+func NewExportHandler(repo *repositories.FieldTripRepository, serverPort string, baseURL string) *ExportHandler {
+	return &ExportHandler{Repo: repo, ServerPort: serverPort, BaseURL: baseURL}
 }
 
 // QRPayload represents the JSON payload stored in QR codes
@@ -231,7 +232,7 @@ func (h *ExportHandler) getLatestAPK() (*apkInfo, error) {
 	}
 
 	filename := latestFile.Name()
-	downloadURL := fmt.Sprintf("http://localhost:%s/apk/%s", h.ServerPort, filename)
+	downloadURL := fmt.Sprintf("%s/apk/%s", h.BaseURL, filename)
 
 	return &apkInfo{
 		Filename:    filename,
