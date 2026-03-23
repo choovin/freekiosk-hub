@@ -42,8 +42,11 @@ COPY --from=builder /build/bin/freekiosk-hub /app/freekiosk-hub
 # Copy i18n translation files
 COPY --from=builder /build/internal/i18n/locales /app/locales
 
-# Create directories for data and media
-RUN mkdir -p /app/data /app/media && \
+# Copy swagger docs
+COPY --from=builder /build/docs /app/docs
+
+# Create directories for data, media, and apk
+RUN mkdir -p /app/data /app/media /app/apk && \
     chown -R appuser:appgroup /app
 
 USER appuser

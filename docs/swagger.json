@@ -1,7 +1,17 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "title": "FreeKiosk Hub API",
+        "description": "FreeKiosk Hub 设备管理平台的 RESTful API，提供设备管理、命令下发、状态监控等功能",
+        "version": "1.0.0",
+        "contact": {
+            "name": "FreeKiosk Team",
+            "url": "https://github.com/wared2003/freekiosk-hub"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
     },
     "paths": {
         "/api/v2/auth/device/{deviceId}": {
@@ -2627,6 +2637,13 @@
                 },
                 "group_name": {
                     "type": "string"
+                },
+                "mqtt_broker_url": {
+                    "description": "MQTT Broker info for tablet connection",
+                    "type": "string"
+                },
+                "mqtt_port": {
+                    "type": "integer"
                 },
                 "signing_pubkey": {
                     "type": "string"

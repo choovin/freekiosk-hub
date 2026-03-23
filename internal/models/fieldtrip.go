@@ -44,6 +44,9 @@ type BindResponse struct {
 	SigningPubKey  string `json:"signing_pubkey"`
 	BroadcastSound string `json:"broadcast_sound"`
 	UpdatePolicy   string `json:"update_policy"`
+	// MQTT Broker info for tablet connection
+	MqttBrokerURL string `json:"mqtt_broker_url"`
+	MqttPort      int    `json:"mqtt_port"`
 }
 
 // GPSReport sent by tablet

@@ -15,13 +15,15 @@ import (
 type DownloadHandler struct {
 	APKDir     string
 	ServerPort string
+	BaseURL    string
 }
 
 // NewDownloadHandler creates a new DownloadHandler
-func NewDownloadHandler(apkDir string, serverPort string) *DownloadHandler {
+func NewDownloadHandler(apkDir string, serverPort string, baseURL string) *DownloadHandler {
 	return &DownloadHandler{
 		APKDir:     apkDir,
 		ServerPort: serverPort,
+		BaseURL:    baseURL,
 	}
 }
 
@@ -73,7 +75,7 @@ func (h *DownloadHandler) getLatestAPK() (*APKInfo, error) {
 		version = "Unknown"
 	}
 
-	downloadURL := fmt.Sprintf("http://localhost:%s/apk/%s", h.ServerPort, filename)
+	downloadURL := fmt.Sprintf("%s/apk/%s", h.BaseURL, filename)
 
 	return &APKInfo{
 		Filename:    filename,

@@ -77,6 +77,8 @@ services:
       - hub_data:/app/data
       # Persist media files
       - hub_media:/app/media
+      # Persist APK files
+      - hub_apk:/app/apk
     networks:
       - freekiosk-network
     depends_on:
@@ -95,6 +97,8 @@ volumes:
     name: freekiosk-hub-data
   hub_media:
     name: freekiosk-hub-media
+  hub_apk:
+    name: freekiosk-hub-apk
   emqx_data:
     name: freekiosk-emqx-data
   emqx_log:

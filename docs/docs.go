@@ -2639,6 +2639,13 @@ const docTemplate = `{
                 "group_name": {
                     "type": "string"
                 },
+                "mqtt_broker_url": {
+                    "description": "MQTT Broker info for tablet connection",
+                    "type": "string"
+                },
+                "mqtt_port": {
+                    "type": "integer"
+                },
                 "signing_pubkey": {
                     "type": "string"
                 },

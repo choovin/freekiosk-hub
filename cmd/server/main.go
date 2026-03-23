@@ -29,6 +29,8 @@ import (
 
 	"github.com/wared2003/freekiosk-hub/internal/api"
 	"github.com/wared2003/freekiosk-hub/internal/i18n"
+
+	_ "github.com/wared2003/freekiosk-hub/docs" // swagger docs
 )
 
 type ApiKeyTransport struct {

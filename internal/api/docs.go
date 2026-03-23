@@ -27,5 +27,5 @@
 package api
 
 import (
-	_ "github.com/swaggo/swag/v2"
+	_ "github.com/swaggo/swag"
 )
