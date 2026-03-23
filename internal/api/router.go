@@ -150,7 +150,7 @@ func (s *ApiServer) setupRoutes() {
 	authH := NewHtmlAuthHandler(s.Cfg.WebUsername, s.Cfg.WebPassword)
 	s.Echo.GET("/login", authH.HandleLogin)
 	s.Echo.POST("/login", authH.HandleLoginSubmit)
-	s.Echo.POST("/logout", authH.HandleLogout)
+	s.Echo.GET("/logout", authH.HandleLogout)
 
 	// --- 2. 公共路由 (健康检查) ---
 	s.Echo.GET("/health", systemJsonH.HandleHealthCheck)
