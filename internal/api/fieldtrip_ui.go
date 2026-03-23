@@ -89,7 +89,7 @@ func (h *FieldTripUIHandler) HandleNewGroup(c echo.Context) error {
 		BroadcastSound: "default",
 		UpdatePolicy:   "manual",
 	}
-	return c.String(http.StatusOK, FieldTripGroupFormModal(group, lang))
+	return ui.FieldTripGroupFormModal(group, lang).Render(c.Request().Context(), c.Response().Writer)
 }
 
 // HandleEditGroup renders the edit group form modal
@@ -102,7 +102,7 @@ func (h *FieldTripUIHandler) HandleEditGroup(c echo.Context) error {
 	}
 
 	lang := ftGetLang(c)
-	return c.String(http.StatusOK, FieldTripGroupFormModal(group, lang))
+	return ui.FieldTripGroupFormModal(group, lang).Render(c.Request().Context(), c.Response().Writer)
 }
 
 // HandleSaveGroup saves a new or existing group
