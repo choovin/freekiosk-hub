@@ -21,6 +21,20 @@ func NewAuditHandler(auditSvc *services.AuditService) *AuditHandler {
 }
 
 // HandleQueryAuditLogs 查询审计日志
+// @Summary 查询审计日志
+// @Description 查询指定租户的审计日志记录
+// @Tags 审计日志
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param limit query int false "每页数量" default(50)
+// @Param offset query int false "偏移量" default(0)
+// @Param actor_id query string false "操作者ID"
+// @Param action query string false "操作类型"
+// @Param resource_type query string false "资源类型"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/audit-logs [get]
 func (h *AuditHandler) HandleQueryAuditLogs(c echo.Context) error {
 	tenantID := c.Param("tenantId")
 	if tenantID == "" {

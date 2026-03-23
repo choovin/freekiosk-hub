@@ -38,7 +38,16 @@ func extractVersion(filename string) string {
 }
 
 // UploadOTA handles APK file upload
-// POST /api/v2/fieldtrip/ota/upload
+// @Summary 上传OTA安装包
+// @Description 上传OTA更新安装包（APK格式）
+// @Tags OTA更新
+// @Accept multipart/form-data
+// @Produce json
+// @Param apk formData file true "APK文件"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/ota/upload [post]
 func (h *OTAHandler) UploadOTA(c echo.Context) error {
 	// Get the APK file from the multipart form
 	file, err := c.FormFile("apk")
@@ -95,7 +104,13 @@ func (h *OTAHandler) UploadOTA(c echo.Context) error {
 }
 
 // ListOTA lists available OTA APK files
-// GET /api/v2/fieldtrip/ota/list
+// @Summary 列出OTA安装包
+// @Description 获取所有可用的OTA更新安装包
+// @Tags OTA更新
+// @Produce json
+// @Success 200 {array} map[string]interface{}
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/ota/list [get]
 func (h *OTAHandler) ListOTA(c echo.Context) error {
 	// Ensure APK directory exists
 	if _, err := os.Stat(h.APKDir); os.IsNotExist(err) {

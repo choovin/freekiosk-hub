@@ -71,7 +71,16 @@ func (h *FieldTripHandler) validateApiKey(c echo.Context, expectedHash string) e
 }
 
 // CreateGroup creates a new field trip group
-// POST /api/v2/fieldtrip/groups
+// @Summary 创建分组
+// @Description 创建新的野外考察分组
+// @Tags 野外考察
+// @Accept json
+// @Produce json
+// @Param request body CreateGroupInput true "创建分组请求"
+// @Success 201 {object} models.FieldTripGroup
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/groups [post]
 func (h *FieldTripHandler) CreateGroup(c echo.Context) error {
 	var input struct {
 		Name           string `json:"name" validate:"required"`
@@ -116,7 +125,13 @@ func (h *FieldTripHandler) CreateGroup(c echo.Context) error {
 }
 
 // ListGroups lists all field trip groups
-// GET /api/v2/fieldtrip/groups
+// @Summary 列出分组
+// @Description 获取所有野外考察分组
+// @Tags 野外考察
+// @Produce json
+// @Success 200 {array} models.FieldTripGroup
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/groups [get]
 func (h *FieldTripHandler) ListGroups(c echo.Context) error {
 	groups, err := h.Repo.ListGroups()
 	if err != nil {
@@ -126,7 +141,16 @@ func (h *FieldTripHandler) ListGroups(c echo.Context) error {
 }
 
 // DeleteGroup deletes a field trip group
-// DELETE /api/v2/fieldtrip/groups/:id
+// @Summary 删除分组
+// @Description 删除指定的野外考察分组
+// @Tags 野外考察
+// @Produce json
+// @Param id path string true "分组ID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/groups/{id} [delete]
 func (h *FieldTripHandler) DeleteGroup(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {
@@ -147,7 +171,17 @@ func (h *FieldTripHandler) DeleteGroup(c echo.Context) error {
 }
 
 // CreateDevice creates a new field trip device and returns QR payload
-// POST /api/v2/fieldtrip/devices
+// @Summary 创建设备
+// @Description 创建新的野外考察设备并返回二维码信息
+// @Tags 野外考察
+// @Accept json
+// @Produce json
+// @Param request body CreateDeviceInput true "创建设备请求"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/devices [post]
 func (h *FieldTripHandler) CreateDevice(c echo.Context) error {
 	var input struct {
 		Name     string `json:"name" validate:"required"`
@@ -207,7 +241,17 @@ func (h *FieldTripHandler) CreateDevice(c echo.Context) error {
 }
 
 // BulkCreateDevices creates multiple devices at once
-// POST /api/v2/fieldtrip/devices/bulk
+// @Summary 批量创建设备
+// @Description 批量创建多个野外考察设备
+// @Tags 野外考察
+// @Accept json
+// @Produce json
+// @Param request body BulkCreateDevicesInput true "批量创建设备请求"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/devices/bulk [post]
 func (h *FieldTripHandler) BulkCreateDevices(c echo.Context) error {
 	var input struct {
 		GroupID string `json:"group_id"`
@@ -282,7 +326,13 @@ func (h *FieldTripHandler) BulkCreateDevices(c echo.Context) error {
 }
 
 // ListDevices lists all field trip devices
-// GET /api/v2/fieldtrip/devices
+// @Summary 列出设备
+// @Description 获取所有野外考察设备
+// @Tags 野外考察
+// @Produce json
+// @Success 200 {array} models.FieldTripDevice
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/devices [get]
 func (h *FieldTripHandler) ListDevices(c echo.Context) error {
 	devices, err := h.Repo.ListDevices()
 	if err != nil {
@@ -292,7 +342,16 @@ func (h *FieldTripHandler) ListDevices(c echo.Context) error {
 }
 
 // DeleteDevice deletes a field trip device
-// DELETE /api/v2/fieldtrip/devices/:id
+// @Summary 删除设备
+// @Description 删除指定的野外考察设备
+// @Tags 野外考察
+// @Produce json
+// @Param id path string true "设备ID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/devices/{id} [delete]
 func (h *FieldTripHandler) DeleteDevice(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {
@@ -313,7 +372,18 @@ func (h *FieldTripHandler) DeleteDevice(c echo.Context) error {
 }
 
 // UpdateDevice updates a field trip device (name only)
-// PATCH /api/v2/fieldtrip/devices/:id
+// @Summary 更新设备
+// @Description 更新野外考察设备信息（仅名称）
+// @Tags 野外考察
+// @Accept json
+// @Produce json
+// @Param id path string true "设备ID"
+// @Param request body UpdateDeviceInput true "更新设备请求"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/devices/{id} [patch]
 func (h *FieldTripHandler) UpdateDevice(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {
@@ -345,7 +415,18 @@ func (h *FieldTripHandler) UpdateDevice(c echo.Context) error {
 }
 
 // BindDevice handles tablet QR code binding
-// POST /api/v2/fieldtrip/devices/bind
+// @Summary 绑定设备
+// @Description 处理平板二维码绑定
+// @Tags 野外考察
+// @Accept json
+// @Produce json
+// @Param request body models.BindRequest true "绑定请求"
+// @Success 200 {object} models.BindResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/devices/bind [post]
 func (h *FieldTripHandler) BindDevice(c echo.Context) error {
 	var req models.BindRequest
 	if err := c.Bind(&req); err != nil {
@@ -400,7 +481,17 @@ func (h *FieldTripHandler) BindDevice(c echo.Context) error {
 }
 
 // ReportLocation reports GPS location from a device
-// POST /api/v2/fieldtrip/devices/:id/location
+// @Summary 报告位置
+// @Description 设备上报GPS位置信息
+// @Tags 野外考察
+// @Accept json
+// @Produce json
+// @Param id path string true "设备ID"
+// @Param request body models.GPSReport true "GPS报告"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/devices/{id}/location [post]
 func (h *FieldTripHandler) ReportLocation(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {
@@ -429,7 +520,15 @@ func (h *FieldTripHandler) ReportLocation(c echo.Context) error {
 }
 
 // GetLocationHistory returns GPS history for a device
-// GET /api/v2/fieldtrip/devices/:id/location/history
+// @Summary 获取位置历史
+// @Description 获取设备的位置历史记录
+// @Tags 野外考察
+// @Produce json
+// @Param id path string true "设备ID"
+// @Success 200 {array} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/devices/{id}/location/history [get]
 func (h *FieldTripHandler) GetLocationHistory(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {
@@ -445,7 +544,17 @@ func (h *FieldTripHandler) GetLocationHistory(c echo.Context) error {
 }
 
 // PollCommands returns pending commands for a device
-// GET /api/v2/fieldtrip/commands?device_id=xxx
+// @Summary 拉取命令
+// @Description 设备拉取待处理的命令
+// @Tags 野外考察
+// @Produce json
+// @Param device_id query string true "设备ID"
+// @Success 200 {object} models.CommandPoll
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/commands [get]
 func (h *FieldTripHandler) PollCommands(c echo.Context) error {
 	deviceID := c.QueryParam("device_id")
 	if deviceID == "" {
@@ -489,7 +598,18 @@ func (h *FieldTripHandler) PollCommands(c echo.Context) error {
 }
 
 // SetWhitelist sets the app whitelist for a device
-// POST /api/v2/fieldtrip/devices/:id/whitelist
+// @Summary 设置白名单
+// @Description 设置设备的应用白名单
+// @Tags 野外考察
+// @Accept json
+// @Produce json
+// @Param id path string true "设备ID"
+// @Param request body SetWhitelistInput true "白名单请求"
+// @Success 202 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/devices/{id}/whitelist [post]
 func (h *FieldTripHandler) SetWhitelist(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {
@@ -532,7 +652,16 @@ func (h *FieldTripHandler) SetWhitelist(c echo.Context) error {
 }
 
 // SendBroadcast sends a broadcast message to a group or all devices
-// POST /api/v2/fieldtrip/broadcast
+// @Summary 发送广播
+// @Description 向分组或所有设备发送广播消息
+// @Tags 野外考察
+// @Accept json
+// @Produce json
+// @Param request body SendBroadcastInput true "广播请求"
+// @Success 201 {object} models.Broadcast
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/fieldtrip/broadcast [post]
 func (h *FieldTripHandler) SendBroadcast(c echo.Context) error {
 	var input struct {
 		GroupID   string `json:"group_id"`
@@ -581,4 +710,42 @@ func (h *FieldTripHandler) SendBroadcast(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, broadcast)
+}
+
+// CreateGroupInput 创建分组输入
+type CreateGroupInput struct {
+	Name           string `json:"name"`
+	BroadcastSound string `json:"broadcast_sound"`
+	UpdatePolicy   string `json:"update_policy"`
+}
+
+// CreateDeviceInput 创建设备输入
+type CreateDeviceInput struct {
+	Name     string `json:"name"`
+	GroupKey string `json:"group_key"`
+}
+
+// BulkCreateDevicesInput 批量创建设备输入
+type BulkCreateDevicesInput struct {
+	GroupID string `json:"group_id"`
+	Count   int    `json:"count"`
+	Prefix  string `json:"prefix"`
+}
+
+// UpdateDeviceInput 更新设备输入
+type UpdateDeviceInput struct {
+	Name string `json:"name"`
+}
+
+// SetWhitelistInput 设置白名单输入
+type SetWhitelistInput struct {
+	Whitelist []string `json:"whitelist"`
+}
+
+// SendBroadcastInput 发送广播输入
+type SendBroadcastInput struct {
+	GroupID   string `json:"group_id"`
+	Message   string `json:"message"`
+	Sound     string `json:"sound"`
+	CreatedBy string `json:"created_by"`
 }

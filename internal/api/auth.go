@@ -20,8 +20,17 @@ func NewAuthHandler(authSvc services.AuthService) *AuthHandler {
 	return &AuthHandler{authSvc: authSvc}
 }
 
-// HandleRegister handles device registration
-// POST /api/v2/auth/register
+// HandleRegister 注册设备
+// @Summary 注册设备
+// @Description 设备注册，获取访问令牌和证书
+// @Tags 认证
+// @Accept json
+// @Produce json
+// @Param request body models.DeviceRegistration true "设备注册信息"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/auth/register [post]
 func (h *AuthHandler) HandleRegister(c echo.Context) error {
 	var req models.DeviceRegistration
 	if err := c.Bind(&req); err != nil {
@@ -66,8 +75,17 @@ func (h *AuthHandler) HandleRegister(c echo.Context) error {
 	})
 }
 
-// HandleRefreshToken handles token refresh
-// POST /api/v2/auth/refresh
+// HandleRefreshToken 刷新令牌
+// @Summary 刷新访问令牌
+// @Description 使用刷新令牌获取新的访问令牌
+// @Tags 认证
+// @Accept json
+// @Produce json
+// @Param request body RefreshTokenRequest true "刷新令牌请求"
+// @Success 200 {object} TokenResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /api/v2/auth/refresh [post]
 func (h *AuthHandler) HandleRefreshToken(c echo.Context) error {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`
@@ -101,8 +119,16 @@ func (h *AuthHandler) HandleRefreshToken(c echo.Context) error {
 	})
 }
 
-// HandleValidateDevice handles device validation
-// GET /api/v2/auth/validate/:deviceId
+// HandleValidateDevice 验证设备
+// @Summary 验证设备
+// @Description 验证设备是否已注册且有效
+// @Tags 认证
+// @Produce json
+// @Param deviceId path string true "设备ID"
+// @Success 200 {object} ValidateDeviceResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Router /api/v2/auth/validate/{deviceId} [get]
 func (h *AuthHandler) HandleValidateDevice(c echo.Context) error {
 	deviceID := c.Param("deviceId")
 	if deviceID == "" {
@@ -124,8 +150,16 @@ func (h *AuthHandler) HandleValidateDevice(c echo.Context) error {
 	})
 }
 
-// HandleRevokeDevice handles device revocation
-// DELETE /api/v2/auth/device/:deviceId
+// HandleRevokeDevice 吊销设备
+// @Summary 吊销设备
+// @Description 吊销指定设备的访问权限
+// @Tags 认证
+// @Produce json
+// @Param deviceId path string true "设备ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/auth/device/{deviceId} [delete]
 func (h *AuthHandler) HandleRevokeDevice(c echo.Context) error {
 	deviceID := c.Param("deviceId")
 	if deviceID == "" {
@@ -145,8 +179,16 @@ func (h *AuthHandler) HandleRevokeDevice(c echo.Context) error {
 	})
 }
 
-// HandleGetToken handles getting a new token (for testing)
-// POST /api/v2/auth/token
+// HandleGetToken 获取令牌
+// @Summary 获取访问令牌
+// @Description 根据租户ID和设备密钥获取访问令牌(仅用于测试)
+// @Tags 认证
+// @Accept json
+// @Produce json
+// @Param request body TokenRequest true "令牌请求"
+// @Success 200 {object} TokenResponse
+// @Failure 400 {object} ErrorResponse
+// @Router /api/v2/auth/token [post]
 func (h *AuthHandler) HandleGetToken(c echo.Context) error {
 	var req struct {
 		TenantID  string `json:"tenant_id"`
@@ -168,4 +210,29 @@ func (h *AuthHandler) HandleGetToken(c echo.Context) error {
 		"expires_at":    time.Now().Add(time.Hour).UnixMilli(),
 		"token_type":    "Bearer",
 	})
+}
+
+// RefreshTokenRequest 刷新令牌请求
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" example:"xxx"`
+}
+
+// TokenRequest 获取令牌请求
+type TokenRequest struct {
+	TenantID  string `json:"tenant_id" example:"tenant001"`
+	DeviceKey string `json:"device_key" example:"device-key-xxx"`
+}
+
+// TokenResponse 令牌响应
+type TokenResponse struct {
+	AccessToken  string `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	RefreshToken string `json:"refresh_token,omitempty" example:"xxx"`
+	ExpiresAt   int64  `json:"expires_at" example:"1700000000000"`
+	TokenType   string `json:"token_type" example:"Bearer"`
+}
+
+// ValidateDeviceResponse 设备验证响应
+type ValidateDeviceResponse struct {
+	DeviceID string `json:"device_id" example:"device001"`
+	Valid    bool   `json:"valid" example:"true"`
 }

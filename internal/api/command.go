@@ -94,7 +94,17 @@ func (h *CommandHandler) HandleSendCommand(c echo.Context) error {
 }
 
 // HandleSendBatchCommand 发送批量命令
-// POST /api/v2/tenants/:tenantId/commands/batch
+// @Summary 发送批量命令
+// @Description 向多个设备或分组发送批量命令
+// @Tags 命令管理
+// @Accept json
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param request body BatchCommandRequest true "批量命令请求"
+// @Success 202 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/commands/batch [post]
 func (h *CommandHandler) HandleSendBatchCommand(c echo.Context) error {
 	tenantID := c.Param("tenantId")
 
@@ -152,7 +162,18 @@ func (h *CommandHandler) HandleSendBatchCommand(c echo.Context) error {
 }
 
 // HandleGetCommandHistory 获取命令历史
-// GET /api/v2/tenants/:tenantId/devices/:deviceId/commands/history
+// @Summary 获取命令历史
+// @Description 获取指定设备的命令历史记录
+// @Tags 命令管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param deviceId path string true "设备ID"
+// @Param limit query int false "每页数量" default(50)
+// @Param offset query int false "偏移量" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/devices/{deviceId}/commands/history [get]
 func (h *CommandHandler) HandleGetCommandHistory(c echo.Context) error {
 	tenantID := c.Param("tenantId")
 	deviceID := c.Param("deviceId")
@@ -194,7 +215,16 @@ func (h *CommandHandler) HandleGetCommandHistory(c echo.Context) error {
 }
 
 // HandleGetCommandByID 获取命令详情
-// GET /api/v2/tenants/:tenantId/commands/:commandId
+// @Summary 获取命令详情
+// @Description 根据命令ID获取命令详细信息
+// @Tags 命令管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param commandId path string true "命令ID"
+// @Success 200 {object} models.Command
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/commands/{commandId} [get]
 func (h *CommandHandler) HandleGetCommandByID(c echo.Context) error {
 	commandID := c.Param("commandId")
 
@@ -215,7 +245,16 @@ func (h *CommandHandler) HandleGetCommandByID(c echo.Context) error {
 }
 
 // HandleCancelCommand 取消命令
-// DELETE /api/v2/tenants/:tenantId/commands/:commandId
+// @Summary 取消命令
+// @Description 取消指定的待执行命令
+// @Tags 命令管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param commandId path string true "命令ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/commands/{commandId} [delete]
 func (h *CommandHandler) HandleCancelCommand(c echo.Context) error {
 	commandID := c.Param("commandId")
 
@@ -249,7 +288,16 @@ func NewStatusHandler(statusSvc services.DeviceStatusService) *StatusHandler {
 }
 
 // HandleGetDeviceStatus 获取设备状态
-// GET /api/v2/tenants/:tenantId/devices/:deviceId/status
+// @Summary 获取设备状态
+// @Description 获取指定设备的当前状态信息
+// @Tags 状态管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param deviceId path string true "设备ID"
+// @Success 200 {object} models.DeviceStatus
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/devices/{deviceId}/status [get]
 func (h *StatusHandler) HandleGetDeviceStatus(c echo.Context) error {
 	deviceID := c.Param("deviceId")
 
@@ -270,7 +318,15 @@ func (h *StatusHandler) HandleGetDeviceStatus(c echo.Context) error {
 }
 
 // HandleGetAllDeviceStatuses 获取所有设备状态
-// GET /api/v2/tenants/:tenantId/devices/status
+// @Summary 获取所有设备状态
+// @Description 获取指定租户下所有设备的状态概览
+// @Tags 状态管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/devices/status [get]
 func (h *StatusHandler) HandleGetAllDeviceStatuses(c echo.Context) error {
 	tenantID := c.Param("tenantId")
 
@@ -316,7 +372,7 @@ func parseIntParam(s string) (int, error) {
 // CommandRequest 发送命令请求
 type CommandRequest struct {
 	Type     string                 `json:"type" example:"setScreen" validate:"required"`
-	Params   map[string]interface{} `json:"params,omitempty" example:"{\"on\": true}"`
+	Params   map[string]interface{} `json:"params,omitempty"`
 	Timeout  int                    `json:"timeout,omitempty" example:"30"`
 	Priority int                    `json:"priority,omitempty" example:"0"`
 }
@@ -333,4 +389,14 @@ type CommandResponse struct {
 // ErrorResponse 错误响应
 type ErrorResponse struct {
 	Error string `json:"error" example:"error message"`
+}
+
+// BatchCommandRequest 批量命令请求
+type BatchCommandRequest struct {
+	DeviceIDs []string               `json:"device_ids,omitempty"`
+	GroupIDs  []string               `json:"group_ids,omitempty"`
+	All       bool                   `json:"all,omitempty"`
+	Type      string                 `json:"type" example:"setScreen"`
+	Params    map[string]interface{} `json:"params,omitempty"`
+	Timeout   int                    `json:"timeout,omitempty" example:"30"`
 }

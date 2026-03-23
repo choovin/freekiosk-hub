@@ -50,7 +50,17 @@ type AssignPolicyRequest struct {
 }
 
 // CreatePolicy 创建安全策略
-// POST /api/v2/tenants/:tenantId/policies
+// @Summary 创建安全策略
+// @Description 为租户创建新的安全策略
+// @Tags 策略管理
+// @Accept json
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param request body CreatePolicyRequest true "创建策略请求"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/policies [post]
 func (h *PolicyHandler) CreatePolicy(c echo.Context) error {
 	tenantID := c.Param("tenantId")
 	if tenantID == "" {
@@ -82,7 +92,16 @@ func (h *PolicyHandler) CreatePolicy(c echo.Context) error {
 }
 
 // GetPolicy 获取策略
-// GET /api/v2/tenants/:tenantId/policies/:policyId
+// @Summary 获取策略详情
+// @Description 根据策略ID获取策略详细信息
+// @Tags 策略管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param policyId path string true "策略ID"
+// @Success 200 {object} models.SecurityPolicy
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/policies/{policyId} [get]
 func (h *PolicyHandler) GetPolicy(c echo.Context) error {
 	policyID := c.Param("policyId")
 	if policyID == "" {
@@ -98,7 +117,15 @@ func (h *PolicyHandler) GetPolicy(c echo.Context) error {
 }
 
 // ListPolicies 列出租户的所有策略
-// GET /api/v2/tenants/:tenantId/policies
+// @Summary 列出租户策略
+// @Description 获取指定租户下的所有策略列表
+// @Tags 策略管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/policies [get]
 func (h *PolicyHandler) ListPolicies(c echo.Context) error {
 	tenantID := c.Param("tenantId")
 	if tenantID == "" {
@@ -117,7 +144,19 @@ func (h *PolicyHandler) ListPolicies(c echo.Context) error {
 }
 
 // UpdatePolicy 更新策略
-// PUT /api/v2/tenants/:tenantId/policies/:policyId
+// @Summary 更新策略
+// @Description 更新指定策略的信息和设置
+// @Tags 策略管理
+// @Accept json
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param policyId path string true "策略ID"
+// @Param request body UpdatePolicyRequest true "更新策略请求"
+// @Success 200 {object} models.SecurityPolicy
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/policies/{policyId} [put]
 func (h *PolicyHandler) UpdatePolicy(c echo.Context) error {
 	policyID := c.Param("policyId")
 	if policyID == "" {
@@ -157,7 +196,16 @@ func (h *PolicyHandler) UpdatePolicy(c echo.Context) error {
 }
 
 // DeletePolicy 删除策略
-// DELETE /api/v2/tenants/:tenantId/policies/:policyId
+// @Summary 删除策略
+// @Description 删除指定的策略
+// @Tags 策略管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param policyId path string true "策略ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/policies/{policyId} [delete]
 func (h *PolicyHandler) DeletePolicy(c echo.Context) error {
 	policyID := c.Param("policyId")
 	if policyID == "" {
@@ -174,7 +222,18 @@ func (h *PolicyHandler) DeletePolicy(c echo.Context) error {
 }
 
 // AssignPolicy 分配策略给设备
-// POST /api/v2/tenants/:tenantId/policies/:policyId/assign
+// @Summary 分配策略
+// @Description 将策略分配给指定的设备
+// @Tags 策略管理
+// @Accept json
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param policyId path string true "策略ID"
+// @Param request body AssignPolicyRequest true "分配策略请求"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/policies/{policyId}/assign [post]
 func (h *PolicyHandler) AssignPolicy(c echo.Context) error {
 	policyID := c.Param("policyId")
 	if policyID == "" {
@@ -205,7 +264,18 @@ func (h *PolicyHandler) AssignPolicy(c echo.Context) error {
 }
 
 // AddAppToWhitelist 添加应用到白名单
-// POST /api/v2/tenants/:tenantId/policies/:policyId/whitelist
+// @Summary 添加应用到白名单
+// @Description 将指定应用添加到策略的白名单中
+// @Tags 白名单管理
+// @Accept json
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param policyId path string true "策略ID"
+// @Param request body AddAppRequest true "添加应用请求"
+// @Success 201 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/policies/{policyId}/whitelist [post]
 func (h *PolicyHandler) AddAppToWhitelist(c echo.Context) error {
 	policyID := c.Param("policyId")
 	if policyID == "" {
@@ -241,7 +311,17 @@ func (h *PolicyHandler) AddAppToWhitelist(c echo.Context) error {
 }
 
 // RemoveAppFromWhitelist 从白名单移除应用
-// DELETE /api/v2/tenants/:tenantId/policies/:policyId/whitelist/:packageName
+// @Summary 从白名单移除应用
+// @Description 将指定应用从策略的白名单中移除
+// @Tags 白名单管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param policyId path string true "策略ID"
+// @Param packageName path string true "应用包名"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/policies/{policyId}/whitelist/{packageName} [delete]
 func (h *PolicyHandler) RemoveAppFromWhitelist(c echo.Context) error {
 	policyID := c.Param("policyId")
 	packageName := c.Param("packageName")
@@ -265,7 +345,16 @@ func (h *PolicyHandler) RemoveAppFromWhitelist(c echo.Context) error {
 }
 
 // GetDeviceWhitelist 获取设备的白名单
-// GET /api/v2/tenants/:tenantId/devices/:deviceId/whitelist
+// @Summary 获取设备白名单
+// @Description 获取指定设备的应用白名单
+// @Tags 白名单管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param deviceId path string true "设备ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/devices/{deviceId}/whitelist [get]
 func (h *PolicyHandler) GetDeviceWhitelist(c echo.Context) error {
 	deviceID := c.Param("deviceId")
 	if deviceID == "" {
@@ -285,7 +374,16 @@ func (h *PolicyHandler) GetDeviceWhitelist(c echo.Context) error {
 }
 
 // GetDevicePolicy 获取设备的策略
-// GET /api/v2/tenants/:tenantId/devices/:deviceId/policy
+// @Summary 获取设备策略
+// @Description 获取指定设备当前应用的策略
+// @Tags 策略管理
+// @Produce json
+// @Param tenantId path string true "租户ID"
+// @Param deviceId path string true "设备ID"
+// @Success 200 {object} models.SecurityPolicy
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v2/tenants/{tenantId}/devices/{deviceId}/policy [get]
 func (h *PolicyHandler) GetDevicePolicy(c echo.Context) error {
 	deviceID := c.Param("deviceId")
 	if deviceID == "" {

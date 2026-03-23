@@ -4,6 +4,1443 @@
         "contact": {}
     },
     "paths": {
+        "/api/v2/auth/device/{deviceId}": {
+            "delete": {
+                "description": "吊销指定设备的访问权限",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "吊销设备",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "deviceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/auth/refresh": {
+            "post": {
+                "description": "使用刷新令牌获取新的访问令牌",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "刷新访问令牌",
+                "parameters": [
+                    {
+                        "description": "刷新令牌请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/auth/register": {
+            "post": {
+                "description": "设备注册，获取访问令牌和证书",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "注册设备",
+                "parameters": [
+                    {
+                        "description": "设备注册信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceRegistration"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/auth/token": {
+            "post": {
+                "description": "根据租户ID和设备密钥获取访问令牌(仅用于测试)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "获取访问令牌",
+                "parameters": [
+                    {
+                        "description": "令牌请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.TokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/auth/validate/{deviceId}": {
+            "get": {
+                "description": "验证设备是否已注册且有效",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "验证设备",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "deviceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ValidateDeviceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/broadcast": {
+            "post": {
+                "description": "向分组或所有设备发送广播消息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "发送广播",
+                "parameters": [
+                    {
+                        "description": "广播请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.SendBroadcastInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Broadcast"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/commands": {
+            "get": {
+                "description": "设备拉取待处理的命令",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "拉取命令",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "device_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.CommandPoll"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/devices": {
+            "get": {
+                "description": "获取所有野外考察设备",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "列出设备",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.FieldTripDevice"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建新的野外考察设备并返回二维码信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "创建设备",
+                "parameters": [
+                    {
+                        "description": "创建设备请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateDeviceInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/devices/bind": {
+            "post": {
+                "description": "处理平板二维码绑定",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "绑定设备",
+                "parameters": [
+                    {
+                        "description": "绑定请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BindRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.BindResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/devices/bulk": {
+            "post": {
+                "description": "批量创建多个野外考察设备",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "批量创建设备",
+                "parameters": [
+                    {
+                        "description": "批量创建设备请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.BulkCreateDevicesInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/devices/{id}": {
+            "delete": {
+                "description": "删除指定的野外考察设备",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "删除设备",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "更新野外考察设备信息（仅名称）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "更新设备",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新设备请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.UpdateDeviceInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/devices/{id}/location": {
+            "post": {
+                "description": "设备上报GPS位置信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "报告位置",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "GPS报告",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.GPSReport"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/devices/{id}/location/history": {
+            "get": {
+                "description": "获取设备的位置历史记录",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "获取位置历史",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/devices/{id}/whitelist": {
+            "post": {
+                "description": "设置设备的应用白名单",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "设置白名单",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "白名单请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.SetWhitelistInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/groups": {
+            "get": {
+                "description": "获取所有野外考察分组",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "列出分组",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.FieldTripGroup"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建新的野外考察分组",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "创建分组",
+                "parameters": [
+                    {
+                        "description": "创建分组请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateGroupInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.FieldTripGroup"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/groups/{id}": {
+            "delete": {
+                "description": "删除指定的野外考察分组",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "野外考察"
+                ],
+                "summary": "删除分组",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "分组ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/ota/list": {
+            "get": {
+                "description": "获取所有可用的OTA更新安装包",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OTA更新"
+                ],
+                "summary": "列出OTA安装包",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/fieldtrip/ota/upload": {
+            "post": {
+                "description": "上传OTA更新安装包（APK格式）",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OTA更新"
+                ],
+                "summary": "上传OTA安装包",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "APK文件",
+                        "name": "apk",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants": {
+            "get": {
+                "description": "获取租户列表",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "列出租户",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建新的租户",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "创建租户",
+                "parameters": [
+                    {
+                        "description": "创建租户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.CreateTenantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Tenant"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}": {
+            "get": {
+                "description": "根据租户ID获取租户详情",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "获取租户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Tenant"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新租户信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "更新租户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新租户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.UpdateTenantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Tenant"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定的租户",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "删除租户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/audit-logs": {
+            "get": {
+                "description": "查询指定租户的审计日志记录",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "审计日志"
+                ],
+                "summary": "查询审计日志",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "操作者ID",
+                        "name": "actor_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "操作类型",
+                        "name": "action",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "资源类型",
+                        "name": "resource_type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/commands/batch": {
+            "post": {
+                "description": "向多个设备或分组发送批量命令",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "命令管理"
+                ],
+                "summary": "发送批量命令",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "批量命令请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.BatchCommandRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/commands/{commandId}": {
+            "get": {
+                "description": "根据命令ID获取命令详细信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "命令管理"
+                ],
+                "summary": "获取命令详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命令ID",
+                        "name": "commandId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Command"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "取消指定的待执行命令",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "命令管理"
+                ],
+                "summary": "取消命令",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "命令ID",
+                        "name": "commandId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/devices/status": {
+            "get": {
+                "description": "获取指定租户下所有设备的状态概览",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "状态管理"
+                ],
+                "summary": "获取所有设备状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v2/tenants/{tenantId}/devices/{deviceId}/commands": {
             "post": {
                 "description": "向指定设备发送控制命令（如屏幕开关、导航、音频等）",
@@ -38,7 +1475,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api.CommandRequest"
+                            "$ref": "#/definitions/api.CommandRequest"
                         }
                     }
                 ],
@@ -46,19 +1483,761 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_api.CommandResponse"
+                            "$ref": "#/definitions/api.CommandResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_api.ErrorResponse"
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_api.ErrorResponse"
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/devices/{deviceId}/commands/history": {
+            "get": {
+                "description": "获取指定设备的命令历史记录",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "命令管理"
+                ],
+                "summary": "获取命令历史",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "deviceId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "偏移量",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/devices/{deviceId}/policy": {
+            "get": {
+                "description": "获取指定设备当前应用的策略",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "策略管理"
+                ],
+                "summary": "获取设备策略",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "deviceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SecurityPolicy"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/devices/{deviceId}/status": {
+            "get": {
+                "description": "获取指定设备的当前状态信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "状态管理"
+                ],
+                "summary": "获取设备状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "deviceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/devices/{deviceId}/whitelist": {
+            "get": {
+                "description": "获取指定设备的应用白名单",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "白名单管理"
+                ],
+                "summary": "获取设备白名单",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "设备ID",
+                        "name": "deviceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/policies": {
+            "get": {
+                "description": "获取指定租户下的所有策略列表",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "策略管理"
+                ],
+                "summary": "列出租户策略",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "为租户创建新的安全策略",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "策略管理"
+                ],
+                "summary": "创建安全策略",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "创建策略请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CreatePolicyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/policies/{policyId}": {
+            "get": {
+                "description": "根据策略ID获取策略详细信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "策略管理"
+                ],
+                "summary": "获取策略详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "策略ID",
+                        "name": "policyId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SecurityPolicy"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新指定策略的信息和设置",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "策略管理"
+                ],
+                "summary": "更新策略",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "策略ID",
+                        "name": "policyId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新策略请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.UpdatePolicyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SecurityPolicy"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定的策略",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "策略管理"
+                ],
+                "summary": "删除策略",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "策略ID",
+                        "name": "policyId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/policies/{policyId}/assign": {
+            "post": {
+                "description": "将策略分配给指定的设备",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "策略管理"
+                ],
+                "summary": "分配策略",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "策略ID",
+                        "name": "policyId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "分配策略请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.AssignPolicyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/policies/{policyId}/whitelist": {
+            "post": {
+                "description": "将指定应用添加到策略的白名单中",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "白名单管理"
+                ],
+                "summary": "添加应用到白名单",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "策略ID",
+                        "name": "policyId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "添加应用请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.AddAppRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/policies/{policyId}/whitelist/{packageName}": {
+            "delete": {
+                "description": "将指定应用从策略的白名单中移除",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "白名单管理"
+                ],
+                "summary": "从白名单移除应用",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "策略ID",
+                        "name": "policyId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "应用包名",
+                        "name": "packageName",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/tenants/{tenantId}/quota": {
+            "get": {
+                "description": "获取指定租户的配额信息",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "获取租户配额",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.TenantQuota"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新指定租户的配额信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "更新租户配额",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "配额信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TenantQuota"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -66,10 +2245,114 @@
         }
     },
     "definitions": {
-        "internal_api.CommandRequest": {
-            "type": "object"
+        "api.AddAppRequest": {
+            "type": "object",
+            "properties": {
+                "allow_notifications": {
+                    "type": "boolean"
+                },
+                "app_name": {
+                    "type": "string"
+                },
+                "auto_launch": {
+                    "type": "boolean"
+                },
+                "default_shortcut": {
+                    "type": "boolean"
+                },
+                "package_name": {
+                    "type": "string"
+                }
+            }
         },
-        "internal_api.CommandResponse": {
+        "api.AssignPolicyRequest": {
+            "type": "object",
+            "properties": {
+                "device_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "group_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "api.BatchCommandRequest": {
+            "type": "object",
+            "properties": {
+                "all": {
+                    "type": "boolean"
+                },
+                "device_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "group_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "params": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "timeout": {
+                    "type": "integer",
+                    "example": 30
+                },
+                "type": {
+                    "type": "string",
+                    "example": "setScreen"
+                }
+            }
+        },
+        "api.BulkCreateDevicesInput": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.CommandRequest": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "params": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "priority": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "timeout": {
+                    "type": "integer",
+                    "example": 30
+                },
+                "type": {
+                    "type": "string",
+                    "example": "setScreen"
+                }
+            }
+        },
+        "api.CommandResponse": {
             "type": "object",
             "properties": {
                 "command_id": {
@@ -94,12 +2377,842 @@
                 }
             }
         },
-        "internal_api.ErrorResponse": {
+        "api.CreateDeviceInput": {
+            "type": "object",
+            "properties": {
+                "group_key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.CreateGroupInput": {
+            "type": "object",
+            "properties": {
+                "broadcast_sound": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "update_policy": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.CreatePolicyRequest": {
+            "type": "object",
+            "properties": {
+                "app_whitelist": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AppWhitelistEntry"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "settings": {
+                    "$ref": "#/definitions/models.SecurityPolicySettings"
+                }
+            }
+        },
+        "api.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
                     "type": "string",
                     "example": "error message"
+                }
+            }
+        },
+        "api.RefreshTokenRequest": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string",
+                    "example": "xxx"
+                }
+            }
+        },
+        "api.SendBroadcastInput": {
+            "type": "object",
+            "properties": {
+                "created_by": {
+                    "type": "string"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "sound": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.SetWhitelistInput": {
+            "type": "object",
+            "properties": {
+                "whitelist": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "api.TokenRequest": {
+            "type": "object",
+            "properties": {
+                "device_key": {
+                    "type": "string",
+                    "example": "device-key-xxx"
+                },
+                "tenant_id": {
+                    "type": "string",
+                    "example": "tenant001"
+                }
+            }
+        },
+        "api.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "expires_at": {
+                    "type": "integer",
+                    "example": 1700000000000
+                },
+                "refresh_token": {
+                    "type": "string",
+                    "example": "xxx"
+                },
+                "token_type": {
+                    "type": "string",
+                    "example": "Bearer"
+                }
+            }
+        },
+        "api.UpdateDeviceInput": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.UpdatePolicyRequest": {
+            "type": "object",
+            "properties": {
+                "app_whitelist": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AppWhitelistEntry"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "settings": {
+                    "$ref": "#/definitions/models.SecurityPolicySettings"
+                }
+            }
+        },
+        "api.ValidateDeviceResponse": {
+            "type": "object",
+            "properties": {
+                "device_id": {
+                    "type": "string",
+                    "example": "device001"
+                },
+                "valid": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "models.AppHardeningConfig": {
+            "type": "object",
+            "properties": {
+                "allow_background_switch": {
+                    "description": "允许后台应用切换",
+                    "type": "boolean"
+                },
+                "allow_recent_apps": {
+                    "description": "允许最近应用",
+                    "type": "boolean"
+                },
+                "allow_return_key": {
+                    "description": "允许返回键",
+                    "type": "boolean"
+                },
+                "force_full_screen": {
+                    "description": "强制全屏",
+                    "type": "boolean"
+                },
+                "hide_home_indicator": {
+                    "description": "隐藏 Home 指示器",
+                    "type": "boolean"
+                }
+            }
+        },
+        "models.AppWhitelistEntry": {
+            "type": "object",
+            "properties": {
+                "allow_notifications": {
+                    "description": "允许通知",
+                    "type": "boolean"
+                },
+                "app_name": {
+                    "description": "应用名称",
+                    "type": "string"
+                },
+                "auto_launch": {
+                    "description": "自启动",
+                    "type": "boolean"
+                },
+                "default_shortcut": {
+                    "description": "显示默认快捷方式",
+                    "type": "boolean"
+                },
+                "package_name": {
+                    "description": "包名",
+                    "type": "string"
+                }
+            }
+        },
+        "models.BindRequest": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "device_id": {
+                    "type": "string"
+                },
+                "group_key": {
+                    "type": "string"
+                },
+                "hub_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BindResponse": {
+            "type": "object",
+            "properties": {
+                "broadcast_sound": {
+                    "type": "string"
+                },
+                "device_id": {
+                    "type": "string"
+                },
+                "device_name": {
+                    "type": "string"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "group_name": {
+                    "type": "string"
+                },
+                "signing_pubkey": {
+                    "type": "string"
+                },
+                "update_policy": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Broadcast": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "integer"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "delivered_count": {
+                    "type": "integer"
+                },
+                "failed_count": {
+                    "type": "integer"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "sound": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Command": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "timeout": {
+                    "description": "秒",
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/models.CommandType"
+                }
+            }
+        },
+        "models.CommandPoll": {
+            "type": "object",
+            "properties": {
+                "broadcast": {
+                    "type": "string"
+                },
+                "ota_url": {
+                    "type": "string"
+                },
+                "whitelist": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "models.CommandType": {
+            "type": "string",
+            "enum": [
+                "setBrightness",
+                "setScreen",
+                "setVolume",
+                "navigate",
+                "reload",
+                "reboot",
+                "clearCache",
+                "updateApp",
+                "screenshot",
+                "getLogs",
+                "getWifiInfo",
+                "installApp",
+                "uninstallApp",
+                "setRotation",
+                "setKioskMode",
+                "playSound",
+                "stopSound",
+                "speak",
+                "wakeUp",
+                "sleep",
+                "setPin"
+            ],
+            "x-enum-varnames": [
+                "CommandSetBrightness",
+                "CommandSetScreen",
+                "CommandSetVolume",
+                "CommandNavigate",
+                "CommandReload",
+                "CommandReboot",
+                "CommandClearCache",
+                "CommandUpdateApp",
+                "CommandScreenshot",
+                "CommandGetLogs",
+                "CommandGetWifiInfo",
+                "CommandInstallApp",
+                "CommandUninstallApp",
+                "CommandSetRotation",
+                "CommandSetKioskMode",
+                "CommandPlaySound",
+                "CommandStopSound",
+                "CommandSpeak",
+                "CommandWakeUp",
+                "CommandSleep",
+                "CommandSetPin"
+            ]
+        },
+        "models.DeviceInfo": {
+            "type": "object",
+            "properties": {
+                "android_version": {
+                    "type": "string"
+                },
+                "app_version": {
+                    "type": "string"
+                },
+                "battery_charging": {
+                    "type": "boolean"
+                },
+                "battery_level": {
+                    "type": "integer"
+                },
+                "brand": {
+                    "type": "string"
+                },
+                "free_memory": {
+                    "type": "integer"
+                },
+                "free_storage": {
+                    "type": "integer"
+                },
+                "imei": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "screen_brightness": {
+                    "type": "integer"
+                },
+                "screen_on": {
+                    "type": "boolean"
+                },
+                "sdk_version": {
+                    "type": "integer"
+                },
+                "serial_number": {
+                    "type": "string"
+                },
+                "total_memory": {
+                    "type": "integer"
+                },
+                "total_storage": {
+                    "type": "integer"
+                },
+                "volume": {
+                    "type": "integer"
+                },
+                "wifi_mac": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DeviceRegistration": {
+            "type": "object",
+            "properties": {
+                "csr_pem": {
+                    "type": "string"
+                },
+                "device_info": {
+                    "$ref": "#/definitions/models.DeviceInfo"
+                },
+                "device_key": {
+                    "type": "string"
+                },
+                "integrity_token": {
+                    "type": "string"
+                },
+                "nonce": {
+                    "type": "string"
+                },
+                "tenant_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DeviceStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "active",
+                "disabled",
+                "deleted"
+            ],
+            "x-enum-varnames": [
+                "DeviceStatusPending",
+                "DeviceStatusActive",
+                "DeviceStatusDisabled",
+                "DeviceStatusDeleted"
+            ]
+        },
+        "models.FieldTripDevice": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "integer"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "hub_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_lat": {
+                    "type": "number"
+                },
+                "last_lng": {
+                    "type": "number"
+                },
+                "last_seen": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "signing_pubkey": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.FieldTripGroup": {
+            "type": "object",
+            "properties": {
+                "broadcast_sound": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "update_policy": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.GPSReport": {
+            "type": "object",
+            "properties": {
+                "accuracy": {
+                    "type": "number"
+                },
+                "device_id": {
+                    "type": "string"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HardeningConfig": {
+            "type": "object",
+            "properties": {
+                "disable_adb_install": {
+                    "description": "禁用 ADB 安装",
+                    "type": "boolean"
+                },
+                "disable_navigation_bar": {
+                    "description": "禁用导航栏",
+                    "type": "boolean"
+                },
+                "disable_power_menu": {
+                    "description": "禁用电源菜单",
+                    "type": "boolean"
+                },
+                "disable_screen_capture": {
+                    "description": "禁用屏幕录制",
+                    "type": "boolean"
+                },
+                "disable_screenshot": {
+                    "description": "禁用截图",
+                    "type": "boolean"
+                },
+                "disable_settings_access": {
+                    "description": "禁用设置访问",
+                    "type": "boolean"
+                },
+                "disable_status_bar": {
+                    "description": "禁用状态栏",
+                    "type": "boolean"
+                },
+                "disable_usb_debug": {
+                    "description": "禁用 USB 调试",
+                    "type": "boolean"
+                },
+                "safe_boot": {
+                    "description": "安全启动",
+                    "type": "boolean"
+                }
+            }
+        },
+        "models.NetworkConfig": {
+            "type": "object",
+            "properties": {
+                "allow_bluetooth": {
+                    "description": "允许蓝牙",
+                    "type": "boolean"
+                },
+                "allow_mobile_data": {
+                    "description": "允许移动数据",
+                    "type": "boolean"
+                },
+                "allow_wifi": {
+                    "description": "允许 WiFi",
+                    "type": "boolean"
+                },
+                "allowed_wifi_ssids": {
+                    "description": "允许的 WiFi SSID 列表",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "blocked_ports": {
+                    "description": "阻止的端口",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "proxy_address": {
+                    "description": "代理服务器地址",
+                    "type": "string"
+                }
+            }
+        },
+        "models.PasswordPolicyConfig": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "lockout_duration_minutes": {
+                    "description": "分钟",
+                    "type": "integer"
+                },
+                "max_attempts": {
+                    "type": "integer"
+                },
+                "min_length": {
+                    "type": "integer"
+                },
+                "require_lowercase": {
+                    "type": "boolean"
+                },
+                "require_numbers": {
+                    "type": "boolean"
+                },
+                "require_symbols": {
+                    "type": "boolean"
+                },
+                "require_uppercase": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "models.SecurityPolicy": {
+            "type": "object",
+            "properties": {
+                "app_whitelist": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AppWhitelistEntry"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "settings": {
+                    "$ref": "#/definitions/models.SecurityPolicySettings"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SecurityPolicySettings": {
+            "type": "object",
+            "properties": {
+                "app_hardening": {
+                    "description": "应用加固",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.AppHardeningConfig"
+                        }
+                    ]
+                },
+                "network_restrictions": {
+                    "description": "网络限制",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.NetworkConfig"
+                        }
+                    ]
+                },
+                "password_policy": {
+                    "description": "密码策略",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.PasswordPolicyConfig"
+                        }
+                    ]
+                },
+                "system_hardening": {
+                    "description": "系统加固",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.HardeningConfig"
+                        }
+                    ]
+                },
+                "timeout_settings": {
+                    "description": "超时设置",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.TimeoutConfig"
+                        }
+                    ]
+                }
+            }
+        },
+        "models.Tenant": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "plan": {
+                    "type": "string"
+                },
+                "settings": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TenantQuota": {
+            "type": "object",
+            "properties": {
+                "api_rate_limit": {
+                    "type": "integer"
+                },
+                "max_devices": {
+                    "type": "integer"
+                },
+                "max_groups": {
+                    "type": "integer"
+                },
+                "max_users": {
+                    "type": "integer"
+                },
+                "retention_days": {
+                    "type": "integer"
+                },
+                "storage_gb": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.TimeoutConfig": {
+            "type": "object",
+            "properties": {
+                "inactivity_lock_timeout": {
+                    "description": "秒，无操作自动锁定",
+                    "type": "integer"
+                },
+                "lock_timeout": {
+                    "description": "秒，自动锁定时间",
+                    "type": "integer"
+                },
+                "screen_off_timeout": {
+                    "description": "秒，屏幕自动关闭时间",
+                    "type": "integer"
+                },
+                "session_timeout": {
+                    "description": "秒，会话超时时间",
+                    "type": "integer"
+                }
+            }
+        },
+        "services.CreateTenantRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "plan": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.UpdateTenantRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "plan": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         }
