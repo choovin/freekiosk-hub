@@ -182,6 +182,37 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 		}
 		h1 { font-size: 28px; margin-bottom: 8px; font-weight: 700; }
 		.subtitle { color: rgba(255, 255, 255, 0.6); font-size: 14px; margin-bottom: 32px; }
+		.app-icon { font-size: 64px; margin-bottom: 16px; line-height: 1; }
+		.app-name { font-size: 13px; color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px; }
+		.apk-btn {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			background: #6366f1;
+			color: white;
+			font-weight: 600;
+			font-size: 15px;
+			padding: 12px 24px;
+			border-radius: 12px;
+			text-decoration: none;
+			margin-bottom: 20px;
+			transition: background 0.2s, transform 0.2s;
+		}
+		.apk-btn:hover { background: #4f46e5; transform: scale(1.02); }
+		.divider {
+			color: rgba(255,255,255,0.3);
+			font-size: 12px;
+			margin-bottom: 20px;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+		.divider::before, .divider::after {
+			content: '';
+			flex: 1;
+			height: 1px;
+			background: rgba(255,255,255,0.2);
+		}
 		.qr-container {
 			background: white;
 			border-radius: 16px;
@@ -243,21 +274,59 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 			transition: opacity 0.3s;
 		}
 		.success-msg.show { opacity: 1; }
-	</style>
+		.instructions {
+			margin-top: 24px;
+			background: rgba(255,255,255,0.05);
+			border: 1px solid rgba(255,255,255,0.1);
+			border-radius: 12px;
+			padding: 16px 20px;
+			text-align: left;
+		}
+		.instructions-title {
+			font-size: 12px;
+			color: rgba(255,255,255,0.4);
+			margin-bottom: 12px;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+		}
+		.step {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			font-size: 13px;
+			color: rgba(255,255,255,0.8);
+			margin-bottom: 8px;
+		}
+		.step:last-child { margin-bottom: 0; }
+		.step-num {
+			width: 22px;
+			height: 22px;
+			background: rgba(99,102,241,0.3);
+			border: 1px solid rgba(99,102,241,0.5);
+			border-radius: 50%%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 11px;
+			font-weight: 700;
+			color: #a5b4fc;
+			flex-shrink: 0;
+		}
+		.step-text strong { color: white; }
 </head>
 <body>
 	<div class="card">
+		<div class="app-icon">📱</div>
+		<p class="app-name">FreeKiosk / 研学版</p>
 		<h1>下载 FreeKiosk 研学版</h1>
 		<p class="subtitle">扫描二维码下载安装包</p>
 
-		<!-- APK 直接下载按钮（新增） -->
-		<div class="mb-6">
-			<a href="%s"
-				class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-all scale-[1.02]">
-				<span>⬇️</span>
-				<span>下载安装 APK</span>
-			</a>
-		</div>
+		<a href="%s" class="apk-btn">
+			<span>⬇️</span>
+			<span>下载安装 APK</span>
+		</a>
+
+		<div class="divider">或扫码下载</div>
 
 		<div class="qr-container">
 			<img src="%s" alt="QR Code" />
@@ -275,6 +344,22 @@ func (h *DownloadHandler) HandleDownloadPage(c echo.Context) error {
 		<div class="success-msg" id="copy-msg">链接已复制到剪贴板</div>
 
 		<p class="size">%s</p>
+
+		<div class="instructions">
+			<div class="instructions-title">使用步骤</div>
+			<div class="step">
+				<div class="step-num">1</div>
+				<div class="step-text">下载安装 <strong>APK</strong></div>
+			</div>
+			<div class="step">
+				<div class="step-num">2</div>
+				<div class="step-text">首次打开请<strong>扫码绑定</strong>设备</div>
+			</div>
+			<div class="step">
+				<div class="step-num">3</div>
+				<div class="step-text">开始<strong>研学之旅</strong></div>
+			</div>
+		</div>
 	</div>
 
 	<script>
