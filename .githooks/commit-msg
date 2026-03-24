@@ -1,0 +1,96 @@
+#!/bin/bash
+# commit-msg — 验证 commit message 格式是否符合规范
+# 如果格式不符，commit 将被拒绝
+#
+# 格式要求：
+#   type(scope)!: description   ← type: 必须为已知类型
+#                               ← scope: 可选，括号包围
+#                               ← !: 可选，表示破坏性变更
+#                               ← description: 中文，≤72字符，不以句号结尾
+
+COMMIT_MSG_FILE="$1"
+
+# 读取第一行（主消息行）
+first_line=$(head -1 "$COMMIT_MSG_FILE" | sed 's/[[:space:]]*$//')
+
+# 跳过 revert 和 merge commit
+if echo "$first_line" | grep -qE "^(Revert|Merge)"; then
+    exit 0
+fi
+
+# 跳过仅有注释的情况（prepare-commit-msg 添加的提示）
+if [ -z "$first_line" ]; then
+    echo "❌ Commit message 为空" >&2
+    exit 1
+fi
+
+# 格式正则
+# type: feat | fix | docs | style | refactor | perf | test | chore | build | ci | ui | db | api | revert
+# 可选 (scope)
+# 可选 ! 表示破坏性变更
+# 必须 : 分隔
+# description: 中文开头，非句号结尾，最大72字符
+VALID_PATTERN="^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|ui|db|api|revert)(\([a-zA-Z0-9_,-]+\))?!?: .+$"
+
+if ! echo "$first_line" | grep -qE "$VALID_PATTERN"; then
+    echo ""
+    echo "╔══════════════════════════════════════════════════════════════╗" >&2
+    echo "║           ❌ Commit Message 格式错误                        ║" >&2
+    echo "╠══════════════════════════════════════════════════════════════╣" >&2
+    echo "║ 当前消息: $first_line" >&2
+    echo "║                                                          ║" >&2
+    echo "║ 正确格式: type(scope): description                        ║" >&2
+    echo "║                                                          ║" >&2
+    echo "║ type 可选值:                                             ║" >&2
+    echo "║   feat    新功能                                         ║" >&2
+    echo "║   fix     Bug 修复                                       ║" >&2
+    echo "║   docs    文档更新                                       ║" >&2
+    echo "║   style   代码格式（不影响功能）                          ║" >&2
+    echo "║   refactor 重构                                         ║" >&2
+    echo "║   perf    性能优化                                       ║" >&2
+    echo "║   test    测试相关                                       ║" >&2
+    echo "║   chore   构建/工具变更                                  ║" >&2
+    echo "║   build   依赖/构建系统                                   ║" >&2
+    echo "║   ci      CI 配置                                        ║" >&2
+    echo "║   ui      UI/样式变更                                     ║" >&2
+    echo "║   db      数据库变更                                      ║" >&2
+    echo "║   api     API 变更                                       ║" >&2
+    echo "║   revert  回退                                            ║" >&2
+    echo "║                                                          ║" >&2
+    echo "║ 示例:                                                    ║" >&2
+    echo "║   feat(android): 添加手动设备码输入                       ║" >&2
+    echo "║   fix(hub): 修复SELECT * 导致sqlx扫描失败                ║" >&2
+    echo "║   docs: 更新API文档                                      ║" >&2
+    echo "║                                                          ║" >&2
+    echo "║ 规则:                                                    ║" >&2
+    echo "║   - description 使用中文                                 ║" >&2
+    echo "║   - 句末不加句号                                         ║" >&2
+    echo "║   - 长度不超过 72 字符                                   ║" >&2
+    echo "╚══════════════════════════════════════════════════════════════╝" >&2
+    exit 1
+fi
+
+# 检查 description 长度
+desc=$(echo "$first_line" | sed -E 's/^[^(]+(\([^)]+\))?(!:)?: //')
+desc_len=${#desc}
+if [ $desc_len -gt 72 ]; then
+    echo "❌ Description 长度 ${desc_len} 超过 72 字符" >&2
+    exit 1
+fi
+
+# 检查 description 是否以句号结尾
+if echo "$desc" | grep -qE '。$|\.$'; then
+    echo "❌ Description 末尾不应有句号" >&2
+    exit 1
+fi
+
+# 检查 scope 中的非法字符
+scope=$(echo "$first_line" | sed -n 's/^[^(]*(\([^)]*\)).*/\1/p')
+if [ -n "$scope" ]; then
+    if echo "$scope" | grep -qE '[^a-zA-Z0-9_,-]'; then
+        echo "❌ Scope 中包含非法字符，只允许 a-zA-Z0-9_,-" >&2
+        exit 1
+    fi
+fi
+
+exit 0

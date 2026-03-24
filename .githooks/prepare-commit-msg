@@ -1,0 +1,70 @@
+#!/bin/bash
+# prepare-commit-msg — 自动生成符合规范的 commit message 模板
+# 使用方式：在 commit message 编辑前运行，自动添加 type prefix 提示
+#
+# 支持的 type：
+#   feat:     新功能
+#   fix:      Bug 修复
+#   docs:     文档更新
+#   style:    代码格式（不影响功能）
+#   refactor: 重构（不修复bug不添加功能）
+#   perf:     性能优化
+#   test:     测试相关
+#   chore:    构建/工具变更
+#   build:    依赖/构建系统
+#   ci:       CI 配置
+#   ui:       UI/样式变更
+#   db:       数据库变更
+#   api:      API 变更
+#
+# 使用示例：
+#   git commit -m "feat: 添加用户登录功能"
+#   git commit -m "fix(android): 修复Kiosk模式崩溃"
+#   git commit -m "docs: 更新REST API文档"
+
+COMMIT_MSG_FILE="$1"
+COMMIT_SOURCE="$2"
+SHA1="$3"
+
+# 如果是 squash merge 或从 template 读取，不做处理
+if [ -z "$COMMIT_SOURCE" ] || [ "$COMMIT_SOURCE" = "template" ] || [ "$COMMIT_SOURCE" = "squash" ]; then
+    exit 0
+fi
+
+# 如果 message 已经存在（非空且不是默认模板），不修改
+if [ -s "$COMMIT_MSG_FILE" ] && [ "$(wc -l < "$COMMIT_MSG_FILE")" -gt 0 ]; then
+    first_line=$(head -1 "$COMMIT_MSG_FILE")
+    # 如果第一行已经是 "type: description" 格式，跳过
+    if echo "$first_line" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|ui|db|api|revert)(\(.+\))?!?: .+"; then
+        exit 0
+    fi
+fi
+
+# 读取已有内容
+existing_msg=$(cat "$COMMIT_MSG_FILE" 2>/dev/null | head -20)
+
+# 打印类型提示（注释形式添加到文件底部，不影响主消息）
+cat >> "$COMMIT_MSG_FILE" << 'EOF'
+
+# ═══════════════════════════════════════════════════════════════
+#  Commit Message 规范
+#  格式：type(scope): description
+#
+#  type: feat | fix | docs | style | refactor | perf | test |
+#        chore | build | ci | ui | db | api | revert
+#
+#  示例：
+#    feat: 添加用户绑定功能
+#    fix(android): 修复扫码崩溃
+#    docs(hub): 更新API文档
+#    ui(settings): 优化设置页面样式
+#
+#  description 规则：
+#    - 使用中文，简洁明了
+#    - 句末不加句号
+#    - 长度不超过 72 字符
+#    - 问题修复请写明 "修复XXX"
+# ═══════════════════════════════════════════════════════════════
+EOF
+
+exit 0
