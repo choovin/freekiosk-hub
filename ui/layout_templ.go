@@ -101,7 +101,20 @@ func Layout(title string, lang string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</a></li><li><a hx-get=\"/fieldtrip\" hx-target=\"main\" hx-push-url=\"true\" class=\"rounded-lg hover:bg-primary/10 transition-colors cursor-pointer\">Field Trip</a></li></ul><div class=\"dropdown dropdown-end\"><div tabindex=\"0\" role=\"button\" class=\"btn btn-ghost btn-circle avatar placeholder\"><div class=\"bg-neutral text-neutral-content rounded-full w-8\"><span class=\"text-xs\">FK</span></div></div><ul tabindex=\"0\" class=\"dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-slate-100\"><li><a href=\"?lang=en\">🇺🇸 English</a></li><li><a href=\"?lang=zh\">🇨🇳 中文</a></li><li><a href=\"?lang=fr\">🇫🇷 Français</a></li><li><a href=\"?lang=es\">🇪🇸 Español</a></li><li><a href=\"?lang=de\">🇩🇪 Deutsch</a></li><li><a href=\"?lang=ja\">🇯🇵 日本語</a></li><li><a href=\"?lang=ko\">🇰🇷 한국어</a></li><li><a href=\"?lang=pt\">🇵🇹 Português</a></li><li><a href=\"?lang=ru\">🇷🇺 Русский</a></li><li><a href=\"?lang=ar\">🇸🇦 العربية</a></li></ul></div></div></div></div><div id=\"toast-container\" class=\"toast toast-end fixed bottom-6 right-6 z-[9999]\"></div><main class=\"max-w-7xl mx-auto py-8\" id=\"main-container\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</a></li><li><a hx-get=\"/fieldtrip\" hx-target=\"main\" hx-push-url=\"true\" class=\"rounded-lg hover:bg-primary/10 transition-colors cursor-pointer\">Field Trip</a></li><li><a href=\"/logout\" class=\"rounded-lg hover:bg-primary/10 transition-colors cursor-pointer text-error\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(t("auth.logout"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 112, Col: 54}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</a></li></ul><div class=\"dropdown dropdown-end\"><div tabindex=\"0\" role=\"button\" class=\"btn btn-ghost btn-circle avatar placeholder\"><div class=\"bg-neutral text-neutral-content rounded-full w-8\"><span class=\"text-xs\">FK</span></div></div><ul tabindex=\"0\" class=\"dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-slate-100\"><li><a href=\"?lang=en\">🇺🇸 English</a></li><li><a href=\"?lang=zh\">🇨🇳 中文</a></li><li><a href=\"?lang=fr\">🇫🇷 Français</a></li><li><a href=\"?lang=es\">🇪🇸 Español</a></li><li><a href=\"?lang=de\">🇩🇪 Deutsch</a></li><li><a href=\"?lang=ja\">🇯🇵 日本語</a></li><li><a href=\"?lang=ko\">🇰🇷 한국어</a></li><li><a href=\"?lang=pt\">🇵🇹 Português</a></li><li><a href=\"?lang=ru\">🇷🇺 Русский</a></li><li><a href=\"?lang=ar\">🇸🇦 العربية</a></li></ul></div></div></div></div><div id=\"toast-container\" class=\"toast toast-end fixed bottom-6 right-6 z-[9999]\"></div><main class=\"max-w-7xl mx-auto py-8\" id=\"main-container\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -109,7 +122,7 @@ func Layout(title string, lang string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main><footer class=\"footer footer-center p-4 text-slate-400 text-xs\"><aside><div class=\"flex items-center gap-4\"><p>FreeKiosk Hub</p><span>|</span> <a href=\"http://localhost:18083\" target=\"_blank\" class=\"flex items-center gap-1 hover:text-primary transition-colors\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2\"></path></svg> EMQX Dashboard</a></div></aside></footer><style>\n                .toast-card {\n                    animation: toast-in 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;\n                    pointer-events: auto; /* On réactive les clics pour le bouton fermer */\n                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);\n                }\n\n                @keyframes toast-in {\n                    from { transform: translateY(20px); opacity: 0; scale: 0.9; }\n                    to { transform: translateY(0); opacity: 1; scale: 1; }\n                }\n\n               .toast-out {\n                    opacity: 0 !important;\n                    transform: scale(0.9) translateY(20px) !important;\n                    transition:\n                        opacity 0.3s ease-out,\n                        transform 0.4s cubic-bezier(0.4, 0, 1, 1),\n                        margin 0.4s 0.1s ease-in !important; /* Pour réduire l'espace proprement */\n                    pointer-events: none; /* Évite les clics fantômes pendant l'animation */\n                }\n            </style></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</main><footer class=\"footer footer-center p-4 text-slate-400 text-xs\"><aside><div class=\"flex items-center gap-4\"><p>FreeKiosk Hub</p><span>|</span> <a href=\"http://localhost:18083\" target=\"_blank\" class=\"flex items-center gap-1 hover:text-primary transition-colors\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2\"></path></svg> EMQX Dashboard</a></div></aside></footer><style>\n                .toast-card {\n                    animation: toast-in 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;\n                    pointer-events: auto; /* On réactive les clics pour le bouton fermer */\n                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);\n                }\n\n                @keyframes toast-in {\n                    from { transform: translateY(20px); opacity: 0; scale: 0.9; }\n                    to { transform: translateY(0); opacity: 1; scale: 1; }\n                }\n\n               .toast-out {\n                    opacity: 0 !important;\n                    transform: scale(0.9) translateY(20px) !important;\n                    transition:\n                        opacity 0.3s ease-out,\n                        transform 0.4s cubic-bezier(0.4, 0, 1, 1),\n                        margin 0.4s 0.1s ease-in !important; /* Pour réduire l'espace proprement */\n                    pointer-events: none; /* Évite les clics fantômes pendant l'animation */\n                }\n            </style></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -133,77 +146,77 @@ func Toast(message string, status string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		toastID := fmt.Sprintf("t%d", time.Now().UnixNano())
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div hx-swap-oob=\"beforeend:#toast-container\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div hx-swap-oob=\"beforeend:#toast-container\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var8 = []any{"alert shadow-2xl flex items-center justify-between min-w-[320px] border-none !opacity-100 mb-2 pointer-events-auto",
+		var templ_7745c5c3_Var9 = []any{"alert shadow-2xl flex items-center justify-between min-w-[320px] border-none !opacity-100 mb-2 pointer-events-auto",
 			boolToText(status == "success", "alert-success text-white", "alert-error text-white")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var8...)
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var9...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<span id=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(toastID)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 182, Col: 20}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<span id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var8).String())
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(toastID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 1, Col: 0}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 188, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><div class=\"flex items-center gap-3\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if status == "success" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<span class=\"font-bold text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(message)
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var9).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 193, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 1, Col: 0}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</span></div><button onclick=\"const a = this.closest('.alert'); a.style.opacity='0'; a.style.transform='scale(0.9)'; setTimeout(() => a.remove(), 100)\" class=\"btn btn-ghost btn-xs btn-circle bg-black/10 hover:bg-black/20 text-white border-none ml-4\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button><script>\n            \n                // Utilisation de l'ID injecté par Templ\n                const el = document.getElementById(\"{ toastID }\");\n                if (el) {\n                    setTimeout(() => {\n                        if(document.body.contains(el)) {\n                            el.style.opacity = '0';\n                            el.style.transform = 'scale(0.4)';\n                            setTimeout(() => el.remove(), 400);\n                        }\n                    }, 5000);\n                }\n            \n        </script></span></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"><div class=\"flex items-center gap-3\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if status == "success" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<span class=\"font-bold text-sm\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(message)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/layout.templ`, Line: 199, Col: 53}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</span></div><button onclick=\"const a = this.closest('.alert'); a.style.opacity='0'; a.style.transform='scale(0.9)'; setTimeout(() => a.remove(), 100)\" class=\"btn btn-ghost btn-xs btn-circle bg-black/10 hover:bg-black/20 text-white border-none ml-4\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button><script>\n            \n                // Utilisation de l'ID injecté par Templ\n                const el = document.getElementById(\"{ toastID }\");\n                if (el) {\n                    setTimeout(() => {\n                        if(document.body.contains(el)) {\n                            el.style.opacity = '0';\n                            el.style.transform = 'scale(0.4)';\n                            setTimeout(() => el.remove(), 400);\n                        }\n                    }, 5000);\n                }\n            \n        </script></span></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
