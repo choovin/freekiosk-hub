@@ -15,97 +15,48 @@ templ FieldTripPage(groups []models.FieldTripGroup, allDevices []models.FieldTri
 
 templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.FieldTripDevice) {
 	<div class="max-w-7xl mx-auto p-6 animate-in fade-in duration-500 pb-28">
-		<header class="mb-8">
+		<header class="mb-6">
 			<h1 class="text-3xl font-black text-slate-800">研学版管理</h1>
 			<p class="text-slate-500 text-sm">管理设备分组、发送广播、监控GPS定位</p>
 		</header>
 
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-			<!-- Left Column: Groups & Devices -->
-			<div class="lg:col-span-2 space-y-6">
-				<!-- Groups Section -->
-				<div class="card bg-white shadow-sm border border-slate-100">
-					<div class="card-body">
-						<div class="flex justify-between items-center mb-4">
-							<h2 class="text-lg font-bold text-slate-800">分组列表</h2>
-							<button hx-get="/fieldtrip/groups/new" hx-target="#modal-container" class="btn btn-primary btn-sm gap-2">
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-									<path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-								</svg>
-								创建分组
-							</button>
-						</div>
-
-						if len(groups) == 0 {
-							<div class="text-center py-8 text-slate-400">
-								<p class="text-sm">暂无分组，请创建一个分组开始使用</p>
-							</div>
-						} else {
-							<div class="space-y-4">
-								for _, group := range groups {
-								@FieldTripGroupCard(group, allDevices)
-								}
-							</div>
-						}
-					</div>
-				</div>
-			</div>
-
-			<!-- Right Column: Map & OTA -->
-			<div class="space-y-6">
-				<!-- Map View -->
-				<div class="card bg-white shadow-sm border border-slate-100">
-					<div class="card-body">
-						<h2 class="text-lg font-bold text-slate-800 mb-4">设备位置</h2>
-						<div class="space-y-2 max-h-96 overflow-y-auto">
-							for _, device := range allDevices {
-								if device.LastLat != nil && device.LastLng != nil {
-									<div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg text-sm">
-										<div>
-											<span class="font-medium">{ device.Name }</span>
-											<span class="text-xs text-slate-400 ml-2">{
-												fmt.Sprintf("%.4f, %.4f", *device.LastLat, *device.LastLng)
-											}</span>
-										</div>
-										<span class={ "badge badge-sm", templ.KV("badge-success", device.Status == "active"), templ.KV("badge-error", device.Status != "active") }>{ device.Status }</span>
-									</div>
-								} else {
-									<div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg text-sm">
-										<span class="font-medium">{ device.Name }</span>
-										<span class="text-xs text-slate-400">暂无定位</span>
-									</div>
-								}
-							}
-							if len(allDevices) == 0 {
-								<p class="text-sm text-slate-400 text-center py-4">暂无设备注册</p>
-							}
-						</div>
-					</div>
-				</div>
-
-				<!-- OTA Section -->
-				<div class="card bg-white shadow-sm border border-slate-100">
-					<div class="card-body">
-						<h2 class="text-lg font-bold text-slate-800 mb-4">OTA 更新</h2>
-						<form hx-post="/fieldtrip/ota/upload" hx-target="#ota-result" enctype="multipart/form-data" class="space-y-4">
-							<div class="form-control">
-								<label class="label text-xs font-bold uppercase text-slate-500">上传 APK</label>
-								<input type="file" name="apk" accept=".apk" class="file-input file-input-bordered w-full" required />
-							</div>
-							<button type="submit" class="btn btn-outline btn-sm w-full">
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-								</svg>
-								上传 APK
-							</button>
-						</form>
-						<div id="ota-result" class="mt-4"></div>
-					</div>
-				</div>
-			</div>
+		<!-- Tab Navigation -->
+		<div class="tabs tabs-boxed bg-slate-100 rounded-xl p-1 mb-6 w-fit" id="ft-tabs">
+			<button class="tab tab-active gap-2" data-tab="devices" onclick="switchFtTab('devices')">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+				</svg>
+				设备
+			</button>
+			<button class="tab gap-2" data-tab="apps" onclick="switchFtTab('apps')">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+				</svg>
+				应用
+			</button>
+			<button class="tab gap-2" data-tab="config" onclick="switchFtTab('config')">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+				</svg>
+				配置
+			</button>
 		</div>
 
-		<div id="modal-container"></div>
+		<!-- Devices Tab -->
+		<div id="ft-tab-devices" class="ft-tab-content">
+			@FieldTripDevicesTab(groups, allDevices)
+		</div>
+
+		<!-- Applications Tab -->
+		<div id="ft-tab-apps" class="ft-tab-content hidden">
+			@FieldTripAppsTab(groups, allDevices)
+		</div>
+
+		<!-- Configuration Tab -->
+		<div id="ft-tab-config" class="ft-tab-content hidden">
+			@FieldTripConfigTab(groups, allDevices)
+		</div>
 	</div>
 
 	<!-- Broadcast Bottom Bar — quick broadcast from anywhere on the dashboard -->
@@ -151,6 +102,22 @@ templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.Field
 	</div>
 
 	<script>
+	function switchFtTab(tabName) {
+		// Update tab buttons
+		document.querySelectorAll('#ft-tabs .tab').forEach(tab => {
+			if (tab.dataset.tab === tabName) {
+				tab.classList.add('tab-active');
+			} else {
+				tab.classList.remove('tab-active');
+			}
+		});
+		// Update tab content
+		document.querySelectorAll('.ft-tab-content').forEach(content => {
+			content.classList.add('hidden');
+		});
+		document.getElementById('ft-tab-' + tabName).classList.remove('hidden');
+	}
+
 	// Clear broadcast bar input after successful send
 	document.addEventListener('htmx:afterSwap', function(evt) {
 		if (evt.detail.target.id === 'broadcast-bar-result') {
@@ -169,89 +136,622 @@ templ FieldTripContent(groups []models.FieldTripGroup, allDevices []models.Field
 	</script>
 }
 
-templ FieldTripGroupCard(group models.FieldTripGroup, allDevices []models.FieldTripDevice) {
-	{{ devices := filterDevicesByGroup(allDevices, group.ID) }}
-	<div class="border border-slate-100 rounded-xl p-4 hover:border-primary/30 transition-colors" id={ fmt.Sprintf("ft-group-%s", group.ID) }>
-		<div class="flex justify-between items-start mb-3">
-			<div class="flex items-center gap-3">
-				<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-					{ string(group.Name[0]) }
-				</div>
-				<div>
-					<h3 class="font-bold text-slate-800">{ group.Name }</h3>
-					<p class="text-xs text-slate-400">{ fmt.Sprintf("%d 台设备", len(devices)) }</p>
-				</div>
-			</div>
-			<div class="dropdown dropdown-end">
-				<label tabindex="0" class="btn btn-ghost btn-xs btn-circle text-slate-400">•••</label>
-				<ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-slate-100">
-					<li><a hx-get={ fmt.Sprintf("/fieldtrip/groups/%s/edit", group.ID) } hx-target="#modal-container">编辑</a></li>
-					<li><a hx-delete={ fmt.Sprintf("/fieldtrip/groups/%s", group.ID) } hx-target={ fmt.Sprintf("#ft-group-%s", group.ID) } hx-swap="outerHTML" class="text-error">删除</a></li>
-				</ul>
-			</div>
+// ─── Devices Tab ────────────────────────────────────────────────────────────────
+
+templ FieldTripDevicesTab(groups []models.FieldTripGroup, allDevices []models.FieldTripDevice) {
+	<div class="space-y-6">
+		<!-- Toolbar: group filter + search -->
+		<div class="flex items-center gap-4">
+			<select id="ft-device-group-filter" class="select select-bordered select-sm w-auto" onchange="filterDevicesByGroup()">
+				<option value="">全部分组</option>
+				for _, group := range groups {
+					<option value={ group.ID }>{ group.Name }</option>
+				}
+			</select>
+			<input type="text" id="ft-device-search" placeholder="搜索设备名称..." class="input input-bordered input-sm flex-1 max-w-xs" oninput="filterDevicesByGroup()" />
+			<span id="ft-device-count" class="text-sm text-slate-500 ml-auto">{ fmt.Sprintf("%d 台设备", len(allDevices)) }</span>
 		</div>
 
-		<!-- Devices in Group -->
-		if len(devices) > 0 {
-			<div class="flex flex-wrap gap-2 mt-3">
-				for _, device := range devices {
-					<div class="badge badge-outline gap-1 py-2 px-3">
-						<div class={ "w-1.5 h-1.5 rounded-full", templ.KV("bg-success", device.Status == "active"), templ.KV("bg-error", device.Status != "active") }></div>
-						{ device.Name }
-						<button type="button" class="ml-1 hover:text-primary" title="查看二维码" data-device-id={ device.ID } data-device-name={ device.Name } onclick="showDeviceQR(this.dataset.deviceId, this.dataset.deviceName)">
-							<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-							</svg>
-						</button>
-						<button hx-delete={ fmt.Sprintf("/fieldtrip/devices/%s", device.ID) } hx-target={ fmt.Sprintf("#ft-group-%s", group.ID) } hx-swap="outerHTML" class="ml-1 hover:text-error">
-							<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-							</svg>
-						</button>
+		<!-- Device Cards Grid -->
+		<div id="ft-devices-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+			for _, device := range allDevices {
+				@FieldTripDeviceCard(device, groups)
+			}
+		</div>
+
+		if len(allDevices) == 0 {
+			<div class="text-center py-16 text-slate-400">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+				</svg>
+				<p class="text-lg font-medium">暂无设备</p>
+				<p class="text-sm mt-1">创建分组并添加设备后，它们将显示在这里</p>
+			</div>
+		}
+	</div>
+}
+
+templ FieldTripDeviceCard(device models.FieldTripDevice, groups []models.FieldTripGroup) {
+	{{
+		groupName := ""
+		for _, g := range groups {
+			if g.ID == device.GroupID {
+				groupName = g.Name
+				break
+			}
+		}
+	}}
+	<div
+		class="card bg-white shadow-sm border border-slate-100 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
+		data-device-id={ device.ID }
+		data-device-name={ device.Name }
+		data-group-id={ device.GroupID }
+		onclick="openDeviceDetail(this.dataset.deviceId)"
+	>
+		<div class="card-body p-4">
+			<div class="flex items-start justify-between mb-3">
+				<div class="flex items-center gap-3">
+					<div class={ "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg", templ.KV("bg-success", device.Status == "active"), templ.KV("bg-error", device.Status != "active") }>
+						{ string(device.Name[0]) }
+					</div>
+					<div>
+						<h3 class="font-bold text-slate-800 text-sm">{ device.Name }</h3>
+						<p class="text-xs text-slate-400">{ groupName }</p>
+					</div>
+				</div>
+				<div class={ "badge badge-sm gap-1", templ.KV("badge-success", device.Status == "active"), templ.KV("badge-error", device.Status != "active") }>
+					<div class={ "w-1.5 h-1.5 rounded-full", templ.KV("bg-white", device.Status == "active"), templ.KV("bg-white/50", device.Status != "active") }></div>
+					if device.Status == "active" {
+						在线
+					} else {
+						离线
+					}
+				</div>
+			</div>
+
+			<!-- Quick info row -->
+			<div class="grid grid-cols-2 gap-2 text-xs text-slate-500 mb-3">
+				<div class="flex items-center gap-1">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					<span>心跳: { formatFieldTripTime(device.LastSeen) }</span>
+				</div>
+				if device.LastLat != nil && device.LastLng != nil {
+					<div class="flex items-center gap-1">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+						</svg>
+						<span>{ fmt.Sprintf("%.4f, %.4f", *device.LastLat, *device.LastLng) }</span>
+					</div>
+				} else {
+					<div class="flex items-center gap-1">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+						</svg>
+						<span>暂无定位</span>
 					</div>
 				}
 			</div>
-		} else {
-			<p class="text-xs italic text-slate-300 mt-2">此分组暂无设备</p>
-		}
-	</div>
 
-	<!-- Device QR Modal -->
-	<div id="device-qr-modal" class="fixed inset-0 z-[100] hidden">
-		<div class="absolute inset-0 bg-black/50" onclick="closeDeviceQR()"></div>
-		<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
-			<div class="text-center">
-				<h3 id="qr-modal-title" class="font-bold text-lg mb-4">设备二维码</h3>
-				<div id="qr-modal-content" class="flex justify-center mb-4">
-					<img id="qr-modal-image" src="" alt="QR Code" class="w-64 h-64" />
-				</div>
-				<p class="text-sm text-slate-500 mb-4">请使用 FreeKiosk 应用扫描此二维码绑定设备</p>
-				<button onclick="closeDeviceQR()" class="btn btn-primary">关闭</button>
+			<!-- Device info placeholder (filled by device info API) -->
+			<div id={ fmt.Sprintf("ft-device-info-%s", device.ID) } class="text-xs text-slate-400 italic">点击查看详情...</div>
+
+			<!-- Actions row -->
+			<div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-50">
+				<button class="btn btn-ghost btn-xs gap-1" onclick="event.stopPropagation(); showDeviceQR(this.closest('[data-device-id]').dataset.deviceId, this.closest('[data-device-id]').dataset.deviceName)" title="查看二维码">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+					</svg>
+					二维码
+				</button>
+				<button class="btn btn-ghost btn-xs text-error" onclick="event.stopPropagation(); deleteDevice(this.closest('[data-device-id]').dataset.deviceId)" title="删除设备">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+					</svg>
+				</button>
 			</div>
 		</div>
 	</div>
 
 	<script>
-	function showDeviceQR(deviceId, deviceName) {
-		document.getElementById('qr-modal-title').textContent = deviceName + ' 二维码';
-		document.getElementById('qr-modal-image').src = '/api/v2/fieldtrip/devices/' + deviceId + '/qr';
-		document.getElementById('device-qr-modal').classList.remove('hidden');
+	// Load device info for this card
+	(async () => {
+		try {
+			const resp = await fetch('/api/v2/fieldtrip/devices/' + { device.ID } + '/info');
+			if (resp.ok) {
+				const info = await resp.json();
+				const el = document.getElementById('ft-device-info-' + { device.ID });
+				if (el && Object.keys(info).length > 0) {
+					let infoText = [];
+					if (info.battery_level !== undefined) infoText.push('电池: ' + info.battery_level + '%');
+					if (info.imei) infoText.push('IMEI: ' + info.imei);
+					if (info.app_version) infoText.push('App: ' + info.app_version);
+					el.textContent = infoText.join(' · ') || '暂无详细信息';
+					el.classList.remove('italic');
+				}
+			}
+		} catch(e) {}
+	})();
+	</script>
+}
+
+templ FieldTripDevicesTabContent(groups []models.FieldTripGroup, allDevices []models.FieldTripDevice) {
+	@FieldTripDevicesTab(groups, allDevices)
+}
+
+// ─── Applications Tab ───────────────────────────────────────────────────────────
+
+templ FieldTripAppsTab(groups []models.FieldTripGroup, allDevices []models.FieldTripDevice) {
+	<div class="space-y-6">
+		<!-- Toolbar: group + device selectors -->
+		<div class="flex items-center gap-4">
+			<select id="ft-app-group" class="select select-bordered select-sm w-auto" onchange="onFtAppGroupChange()">
+				<option value="">全部分组</option>
+				for _, group := range groups {
+					<option value={ group.ID }>{ group.Name }</option>
+				}
+			</select>
+			<select id="ft-app-device" class="select select-bordered select-sm w-auto flex-1 max-w-xs" onchange="onFtAppDeviceChange()">
+				<option value="">选择设备</option>
+				for _, device := range allDevices {
+					<option value={ device.ID } data-group-id={ device.GroupID }>{ device.Name }</option>
+				}
+			</select>
+			<button class="btn btn-primary btn-sm gap-2 ml-auto" onclick="openAppInstallModal()">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+				</svg>
+				远程安装
+			</button>
+		</div>
+
+		<!-- App List -->
+		<div class="card bg-white shadow-sm border border-slate-100">
+			<div class="card-body">
+				<div class="flex justify-between items-center mb-4">
+					<h2 class="text-lg font-bold text-slate-800">已安装应用</h2>
+					<span id="ft-app-count" class="text-sm text-slate-400">选择设备以查看应用</span>
+				</div>
+
+				<div id="ft-app-list">
+					<div class="text-center py-12 text-slate-400">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+						</svg>
+						<p class="text-sm">请从上方选择一个设备以查看其应用列表</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	function onFtAppGroupChange() {
+		const groupId = document.getElementById('ft-app-group').value;
+		const deviceSelect = document.getElementById('ft-app-device');
+		// Show only devices in the selected group
+		Array.from(deviceSelect.options).forEach(opt => {
+			if (!opt.value) return;
+			if (!groupId || opt.dataset.groupId === groupId) {
+				opt.hidden = false;
+			} else {
+				opt.hidden = true;
+			}
+		});
+		deviceSelect.value = '';
+		document.getElementById('ft-app-list').innerHTML = '<div class="text-center py-12 text-slate-400"><p class="text-sm">请从上方选择一个设备以查看其应用列表</p></div>';
+		document.getElementById('ft-app-count').textContent = '选择设备以查看应用';
 	}
-	function closeDeviceQR() {
-		document.getElementById('device-qr-modal').classList.add('hidden');
+
+	async function onFtAppDeviceChange() {
+		const deviceId = document.getElementById('ft-app-device').value;
+		if (!deviceId) {
+			document.getElementById('ft-app-list').innerHTML = '<div class="text-center py-12 text-slate-400"><p class="text-sm">请从上方选择一个设备以查看其应用列表</p></div>';
+			document.getElementById('ft-app-count').textContent = '选择设备以查看应用';
+			return;
+		}
+		document.getElementById('ft-app-count').textContent = '加载中...';
+		// Fetch device config to get app list
+		try {
+			const resp = await fetch('/api/v2/fieldtrip/devices/' + deviceId + '/config');
+			if (resp.ok) {
+				const config = await resp.json();
+				const apps = config.allowed_apps || ["com.freekiosk", "com.android.chrome", "com.android.settings", "com.android.camera2"];
+				renderAppList(apps);
+			} else {
+				// If no config, show placeholder apps
+				renderAppList(["com.freekiosk", "com.android.chrome", "com.android.settings", "com.android.camera2"]);
+			}
+		} catch(e) {
+			renderAppList(["com.freekiosk", "com.android.chrome", "com.android.settings", "com.android.camera2"]);
+		}
+	}
+
+	function renderAppList(apps) {
+		const list = document.getElementById('ft-app-list');
+		document.getElementById('ft-app-count').textContent = apps.length + ' 个应用';
+		list.innerHTML = '<div class="space-y-2">' +
+			apps.map(app => '<div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">' +
+				'<div class="flex items-center gap-3">' +
+					'<div class="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">' +
+						app.split('.').pop()[0].toUpperCase() +
+					'</div>' +
+					'<div>' +
+						'<p class="text-sm font-medium text-slate-700">' + app + '</p>' +
+					'</div>' +
+				'</div>' +
+				'<div class="flex items-center gap-2">' +
+					'<button class="btn btn-ghost btn-xs" onclick="startApp(\'' + app + '\')">启动</button>' +
+					'<button class="btn btn-ghost btn-xs text-error">卸载</button>' +
+				'</div>' +
+			'</div>').join('') +
+		'</div>';
+	}
+
+	async function startApp(packageName) {
+		const deviceId = document.getElementById('ft-app-device').value;
+		if (!deviceId) return;
+		// TODO: send command to device to start app
+		alert('启动应用功能开发中: ' + packageName);
+	}
+
+	function openAppInstallModal() {
+		const deviceId = document.getElementById('ft-app-device').value;
+		if (!deviceId) {
+			alert('请先选择一个设备');
+			return;
+		}
+		// TODO: show APK upload modal
+		alert('远程安装APK功能开发中');
 	}
 	</script>
 }
 
-func filterDevicesByGroup(devices []models.FieldTripDevice, groupID string) []models.FieldTripDevice {
-	var result []models.FieldTripDevice
-	for _, d := range devices {
-		if d.GroupID == groupID {
-			result = append(result, d)
+// ─── Configuration Tab ─────────────────────────────────────────────────────────
+
+templ FieldTripConfigTab(groups []models.FieldTripGroup, allDevices []models.FieldTripDevice) {
+	<div class="space-y-6">
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+			<!-- Group Config -->
+			<div class="card bg-white shadow-sm border border-slate-100">
+				<div class="card-body">
+					<div class="flex justify-between items-center mb-4">
+						<h2 class="text-lg font-bold text-slate-800">分组配置</h2>
+						<button hx-get="/fieldtrip/groups/new" hx-target="#modal-container" class="btn btn-primary btn-sm gap-2">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+								<path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+							</svg>
+							新建分组
+						</button>
+					</div>
+
+					if len(groups) == 0 {
+						<div class="text-center py-8 text-slate-400">
+							<p class="text-sm">暂无分组</p>
+						</div>
+					} else {
+						<div class="space-y-3">
+							for _, group := range groups {
+							<div class="border border-slate-100 rounded-xl p-4 hover:border-primary/20 transition-colors">
+								<div class="flex items-center justify-between mb-3">
+									<div class="flex items-center gap-3">
+										<div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+											{ string(group.Name[0]) }
+										</div>
+										<div>
+											<h3 class="font-semibold text-slate-800 text-sm">{ group.Name }</h3>
+											<p class="text-xs text-slate-400">{ fmt.Sprintf("%d 台设备", len(filterDevicesByGroup(allDevices, group.ID))) }</p>
+										</div>
+									</div>
+									<div class="dropdown dropdown-end">
+										<label tabindex="0" class="btn btn-ghost btn-xs btn-circle text-slate-400">•••</label>
+										<ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-slate-100">
+											<li><a hx-get={ fmt.Sprintf("/fieldtrip/groups/%s/edit", group.ID) } hx-target="#modal-container">编辑</a></li>
+											<li><a hx-delete={ fmt.Sprintf("/fieldtrip/groups/%s", group.ID) } class="text-error">删除</a></li>
+										</ul>
+									</div>
+								</div>
+
+								<!-- Group settings -->
+								<div class="grid grid-cols-2 gap-2 text-xs">
+									<div class="bg-slate-50 rounded-lg p-2">
+										<p class="text-slate-400 mb-1">广播声音</p>
+										<select class="select select-bordered select-xs w-full" onchange="updateGroupSound('{ group.ID }', this.value)">
+											<option value="default" selected?={ group.BroadcastSound == "default" }>默认</option>
+											<option value="chime" selected?={ group.BroadcastSound == "chime" }>提示音</option>
+											<option value="alert" selected?={ group.BroadcastSound == "alert" }>警报</option>
+										</select>
+									</div>
+									<div class="bg-slate-50 rounded-lg p-2">
+										<p class="text-slate-400 mb-1">更新策略</p>
+										<select class="select select-bordered select-xs w-full" onchange="updateGroupPolicy('{ group.ID }', this.value)">
+											<option value="manual" selected?={ group.UpdatePolicy == "manual" }>手动</option>
+											<option value="auto" selected?={ group.UpdatePolicy == "auto" }>自动</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							}
+						</div>
+					}
+				</div>
+			</div>
+
+			<!-- Device Config -->
+			<div class="card bg-white shadow-sm border border-slate-100">
+				<div class="card-body">
+					<h2 class="text-lg font-bold text-slate-800 mb-4">设备配置</h2>
+
+					<div class="form-control mb-4">
+						<label class="label text-xs font-bold uppercase text-slate-500">选择设备</label>
+						<select id="ft-config-device" class="select select-bordered select-sm w-full" onchange="loadDeviceConfig()">
+							<option value="">选择设备...</option>
+							for _, device := range allDevices {
+								<option value={ device.ID }>{ device.Name }</option>
+							}
+						</select>
+					</div>
+
+					<div id="ft-config-form" class="space-y-4 hidden">
+						<div class="form-control">
+							<label class="label cursor-pointer justify-start gap-3">
+								<input type="checkbox" id="ft-cfg-kiosk" class="toggle toggle-primary" onchange="saveDeviceConfig()" />
+								<span class="label-text font-medium">Kiosk 模式</span>
+							</label>
+							<label class="label">
+								<span class="label-text-alt text-slate-400">启用后设备将锁定在指定应用中</span>
+							</label>
+						</div>
+
+						<div class="form-control">
+							<label class="label cursor-pointer justify-start gap-3">
+								<input type="checkbox" id="ft-cfg-screenlock" class="toggle toggle-primary" onchange="saveDeviceConfig()" />
+								<span class="label-text font-medium">屏幕锁定</span>
+							</label>
+						</div>
+
+						<div class="form-control">
+							<label class="label text-xs font-bold uppercase text-slate-500">允许的应用</label>
+							<div class="space-y-2 max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-3">
+								<label class="flex items-center gap-2 cursor-pointer">
+									<input type="checkbox" value="com.freekiosk" class="checkbox checkbox-primary checkbox-sm ft-cfg-app" onchange="saveDeviceConfig()" checked />
+									<span class="text-sm">FreeKiosk</span>
+								</label>
+								<label class="flex items-center gap-2 cursor-pointer">
+									<input type="checkbox" value="com.android.chrome" class="checkbox checkbox-primary checkbox-sm ft-cfg-app" onchange="saveDeviceConfig()" />
+									<span class="text-sm">Chrome 浏览器</span>
+								</label>
+								<label class="flex items-center gap-2 cursor-pointer">
+									<input type="checkbox" value="com.android.settings" class="checkbox checkbox-primary checkbox-sm ft-cfg-app" onchange="saveDeviceConfig()" />
+									<span class="text-sm">系统设置</span>
+								</label>
+								<label class="flex items-center gap-2 cursor-pointer">
+									<input type="checkbox" value="com.android.camera2" class="checkbox checkbox-primary checkbox-sm ft-cfg-app" onchange="saveDeviceConfig()" />
+									<span class="text-sm">相机</span>
+								</label>
+							</div>
+						</div>
+
+						<button class="btn btn-outline btn-sm w-full" onclick="resetDeviceConfig()">
+							重置配置
+						</button>
+					</div>
+
+					if len(allDevices) == 0 {
+						<div class="text-center py-8 text-slate-400">
+							<p class="text-sm">暂无设备</p>
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+
+		<!-- Broadcast bar for config tab (quick settings) -->
+		<div class="card bg-white shadow-sm border border-slate-100">
+			<div class="card-body">
+				<h2 class="text-lg font-bold text-slate-800 mb-4">快速广播</h2>
+				<form hx-post="/api/v2/fieldtrip/broadcast" hx-target="#broadcast-bar-result" hx-swap="innerHTML" class="flex gap-3 items-center">
+					<input type="text" name="message" placeholder="输入广播消息..." class="input input-bordered flex-1" required maxlength="200" />
+					<select name="group_id" class="select select-bordered w-auto">
+						<option value="">全部设备</option>
+						for _, group := range groups {
+							<option value={ group.ID }>{ group.Name }</option>
+						}
+					</select>
+					<button type="submit" class="btn btn-primary">发送</button>
+				</form>
+				<div id="broadcast-bar-result"></div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	async function loadDeviceConfig() {
+		const deviceId = document.getElementById('ft-config-device').value;
+		const form = document.getElementById('ft-config-form');
+		if (!deviceId) {
+			form.classList.add('hidden');
+			return;
 		}
+		form.classList.remove('hidden');
+		try {
+			const resp = await fetch('/api/v2/fieldtrip/devices/' + deviceId + '/config');
+			if (resp.ok) {
+				const config = await resp.json();
+				document.getElementById('ft-cfg-kiosk').checked = config.kiosk_mode || false;
+				document.getElementById('ft-cfg-screenlock').checked = config.screen_locked || false;
+				// Uncheck all apps, then check those in config
+				document.querySelectorAll('.ft-cfg-app').forEach(cb => cb.checked = false);
+				if (config.allowed_apps) {
+					config.allowed_apps.forEach(app => {
+						const cb = document.querySelector('.ft-cfg-app[value="' + app + '"]');
+						if (cb) cb.checked = true;
+					});
+				}
+			}
+		} catch(e) {}
 	}
-	return result
+
+	async function saveDeviceConfig() {
+		const deviceId = document.getElementById('ft-config-device').value;
+		if (!deviceId) return;
+		const config = {
+			kiosk_mode: document.getElementById('ft-cfg-kiosk').checked,
+			screen_locked: document.getElementById('ft-cfg-screenlock').checked,
+			allowed_apps: Array.from(document.querySelectorAll('.ft-cfg-app:checked')).map(cb => cb.value)
+		};
+		try {
+			await fetch('/api/v2/fieldtrip/devices/' + deviceId + '/config', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(config)
+			});
+		} catch(e) {}
+	}
+
+	function resetDeviceConfig() {
+		document.getElementById('ft-cfg-kiosk').checked = false;
+		document.getElementById('ft-cfg-screenlock').checked = false;
+		document.querySelectorAll('.ft-cfg-app').forEach(cb => cb.checked = false);
+		document.querySelector('.ft-cfg-app[value="com.freekiosk"]').checked = true;
+		saveDeviceConfig();
+	}
+
+	async function updateGroupSound(groupId, sound) {
+		// TODO: persist group setting
+		console.log('updateGroupSound', groupId, sound);
+	}
+
+	async function updateGroupPolicy(groupId, policy) {
+		// TODO: persist group setting
+		console.log('updateGroupPolicy', groupId, policy);
+	}
+	</script>
 }
+
+// ─── Device Detail Modal ────────────────────────────────────────────────────────
+
+templ FieldTripDeviceDetailModal(device models.FieldTripDevice, deviceInfoJSON string, groups []models.FieldTripGroup) {
+	{{
+		groupName := ""
+		for _, g := range groups {
+			if g.ID == device.GroupID {
+				groupName = g.Name
+				break
+			}
+		}
+	}}
+	<dialog id="ft_device_detail_modal" class="modal">
+		<div class="modal-box max-w-lg border border-slate-100">
+			<h3 class="font-black text-xl mb-4 text-slate-800">{ device.Name }</h3>
+
+			<div class="space-y-3">
+				<!-- Status row -->
+				<div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+					<div class="flex items-center gap-2 text-sm">
+						<div class={ "w-2 h-2 rounded-full", templ.KV("bg-success", device.Status == "active"), templ.KV("bg-error", device.Status != "active") }></div>
+						if device.Status == "active" {
+							<span class="font-medium text-success">在线</span>
+						} else {
+							<span class="font-medium text-error">离线</span>
+						}
+					</div>
+					<span class="text-xs text-slate-400">{ groupName }</span>
+				</div>
+
+				<!-- Basic info -->
+				<div class="grid grid-cols-2 gap-2 text-sm">
+					<div class="p-2 bg-slate-50 rounded-lg">
+						<p class="text-xs text-slate-400 mb-1">设备ID</p>
+						<p class="font-mono text-xs truncate" title={ device.ID }>{ device.ID }</p>
+					</div>
+					<div class="p-2 bg-slate-50 rounded-lg">
+						<p class="text-xs text-slate-400 mb-1">注册时间</p>
+						<p class="text-xs">{ formatFieldTripTime(&device.CreatedAt) }</p>
+					</div>
+					<div class="p-2 bg-slate-50 rounded-lg">
+						<p class="text-xs text-slate-400 mb-1">最后心跳</p>
+						<p class="text-xs">{ formatFieldTripTime(device.LastSeen) }</p>
+					</div>
+					<div class="p-2 bg-slate-50 rounded-lg">
+						<p class="text-xs text-slate-400 mb-1">Hub地址</p>
+						<p class="font-mono text-xs truncate" title={ device.HubURL }>{ device.HubURL }</p>
+					</div>
+				</div>
+
+				<!-- System info -->
+				if deviceInfoJSON != "" {
+					<div class="border-t border-slate-100 pt-3">
+						<p class="text-xs font-bold uppercase text-slate-500 mb-2">系统信息</p>
+						<div id="ft-detail-device-info" class="text-sm text-slate-600"></div>
+					</div>
+				}
+			</div>
+
+			<div class="modal-action">
+				<button class="btn btn-ghost" onclick="this.closest('dialog').close()">关闭</button>
+			</div>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
+
+	if deviceInfoJSON != "" {
+		<div id="ft-detail-device-info-json" data-info={ deviceInfoJSON } style="display:none"></div>
+	}
+
+	<script>
+	function renderFtDeviceDetailInfo() {
+		const el = document.getElementById("ft-detail-device-info-json");
+		if (!el) return;
+		const info = JSON.parse(el.dataset.info);
+		const container = document.getElementById("ft-detail-device-info");
+		if (!container || !info) return;
+		let html = '<div class="grid grid-cols-2 gap-2">';
+		if (info.battery_level !== undefined) {
+			html += '<div class="p-2 bg-slate-50 rounded-lg"><p class="text-xs text-slate-400">电池</p><p class="font-medium">' + info.battery_level + '%' + (info.battery_charging ? ' \u26A1' : '') + '</p></div>';
+		}
+		if (info.imei) {
+			html += '<div class="p-2 bg-slate-50 rounded-lg"><p class="text-xs text-slate-400">IMEI</p><p class="font-mono text-xs">' + info.imei + '</p></div>';
+		}
+		if (info.phone_number) {
+			html += '<div class="p-2 bg-slate-50 rounded-lg"><p class="text-xs text-slate-400">手机号</p><p class="font-medium">' + info.phone_number + '</p></div>';
+		}
+		if (info.serial_number) {
+			html += '<div class="p-2 bg-slate-50 rounded-lg"><p class="text-xs text-slate-400">序列号</p><p class="font-mono text-xs">' + info.serial_number + '</p></div>';
+		}
+		if (info.android_version) {
+			html += '<div class="p-2 bg-slate-50 rounded-lg"><p class="text-xs text-slate-400">Android</p><p class="font-medium">' + info.android_version + '</p></div>';
+		}
+		if (info.app_version) {
+			html += '<div class="p-2 bg-slate-50 rounded-lg"><p class="text-xs text-slate-400">App</p><p class="font-medium">' + info.app_version + '</p></div>';
+		}
+		if (info.total_storage && info.free_storage !== undefined) {
+			var used = info.total_storage - info.free_storage;
+			var pct = info.total_storage > 0 ? Math.round(used / info.total_storage * 100) : 0;
+			var usedGB = Math.round(used / 1073741824);
+			var totalGB = Math.round(info.total_storage / 1073741824);
+			html += '<div class="p-2 bg-slate-50 rounded-lg col-span-2"><p class="text-xs text-slate-400">存储</p><div class="flex items-center gap-2"><div class="flex-1 bg-slate-200 rounded-full h-2"><div class="bg-primary h-2 rounded-full" style="width:' + pct + '%"></div></div><span class="text-xs">' + usedGB + 'GB / ' + totalGB + 'GB</span></div></div>';
+		}
+		if (info.total_memory && info.free_memory !== undefined) {
+			var memUsed = info.total_memory - info.free_memory;
+			var memPct = info.total_memory > 0 ? Math.round(memUsed / info.total_memory * 100) : 0;
+			var memUsedGB = Math.round(memUsed / 1073741824);
+			var memTotalGB = Math.round(info.total_memory / 1073741824);
+			html += '<div class="p-2 bg-slate-50 rounded-lg col-span-2"><p class="text-xs text-slate-400">内存</p><div class="flex items-center gap-2"><div class="flex-1 bg-slate-200 rounded-full h-2"><div class="bg-primary h-2 rounded-full" style="width:' + memPct + '%"></div></div><span class="text-xs">' + memUsedGB + 'GB / ' + memTotalGB + 'GB</span></div></div>';
+		}
+		html += '</div>';
+		container.innerHTML = html;
+	}
+	renderFtDeviceDetailInfo();
+	</script>
+}
+
+// ─── Group Form Modal ───────────────────────────────────────────────────────────
 
 templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 	<dialog id="ft_group_modal" class="modal modal-open">
@@ -303,7 +803,6 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 				</div>
 			</form>
 
-			// Bulk device creation section — only for existing groups
 			if group != nil && group.ID != "" {
 				<div class="border-t border-slate-100 mt-4 pt-4 space-y-3">
 					<button type="button" onclick="openBulkModal()" class="btn btn-outline btn-sm w-full gap-2">
@@ -313,39 +812,21 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 						批量创建设备
 					</button>
 
-					// QR code export section
 					<div class="border-t border-slate-100 pt-3">
 						<p class="label text-xs font-bold uppercase text-slate-500 mb-2">批量导出二维码</p>
 						<div class="grid grid-cols-3 gap-2">
-							<a href={ fmt.Sprintf("/api/v2/fieldtrip/groups/%s/export?layout=6up", group.ID) } class="btn btn-primary btn-sm gap-1" download>
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-								</svg>
-								6-up
-							</a>
-							<a href={ fmt.Sprintf("/api/v2/fieldtrip/groups/%s/export?layout=4up", group.ID) } class="btn btn-primary btn-sm gap-1" download>
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-								</svg>
-								4-up
-							</a>
-							<a href={ fmt.Sprintf("/api/v2/fieldtrip/groups/%s/export?layout=1up", group.ID) } class="btn btn-primary btn-sm gap-1" download>
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-								</svg>
-								单设备
-							</a>
+							<a href={ fmt.Sprintf("/api/v2/fieldtrip/groups/%s/export?layout=6up", group.ID) } class="btn btn-primary btn-sm gap-1" download>6-up</a>
+							<a href={ fmt.Sprintf("/api/v2/fieldtrip/groups/%s/export?layout=4up", group.ID) } class="btn btn-primary btn-sm gap-1" download>4-up</a>
+							<a href={ fmt.Sprintf("/api/v2/fieldtrip/groups/%s/export?layout=1up", group.ID) } class="btn btn-primary btn-sm gap-1" download>单设备</a>
 						</div>
 						<p class="text-xs text-slate-400 mt-1">6-up: 2行3列, 4-up: 2行2列, 单设备: 1页1个</p>
 					</div>
 				</div>
 
-				// Bulk creation modal (div-based overlay, not nested dialog)
 				<div id="bulkModal" class="bulk-modal">
 					<div class="bulk-modal-backdrop" onclick="closeBulkModal()"></div>
 					<div class="bulk-modal-card">
 						<h3 class="font-black text-xl mb-4 text-slate-800">批量创建设备</h3>
-
 						<input type="hidden" id="bulkGroupKey" value={ group.GroupKey } />
 						<input type="hidden" id="bulkGroupId" value={ group.ID } />
 
@@ -356,7 +837,6 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 							</div>
 							<div class="form-control">
 								<label class="label text-xs font-bold uppercase text-slate-500">数量 (1-500)</label>
-								<!-- Stepper 按钮组 -->
 								<div class="flex items-center gap-2">
 									<button type="button" onclick="decrementCount()" class="btn btn-outline btn-sm btn-square">−</button>
 									<input type="number" id="bulkCount" class="input input-bordered w-20 text-center font-medium" min="1" max="500" value="10" oninput="updateBulkPreview()" readonly />
@@ -370,23 +850,11 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 							<div id="bulkPreview" class="text-sm text-slate-600 max-h-32 overflow-y-auto bg-slate-50 rounded-lg p-3"></div>
 						</div>
 
-						<div id="bulkWarning" class="hidden mt-4">
-							<div class="alert alert-warning text-sm">
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-								</svg>
-								<span id="bulkWarningText"></span>
-							</div>
-						</div>
-
 						<div id="bulkResults" class="mt-4"></div>
 
 						<div class="flex gap-3 mt-4">
 							<button type="button" onclick="closeBulkModal()" class="btn btn-ghost flex-1">取消</button>
 							<button type="button" onclick="createBulkDevices()" class="btn btn-primary flex-1 gap-2">
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-								</svg>
 								创建
 							</button>
 						</div>
@@ -427,15 +895,6 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 					} else {
 						preview.innerHTML = names.slice(0, 3).join(', ') + ', ... ' + prefix + String(count).padStart(2, '0');
 					}
-					// Show warning for large batch sizes
-					const warning = document.getElementById('bulkWarning');
-					const warningText = document.getElementById('bulkWarningText');
-					if (count >= 10) {
-						warning.classList.remove('hidden');
-						warningText.textContent = '将创建 ' + count + ' 台设备，生成 ' + count + ' 个二维码';
-					} else {
-						warning.classList.add('hidden');
-					}
 				}
 				async function createBulkDevices() {
 					const prefix = document.getElementById('bulkPrefix').value;
@@ -454,7 +913,7 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 
 						const data = await response.json();
 						if (response.ok) {
-							resultsDiv.innerHTML = '<div class="alert alert-success text-sm"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>成功创建 ' + data.count + ' 个设备</div>';
+							resultsDiv.innerHTML = '<div class="alert alert-success text-sm">成功创建 ' + data.count + ' 个设备</div>';
 							setTimeout(() => { closeBulkModal(); window.location.reload(); }, 1500);
 						} else {
 							resultsDiv.innerHTML = '<div class="alert alert-error text-sm">创建失败: ' + (data.message || '未知错误') + '</div>';
@@ -472,42 +931,54 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 	</dialog>
 }
 
-templ FieldTripWhitelistModal(deviceID string, whitelist []string, lang string) {
-	<dialog id="whitelist_modal" class="modal modal-open">
-		<div class="modal-box max-w-md border border-slate-100">
-			<h3 class="font-black text-xl mb-4 text-slate-800">设置应用白名单</h3>
+// ─── Device QR Modal (inline in device cards) ───────────────────────────────────
 
-			<form hx-post={ fmt.Sprintf("/fieldtrip/devices/%s/whitelist", deviceID) } hx-target="#main-container" class="space-y-4">
-				<div class="space-y-2 max-h-64 overflow-y-auto">
-					<!-- Common apps as examples -->
-					<label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-						<input type="checkbox" name="app" value="com.android.chrome" class="checkbox checkbox-primary" />
-						<span class="text-sm">Chrome 浏览器</span>
-					</label>
-					<label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-						<input type="checkbox" name="app" value="com.android.settings" class="checkbox checkbox-primary" />
-						<span class="text-sm">系统设置</span>
-					</label>
-					<label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-						<input type="checkbox" name="app" value="com.freekiosk" class="checkbox checkbox-primary" checked />
-						<span class="text-sm">FreeKiosk</span>
-					</label>
-					<label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-						<input type="checkbox" name="app" value="com.android.camera2" class="checkbox checkbox-primary" />
-						<span class="text-sm">相机</span>
-					</label>
+templ FieldTripDeviceQRModal() {
+	<div id="device-qr-modal" class="fixed inset-0 z-[100] hidden">
+		<div class="absolute inset-0 bg-black/50" onclick="closeDeviceQR()"></div>
+		<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
+			<div class="text-center">
+				<h3 id="qr-modal-title" class="font-bold text-lg mb-4">设备二维码</h3>
+				<div id="qr-modal-content" class="flex justify-center mb-4">
+					<img id="qr-modal-image" src="" alt="QR Code" class="w-64 h-64" />
 				</div>
-
-				<div class="modal-action">
-					<button type="button" class="btn btn-ghost" onclick="this.closest('dialog').remove()">取消</button>
-					<button type="submit" class="btn btn-primary px-8">应用</button>
-				</div>
-			</form>
+				<p class="text-sm text-slate-500 mb-4">请使用 FreeKiosk 应用扫描此二维码绑定设备</p>
+				<button onclick="closeDeviceQR()" class="btn btn-primary">关闭</button>
+			</div>
 		</div>
-		<form method="dialog" class="modal-backdrop">
-			<button onclick="this.closest('dialog').remove()">关闭</button>
-		</form>
-	</dialog>
+	</div>
+
+	<script>
+	function showDeviceQR(deviceId, deviceName) {
+		document.getElementById('qr-modal-title').textContent = deviceName + ' 二维码';
+		document.getElementById('qr-modal-image').src = '/api/v2/fieldtrip/devices/' + deviceId + '/qr';
+		document.getElementById('device-qr-modal').classList.remove('hidden');
+	}
+	function closeDeviceQR() {
+		document.getElementById('device-qr-modal').classList.add('hidden');
+	}
+	function openDeviceDetail(deviceId) {
+		// TODO: open device detail modal with fetched device info
+		console.log('openDeviceDetail', deviceId);
+	}
+	function deleteDevice(deviceId) {
+		if (!confirm('确定要删除此设备吗？')) return;
+		fetch('/api/v2/fieldtrip/devices/' + deviceId, { method: 'DELETE' })
+			.then(r => { if (r.ok) window.location.reload(); });
+	}
+	</script>
+}
+
+// ─── Helper Functions ─────────────────────────────────────────────────────────
+
+func filterDevicesByGroup(devices []models.FieldTripDevice, groupID string) []models.FieldTripDevice {
+	var result []models.FieldTripDevice
+	for _, d := range devices {
+		if d.GroupID == groupID {
+			result = append(result, d)
+		}
+	}
+	return result
 }
 
 // Helper function to format timestamp
