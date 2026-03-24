@@ -1,0 +1,492 @@
+package ui
+
+import (
+	"github.com/wared2003/freekiosk-hub/internal/models"
+)
+
+// MDMTabletsDashboard MDM平板设备仪表板页面
+templ MDMTabletsDashboard(devices []*models.MDMTablet, groups []*models.MDMTabletGroup, total int64, tenant string) {
+	@Layout("MDM设备管理", "zh") {
+		@MDMTabletsContent(devices, groups, total, tenant)
+	}
+}
+
+templ MDMTabletsContent(devices []*models.MDMTablet, groups []*models.MDMTabletGroup, total int64, tenant string) {
+	<div class="max-w-7xl mx-auto p-6 animate-in fade-in duration-500 pb-28">
+		<header class="mb-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<h1 class="text-3xl font-black text-slate-800">MDM平板设备管理</h1>
+					<p class="text-slate-500 text-sm mt-1">企业级移动设备管理 · 实时监控 · 批量控制</p>
+				</div>
+				<div class="flex items-center gap-3">
+					<span class="badge badge-primary badge-lg">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+						</svg>
+						{ int64ToString(total) } 台设备
+					</span>
+					<button class="btn btn-primary gap-2" onclick="mdm_show_add_device_modal()">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+						</svg>
+						添加设备
+					</button>
+				</div>
+			</div>
+		</header>
+
+		<!-- Tab Navigation -->
+		<div class="tabs tabs-boxed bg-slate-100 rounded-xl p-1 mb-6 w-fit" id="mdm-tabs">
+			<button class="tab tab-active gap-2" data-tab="devices" onclick="switchMdmTab('devices')">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+				</svg>
+				设备列表
+			</button>
+			<button class="tab gap-2" data-tab="groups" onclick="switchMdmTab('groups')">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+				</svg>
+				设备分组
+			</button>
+			<button class="tab gap-2" data-tab="map" onclick="switchMdmTab('map')">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4z" />
+				</svg>
+				地图视图
+			</button>
+		</div>
+
+		<!-- Devices Tab -->
+		<div id="mdm-tab-devices" class="mdm-tab-content">
+			@MDMTabletsListTab(devices, groups)
+		</div>
+
+		<!-- Groups Tab -->
+		<div id="mdm-tab-groups" class="mdm-tab-content hidden">
+			@MDMTabletsGroupsTab(groups)
+		</div>
+
+		<!-- Map Tab -->
+		<div id="mdm-tab-map" class="mdm-tab-content hidden">
+			@MDMTabletsMapTab(devices)
+		</div>
+	</div>
+
+	<!-- Bottom Action Bar -->
+	<div id="mdm-action-bar" class="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 hidden">
+		<div class="max-w-7xl mx-auto">
+			<div class="bg-slate-800/95 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-2xl px-4 py-3 flex gap-3 items-center">
+				<div class="flex-shrink-0 w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+				</div>
+				<span id="selected-count" class="text-white font-medium">已选择 0 台设备</span>
+				<div class="flex-1"></div>
+				<button class="btn btn-sm btn-ghost text-slate-400" onclick="clearSelection()">取消选择</button>
+				<button class="btn btn-sm btn-warning gap-1" onclick="mdm_show_bulk_pin_modal()">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+					</svg>
+					修改PIN
+				</button>
+				<button class="btn btn-sm btn-error gap-1" onclick="mdm_bulk_delete()">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+					</svg>
+					删除设备
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Add Device Modal -->
+	<dialog id="mdm_add_device_modal" class="modal">
+		<div class="modal-box">
+			<h3 class="font-bold text-lg mb-4">添加新设备</h3>
+			<form hx-post="/api/v2/tenants/{tenant}/mdm/devices" hx-target="#mdm-devices-list" hx-swap="innerHTML">
+				<div class="grid grid-cols-2 gap-4">
+					<div class="form-control">
+						<label class="label"><span class="label-text">设备编号</span></label>
+						<input type="text" name="number" class="input input-bordered" placeholder="MDM-001" required/>
+					</div>
+					<div class="form-control">
+						<label class="label"><span class="label-text">设备名称</span></label>
+						<input type="text" name="name" class="input input-bordered" placeholder="教室A-01" required/>
+					</div>
+					<div class="form-control">
+						<label class="label"><span class="label-text">IMEI</span></label>
+						<input type="text" name="imei" class="input input-bordered" placeholder="860855041234567"/>
+					</div>
+					<div class="form-control">
+						<label class="label"><span class="label-text">手机号</span></label>
+						<input type="text" name="phone" class="input input-bordered" placeholder="13800138000"/>
+					</div>
+					<div class="form-control">
+						<label class="label"><span class="label-text">设备型号</span></label>
+						<input type="text" name="model" class="input input-bordered" placeholder="华为MatePad SE"/>
+					</div>
+					<div class="form-control">
+						<label class="label"><span class="label-text">制造商</span></label>
+						<input type="text" name="manufacturer" class="input input-bordered" placeholder="华为"/>
+					</div>
+					<div class="form-control col-span-2">
+						<label class="label"><span class="label-text">描述</span></label>
+						<input type="text" name="description" class="input input-bordered" placeholder="设备描述信息"/>
+					</div>
+				</div>
+				<input type="hidden" name="tenant_id" value={ tenant }/>
+				<div class="modal-action">
+					<button type="button" class="btn btn-ghost" onclick="mdm_add_device_modal.close()">取消</button>
+					<button type="submit" class="btn btn-primary">创建设备</button>
+				</div>
+			</form>
+		</div>
+		<form method="dialog" class="modal-backdrop"><button>close</button></form>
+	</dialog>
+
+	<!-- Bulk PIN Modal -->
+	<dialog id="mdm_bulk_pin_modal" class="modal">
+		<div class="modal-box">
+			<h3 class="font-bold text-lg mb-4">批量修改PIN码</h3>
+			<form>
+				<div class="form-control">
+					<label class="label"><span class="label-text">新PIN码 (4位数字)</span></label>
+					<input type="text" id="bulk_pin_input" class="input input-bordered" placeholder="1234" maxlength="4" pattern="[0-9]{4}"/>
+				</div>
+				<div class="modal-action">
+					<button type="button" class="btn btn-ghost" onclick="mdm_bulk_pin_modal.close()">取消</button>
+					<button type="button" class="btn btn-primary" onclick="mdm_do_bulk_pin()">确认修改</button>
+				</div>
+			</form>
+		</div>
+		<form method="dialog" class="modal-backdrop"><button>close</button></form>
+	</dialog>
+
+	<script>
+		function switchMdmTab(tabName) {
+			document.querySelectorAll('#mdm-tabs .tab').forEach(tab => {
+				if (tab.dataset.tab === tabName) {
+					tab.classList.add('tab-active');
+				} else {
+					tab.classList.remove('tab-active');
+				}
+			});
+			document.querySelectorAll('.mdm-tab-content').forEach(content => {
+				content.classList.add('hidden');
+			});
+			document.getElementById('mdm-tab-' + tabName).classList.remove('hidden');
+		}
+
+		function mdm_show_add_device_modal() {
+			mdm_add_device_modal.showModal();
+		}
+
+		function mdm_show_bulk_pin_modal() {
+			mdm_bulk_pin_modal.showModal();
+		}
+
+		let selectedDevices = new Set();
+
+		function toggleDeviceSelection(deviceId) {
+			if (selectedDevices.has(deviceId)) {
+				selectedDevices.delete(deviceId);
+			} else {
+				selectedDevices.add(deviceId);
+			}
+			updateSelectionUI();
+		}
+
+		function updateSelectionUI() {
+			const count = selectedDevices.size;
+			const actionBar = document.getElementById('mdm-action-bar');
+			const countSpan = document.getElementById('selected-count');
+			if (count > 0) {
+				actionBar.classList.remove('hidden');
+				countSpan.textContent = '已选择 ' + count + ' 台设备';
+			} else {
+				actionBar.classList.add('hidden');
+			}
+		}
+
+		function clearSelection() {
+			selectedDevices.clear();
+			document.querySelectorAll('.device-checkbox').forEach(cb => cb.checked = false);
+			updateSelectionUI();
+		}
+
+		function mdm_do_bulk_pin() {
+			const pin = document.getElementById('bulk_pin_input').value;
+			if (pin.length !== 4 || !/^\d+$/.test(pin)) {
+				alert('PIN必须是4位数字');
+				return;
+			}
+			const deviceIds = Array.from(selectedDevices);
+			// TODO: 调用批量修改PIN API
+			console.log('Bulk PIN:', pin, deviceIds);
+			mdm_bulk_pin_modal.close();
+			clearSelection();
+		}
+
+		function mdm_bulk_delete() {
+			const count = selectedDevices.size;
+			if (!confirm('确定要删除选中的 ' + count + ' 台设备吗？此操作不可恢复。')) {
+				return;
+			}
+			// TODO: 调用批量删除API
+			console.log('Bulk delete:', Array.from(selectedDevices));
+			clearSelection();
+		}
+
+		function showQRCode(deviceId, deviceName) {
+			// TODO: 显示设备二维码
+			alert('设备 ' + deviceName + ' 的二维码');
+		}
+	</script>
+}
+
+// ─── Devices List Tab ──────────────────────────────────────────────────────────
+
+templ MDMTabletsListTab(devices []*models.MDMTablet, groups []*models.MDMTabletGroup) {
+	<div class="space-y-4">
+		<!-- Filter Toolbar -->
+		<div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
+			<div class="form-control flex-1">
+				<div class="input-group">
+					<input type="text" id="mdm-search-input" placeholder="搜索设备名称、编号、IMEI..." class="input input-bordered input-sm flex-1" onkeyup="mdm_do_search()"/>
+					<button class="btn btn-sm btn-square btn-primary">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+						</svg>
+					</button>
+				</div>
+			</div>
+			<select id="mdm-group-filter" class="select select-bordered select-sm w-auto" onchange="mdm_do_filter()">
+				<option value="">全部分组</option>
+				for _, group := range groups {
+					<option value={ group.ID }>{ group.Name }</option>
+				}
+			</select>
+			<select id="mdm-status-filter" class="select select-bordered select-sm w-auto" onchange="mdm_do_filter()">
+				<option value="">全部状态</option>
+				<option value="active">在线</option>
+				<option value="inactive">离线</option>
+				<option value="lost">丢失</option>
+			</select>
+		</div>
+
+		<!-- Devices Grid -->
+		<div id="mdm-devices-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+			for _, device := range devices {
+				@MDMTabletCard(device)
+			}
+		</div>
+
+		if len(devices) == 0 {
+			<div class="text-center py-12">
+				<div class="text-6xl mb-4">📱</div>
+				<h3 class="text-lg font-semibold text-slate-600 mb-2">暂无设备</h3>
+				<p class="text-slate-400 mb-4">点击上方"添加设备"开始管理您的平板设备</p>
+			</div>
+		}
+	</div>
+}
+
+// ─── Device Card ──────────────────────────────────────────────────────────────
+
+templ MDMTabletCard(device *models.MDMTablet) {
+	<div class="card bg-base-100 shadow-md hover:shadow-lg transition-all duration-200 border border-slate-200">
+		<div class="card-body p-4">
+			<!-- Header -->
+			<div class="flex items-start justify-between mb-3">
+				<div class="flex items-center gap-3">
+					<input type="checkbox" class="checkbox checkbox-primary checkbox-sm device-checkbox" value={ device.ID } onclick="toggleDeviceSelection('{ device.ID }')"/>
+					<div class="avatar placeholder">
+						<div class="bg-primary/10 text-primary rounded-xl w-10 h-10">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+							</svg>
+						</div>
+					</div>
+					<div>
+						<h3 class="font-semibold text-slate-800 text-sm">{ device.Name }</h3>
+						<p class="text-xs text-slate-400">{ device.Number }</p>
+					</div>
+				</div>
+				@MDMTabletStatusBadge(device.Status)
+			</div>
+
+			<!-- Info Grid -->
+			<div class="grid grid-cols-2 gap-2 text-xs mb-3">
+				<div class="flex items-center gap-1 text-slate-500">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+					</svg>
+					<span class="truncate">{ device.Model }</span>
+				</div>
+				<div class="flex items-center gap-1 text-slate-500">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+					</svg>
+					if device.LastLat != nil && device.LastLng != nil {
+						<span class="text-success">已定位</span>
+					} else {
+						<span class="text-slate-400">未定位</span>
+					}
+				</div>
+			</div>
+
+			<!-- Actions -->
+			<div class="flex items-center gap-2">
+				<button class="btn btn-xs btn-ghost flex-1 gap-1" onclick="showQRCode('{ device.ID }', '{ device.Name }')">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+					</svg>
+					二维码
+				</button>
+				<a href={ templ.URL("/mdm/devices/" + device.ID) } class="btn btn-xs btn-ghost flex-1 gap-1">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+					</svg>
+					详情
+				</a>
+				<button class="btn btn-xs btn-error btn-ghost flex-1 gap-1" onclick="mdm_delete_device('{ device.ID }')">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+					</svg>
+					删除
+				</button>
+			</div>
+		</div>
+	</div>
+}
+
+templ MDMTabletStatusBadge(status string) {
+	switch status {
+		case "active":
+			<span class="badge badge-success badge-sm gap-1">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+				</svg>
+				在线
+			</span>
+		case "inactive":
+			<span class="badge badge-ghost badge-sm">离线</span>
+		case "lost":
+			<span class="badge badge-error badge-sm gap-1">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+				</svg>
+				丢失
+			</span>
+		case "retired":
+			<span class="badge badge-ghost badge-sm">已退役</span>
+		default:
+			<span class="badge badge-ghost badge-sm">{ status }</span>
+	}
+}
+
+// ─── Groups Tab ───────────────────────────────────────────────────────────────
+
+templ MDMTabletsGroupsTab(groups []*models.MDMTabletGroup) {
+	<div class="space-y-4">
+		<div class="flex items-center justify-between">
+			<h2 class="text-lg font-semibold">设备分组</h2>
+			<button class="btn btn-primary btn-sm gap-2" onclick="mdm_show_add_group_modal()">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+				</svg>
+				新建分组
+			</button>
+		</div>
+
+		if len(groups) == 0 {
+			<div class="text-center py-12 bg-slate-50 rounded-xl">
+				<div class="text-6xl mb-4">📁</div>
+				<h3 class="text-lg font-semibold text-slate-600 mb-2">暂无分组</h3>
+				<p class="text-slate-400 mb-4">创建设备分组以便更好地管理设备</p>
+				<button class="btn btn-primary" onclick="mdm_show_add_group_modal()">新建分组</button>
+			</div>
+		} else {
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				for _, group := range groups {
+					<div class="card bg-base-100 shadow border border-slate-200">
+						<div class="card-body p-4">
+							<div class="flex items-center justify-between mb-2">
+								<div class="flex items-center gap-2">
+									<div class="avatar placeholder">
+										<div class="bg-secondary/10 text-secondary rounded-xl w-8 h-8">
+											<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+											</svg>
+										</div>
+									</div>
+									<h3 class="font-semibold">{ group.Name }</h3>
+								</div>
+								<div class="dropdown dropdown-end">
+									<label tabindex="0" class="btn btn-xs btn-ghost">•••</label>
+									<ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-40 z-10">
+										<li><a onclick="mdm_edit_group('{ group.ID }')">编辑</a></li>
+										<li><a onclick="mdm_delete_group('{ group.ID }')" class="text-error">删除</a></li>
+									</ul>
+								</div>
+							</div>
+							if group.Description != "" {
+								<p class="text-xs text-slate-400 mb-2">{ group.Description }</p>
+							}
+							<div class="text-xs text-slate-500">
+								创建于 { formatTime(group.CreatedAt) }
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+		}
+	</div>
+}
+
+// ─── Map Tab ──────────────────────────────────────────────────────────────────
+
+templ MDMTabletsMapTab(devices []*models.MDMTablet) {
+	<div class="bg-slate-100 rounded-xl p-8 text-center min-h-[400px]">
+		<div class="text-6xl mb-4">🗺️</div>
+		<h3 class="text-lg font-semibold text-slate-600 mb-2">地图视图</h3>
+		<p class="text-slate-400 mb-4">显示所有设备的实时位置</p>
+		<div class="flex flex-wrap justify-center gap-4">
+			<div class="stats shadow">
+				<div class="stat">
+					<div class="stat-title">已定位设备</div>
+					<div class="stat-value text-success">{ int64ToString(countLocatedDevices(devices)) }</div>
+					<div class="stat-desc">共 { int64ToString(int64(len(devices))) } 台</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+func countLocatedDevices(devices []*models.MDMTablet) int {
+	count := 0
+	for _, d := range devices {
+		if d.LastLat != nil && d.LastLng != nil {
+			count++
+		}
+	}
+	return count
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+func int64ToString(n int64) string {
+	return fmt.Sprintf("%d", n)
+}
+
+func formatTime(timestamp int64) string {
+	if timestamp == 0 {
+		return "未知"
+	}
+	return time.Unix(timestamp, 0).Format("2006-01-02 15:04")
+}

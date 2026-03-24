@@ -12,6 +12,9 @@ import (
 
 // MDMTabletRepository MDM设备仓库接口
 type MDMTabletRepository interface {
+	// 初始化
+	InitSchema(ctx interface{}) error
+
 	// 设备CRUD
 	CreateDevice(device *models.MDMTablet) error
 	GetDeviceByID(id string) (*models.MDMTablet, error)
@@ -62,6 +65,81 @@ func NewSQLiteMDMTabletRepository(db interface{}) *SQLiteMDMTabletRepository {
 		panic(fmt.Sprintf("unsupported db type: %T", db))
 	}
 	return &SQLiteMDMTabletRepository{db: sqlxDB}
+}
+
+// InitSchema 初始化MDM设备表结构
+func (r *SQLiteMDMTabletRepository) InitSchema(ctx interface{}) error {
+	schema := `
+		CREATE TABLE IF NOT EXISTS mdm_devices (
+			id TEXT PRIMARY KEY,
+			number TEXT NOT NULL UNIQUE,
+			name TEXT NOT NULL,
+			description TEXT,
+			imei TEXT,
+			phone TEXT,
+			model TEXT,
+			manufacturer TEXT,
+			os_version TEXT,
+			sdk_version INTEGER,
+			app_version TEXT,
+			app_version_code INTEGER,
+			carrier TEXT,
+			last_lat REAL,
+			last_lng REAL,
+			last_location_time INTEGER,
+			last_seen INTEGER,
+			status TEXT NOT NULL DEFAULT 'active',
+			configuration_id TEXT,
+			group_id TEXT,
+			tenant_id TEXT NOT NULL,
+			metadata TEXT,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_mdm_devices_tenant ON mdm_devices(tenant_id);
+		CREATE INDEX IF NOT EXISTS idx_mdm_devices_status ON mdm_devices(status);
+		CREATE INDEX IF NOT EXISTS idx_mdm_devices_group ON mdm_devices(group_id);
+		CREATE INDEX IF NOT EXISTS idx_mdm_devices_number ON mdm_devices(number);
+
+		CREATE TABLE IF NOT EXISTS device_groups (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			parent_id TEXT,
+			description TEXT,
+			tenant_id TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_device_groups_tenant ON device_groups(tenant_id);
+
+		CREATE TABLE IF NOT EXISTS device_tags (
+			id TEXT PRIMARY KEY,
+			device_id TEXT NOT NULL,
+			tag TEXT NOT NULL,
+			value TEXT,
+			created_at INTEGER NOT NULL,
+			FOREIGN KEY (device_id) REFERENCES mdm_devices(id) ON DELETE CASCADE
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_device_tags_device ON device_tags(device_id);
+		CREATE INDEX IF NOT EXISTS idx_device_tags_name ON device_tags(tag);
+
+		CREATE TABLE IF NOT EXISTS device_events (
+			id TEXT PRIMARY KEY,
+			device_id TEXT NOT NULL,
+			event_type TEXT NOT NULL,
+			event_data TEXT,
+			created_at INTEGER NOT NULL,
+			FOREIGN KEY (device_id) REFERENCES mdm_devices(id) ON DELETE CASCADE
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_device_events_device ON device_events(device_id);
+		CREATE INDEX IF NOT EXISTS idx_device_events_type ON device_events(event_type);
+	`
+	_, err := r.db.Exec(schema)
+	return err
 }
 
 // CreateDevice 创建设备

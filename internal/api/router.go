@@ -21,24 +21,26 @@ import (
 
 // ApiServer 集中路由所需的依赖项
 type ApiServer struct {
-	Echo         *echo.Echo
-	DB           *sql.DB
-	TabletRepo   repositories.TabletRepository
-	ReportRepo   repositories.ReportRepository
-	GroupRepo    repositories.GroupRepository
-	FTRepo       *repositories.FieldTripRepository
-	MonitorSvc   services.MonitorService
-	KioskClient  clients.KioskClient
-	Cfg          config.Config
-	MediaService services.MediaService
-	MQTTService  *services.MQTTService // MQTT 服务，用于实时双向通信
-	AuthSvc      services.AuthService  // 企业版: 认证服务
-	CmdSvc       services.CommandService // 企业版: 命令服务
-	StatusSvc    services.DeviceStatusService // 企业版: 状态服务
-	PolicySvc    services.PolicyService // 企业版: 策略服务
-	TenantSvc    services.TenantService  // 企业版: 租户服务
-	MetricsSvc   *services.MetricsService // 企业版: 指标服务
-	AuditSvc     *services.AuditService  // 企业版: 审计日志服务
+	Echo           *echo.Echo
+	DB             *sql.DB
+	TabletRepo     repositories.TabletRepository
+	ReportRepo     repositories.ReportRepository
+	GroupRepo      repositories.GroupRepository
+	FTRepo         *repositories.FieldTripRepository
+	MonitorSvc     services.MonitorService
+	KioskClient    clients.KioskClient
+	Cfg            config.Config
+	MediaService   services.MediaService
+	MQTTService    *services.MQTTService // MQTT 服务，用于实时双向通信
+	AuthSvc        services.AuthService  // 企业版: 认证服务
+	CmdSvc         services.CommandService // 企业版: 命令服务
+	StatusSvc      services.DeviceStatusService // 企业版: 状态服务
+	PolicySvc      services.PolicyService // 企业版: 策略服务
+	TenantSvc      services.TenantService  // 企业版: 租户服务
+	MetricsSvc     *services.MetricsService // 企业版: 指标服务
+	AuditSvc       *services.AuditService  // 企业版: 审计日志服务
+	MDMTabletRepo  repositories.MDMTabletRepository // MDM平板设备仓库
+	MDMTabletSvc   services.MDMTabletService       // MDM平板设备服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -59,27 +61,30 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	tenantSvc services.TenantService, // 企业版: 租户服务
 	metricsSvc *services.MetricsService, // 企业版: 指标服务
 	auditSvc *services.AuditService, // 企业版: 审计日志服务
-
+	mdmTabletRepo repositories.MDMTabletRepository, // MDM平板设备仓库
+	mdmTabletSvc services.MDMTabletService, // MDM平板设备服务
 ) *ApiServer {
 	s := &ApiServer{
-		Echo:         e,
-		DB:           db,
-		TabletRepo:   tr,
-		ReportRepo:   rr,
-		GroupRepo:    gr,
-		FTRepo:       ftRepo,
-		MonitorSvc:   ms,
-		KioskClient:  ks,
-		Cfg:          cfg,
-		MediaService: mes,
-		MQTTService:  mqttSvc,
-		AuthSvc:      authSvc,
-		CmdSvc:       cmdSvc,
-		StatusSvc:    statusSvc,
-		PolicySvc:    policySvc,
-		TenantSvc:    tenantSvc,
-		MetricsSvc:   metricsSvc,
-		AuditSvc:     auditSvc,
+		Echo:           e,
+		DB:             db,
+		TabletRepo:     tr,
+		ReportRepo:     rr,
+		GroupRepo:      gr,
+		FTRepo:         ftRepo,
+		MonitorSvc:     ms,
+		KioskClient:    ks,
+		Cfg:            cfg,
+		MediaService:   mes,
+		MQTTService:    mqttSvc,
+		AuthSvc:        authSvc,
+		CmdSvc:         cmdSvc,
+		StatusSvc:      statusSvc,
+		PolicySvc:      policySvc,
+		TenantSvc:      tenantSvc,
+		MetricsSvc:     metricsSvc,
+		AuditSvc:       auditSvc,
+		MDMTabletRepo:  mdmTabletRepo,
+		MDMTabletSvc:   mdmTabletSvc,
 	}
 
 	s.setupMiddlewares()
@@ -347,6 +352,58 @@ func (s *ApiServer) setupRoutes() {
 		{
 			auditRoutes.GET("/audit-logs", auditH.HandleQueryAuditLogs)
 		}
+	}
+
+	// --- 12. MDM平板设备管理 API ---
+	if s.MDMTabletSvc != nil {
+		mdmTabletH := NewMDMTabletHandler(s.MDMTabletSvc)
+
+		// MDM平板设备路由 (挂载在租户路径下)
+		mdmRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 设备管理
+			mdmRoutes.GET("/mdm/devices", mdmTabletH.HandleListDevices)
+			mdmRoutes.POST("/mdm/devices", mdmTabletH.HandleCreateDevice)
+			mdmRoutes.GET("/mdm/devices/search", mdmTabletH.HandleSearchDevices)
+			mdmRoutes.GET("/mdm/devices/:id", mdmTabletH.HandleGetDevice)
+			mdmRoutes.PUT("/mdm/devices/:id", mdmTabletH.HandleUpdateDevice)
+			mdmRoutes.DELETE("/mdm/devices/:id", mdmTabletH.HandleDeleteDevice)
+			mdmRoutes.POST("/mdm/devices/:id/status", mdmTabletH.HandleUpdateDeviceStatus)
+			mdmRoutes.POST("/mdm/devices/bulk/status", mdmTabletH.HandleBulkUpdateStatus)
+			mdmRoutes.GET("/mdm/devices/by-number/:number", mdmTabletH.HandleGetDeviceByNumber)
+
+			// 设备分组管理
+			mdmRoutes.GET("/mdm/groups", mdmTabletH.HandleListGroups)
+			mdmRoutes.POST("/mdm/groups", mdmTabletH.HandleCreateGroup)
+			mdmRoutes.PUT("/mdm/groups/:id", mdmTabletH.HandleUpdateGroup)
+			mdmRoutes.DELETE("/mdm/groups/:id", mdmTabletH.HandleDeleteGroup)
+
+			// 设备与分组关联
+			mdmRoutes.POST("/mdm/devices/:device_id/group/:group_id", mdmTabletH.HandleAssignDeviceToGroup)
+			mdmRoutes.DELETE("/mdm/devices/:device_id/group", mdmTabletH.HandleUnassignDeviceFromGroup)
+			mdmRoutes.POST("/mdm/devices/bulk/group", mdmTabletH.HandleBulkAssignGroup)
+
+			// 设备标签管理
+			mdmRoutes.POST("/mdm/devices/:device_id/tags", mdmTabletH.HandleAddTag)
+			mdmRoutes.DELETE("/mdm/devices/:device_id/tags/:tag_name", mdmTabletH.HandleRemoveTag)
+			mdmRoutes.GET("/mdm/devices/:device_id/tags", mdmTabletH.HandleGetDeviceTags)
+
+			// 设备位置管理
+			mdmRoutes.POST("/mdm/devices/:device_id/location", mdmTabletH.HandleUpdateLocation)
+			mdmRoutes.GET("/mdm/devices/:device_id/location", mdmTabletH.HandleGetDeviceLocation)
+
+			// 设备事件管理
+			mdmRoutes.POST("/mdm/events", mdmTabletH.HandleRecordEvent)
+			mdmRoutes.GET("/mdm/devices/:device_id/events", mdmTabletH.HandleGetDeviceEvents)
+
+			// 二维码
+			mdmRoutes.GET("/mdm/devices/:id/qr", mdmTabletH.HandleQRCode)
+		}
+
+		// MDM平板管理页面路由
+		protected.GET("/mdm", mdmTabletH.HandleMDMTabletsDashboard)
+		protected.GET("/mdm/devices/:id", mdmTabletH.HandleMDMTabletDetails)
+		protected.GET("/mdm/devices/:id/modal", mdmTabletH.HandleMDMTabletModal)
 	}
 
 	// --- Field Trip API v2 ---

@@ -25,6 +25,10 @@ func NewMockMDMTabletRepository() *MockMDMTabletRepository {
 	}
 }
 
+func (m *MockMDMTabletRepository) InitSchema(ctx interface{}) error {
+	return nil
+}
+
 func (m *MockMDMTabletRepository) CreateDevice(device *models.MDMTablet) error {
 	now := time.Now().Unix()
 	device.CreatedAt = now
