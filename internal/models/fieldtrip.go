@@ -87,3 +87,26 @@ type PendingCommand struct {
 	CreatedAt   int64   `json:"created_at" db:"created_at"`
 	DeliveredAt *int64  `json:"delivered_at" db:"delivered_at"`
 }
+
+// FieldTripDeviceInfo represents system information reported by a tablet
+type FieldTripDeviceInfo struct {
+	BatteryLevel    int    `json:"battery_level"`
+	BatteryCharging bool   `json:"battery_charging"`
+	IMEI            string `json:"imei"`
+	PhoneNumber     string `json:"phone_number"`
+	SerialNumber    string `json:"serial_number"`
+	AndroidVersion string `json:"android_version"`
+	AppVersion     string `json:"app_version"`
+	FreeStorage     int64  `json:"free_storage"`
+	TotalStorage    int64  `json:"total_storage"`
+	FreeMemory      int64  `json:"free_memory"`
+	TotalMemory     int64  `json:"total_memory"`
+}
+
+// DeviceConfig represents configuration for a device (kiosk mode settings)
+type DeviceConfig struct {
+	KioskMode      bool     `json:"kiosk_mode"`
+	AllowedApps    []string `json:"allowed_apps"`
+	ScreenLocked   bool     `json:"screen_locked"`
+	Permissions    []string `json:"permissions"`
+}

@@ -807,3 +807,106 @@ type SendBroadcastInput struct {
 	Sound     string `json:"sound"`
 	CreatedBy string `json:"created_by"`
 }
+
+// ReportDeviceInfo handles device system information reporting from tablet
+// POST /api/v2/fieldtrip/devices/:id/info
+func (h *FieldTripHandler) ReportDeviceInfo(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing device id")
+	}
+
+	var info models.FieldTripDeviceInfo
+	if err := c.Bind(&info); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+
+	// Serialize to JSON for storage
+	infoJSON, err := json.Marshal(info)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to serialize device info")
+	}
+
+	now := time.Now().Unix()
+	if err := h.Repo.UpdateDeviceInfo(id, string(infoJSON), now); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update device info")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetDeviceInfo returns stored device system information
+// GET /api/v2/fieldtrip/devices/:id/info
+func (h *FieldTripHandler) GetDeviceInfo(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing device id")
+	}
+
+	infoJSON, err := h.Repo.GetDeviceInfo(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "device not found")
+	}
+
+	if infoJSON == "" {
+		return c.JSON(http.StatusOK, map[string]interface{}{})
+	}
+
+	var info models.FieldTripDeviceInfo
+	if err := json.Unmarshal([]byte(infoJSON), &info); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to parse device info")
+	}
+
+	return c.JSON(http.StatusOK, info)
+}
+
+// GetDeviceConfig returns stored device configuration
+// GET /api/v2/fieldtrip/devices/:id/config
+func (h *FieldTripHandler) GetDeviceConfig(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing device id")
+	}
+
+	configJSON, err := h.Repo.GetDeviceConfig(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "device not found")
+	}
+
+	if configJSON == "" {
+		return c.JSON(http.StatusOK, map[string]interface{}{})
+	}
+
+	var config models.DeviceConfig
+	if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to parse device config")
+	}
+
+	return c.JSON(http.StatusOK, config)
+}
+
+// SetDeviceConfig sets device configuration
+// POST /api/v2/fieldtrip/devices/:id/config
+func (h *FieldTripHandler) SetDeviceConfig(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing device id")
+	}
+
+	var config models.DeviceConfig
+	if err := c.Bind(&config); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+
+	configJSON, err := json.Marshal(config)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to serialize device config")
+	}
+
+	now := time.Now().Unix()
+	if err := h.Repo.UpdateDeviceConfig(id, string(configJSON), now); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update device config")
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+}

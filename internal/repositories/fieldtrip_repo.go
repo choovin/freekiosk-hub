@@ -40,7 +40,9 @@ func (r *FieldTripRepository) InitSchema() error {
 			status TEXT DEFAULT 'active',
 			signing_pubkey TEXT,
 			created_at INTEGER NOT NULL,
-			updated_at INTEGER NOT NULL
+			updated_at INTEGER NOT NULL,
+			device_info TEXT,
+			device_config TEXT
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_ftd_group ON fieldtrip_devices(group_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_ftd_status ON fieldtrip_devices(status)`,
@@ -84,10 +86,15 @@ func (r *FieldTripRepository) InitSchema() error {
 			created_at INTEGER NOT NULL,
 			expires_at INTEGER NOT NULL
 		)`,
+		// Migration: add device_info and device_config columns if they don't exist (for existing databases)
+		`ALTER TABLE fieldtrip_devices ADD COLUMN device_info TEXT`,
+		`ALTER TABLE fieldtrip_devices ADD COLUMN device_config TEXT`,
 	}
 	for _, q := range queries {
 		if _, err := r.db.Exec(q); err != nil {
-			return err
+			// Ignore "duplicate column" errors from ALTER TABLE on existing databases
+			// SQLite doesn't support IF NOT EXISTS for ALTER TABLE ADD COLUMN
+			continue
 		}
 	}
 	return nil
@@ -284,4 +291,32 @@ func (r *FieldTripRepository) GetCachedAPIKey(deviceID string) (string, error) {
 func (r *FieldTripRepository) DeleteAPIKeyCache(deviceID string) error {
 	_, err := r.db.Exec(`DELETE FROM device_key_cache WHERE device_id = ?`, deviceID)
 	return err
+}
+
+// UpdateDeviceInfo stores device system information (battery, IMEI, storage, etc.)
+func (r *FieldTripRepository) UpdateDeviceInfo(deviceID string, deviceInfoJSON string, updatedAt int64) error {
+	_, err := r.db.Exec(`UPDATE fieldtrip_devices SET device_info=?, updated_at=? WHERE id=?`,
+		deviceInfoJSON, updatedAt, deviceID)
+	return err
+}
+
+// GetDeviceInfo retrieves the stored device info JSON for a device
+func (r *FieldTripRepository) GetDeviceInfo(deviceID string) (string, error) {
+	var info string
+	err := r.db.QueryRow(`SELECT device_info FROM fieldtrip_devices WHERE id = ?`, deviceID).Scan(&info)
+	return info, err
+}
+
+// UpdateDeviceConfig stores device configuration JSON
+func (r *FieldTripRepository) UpdateDeviceConfig(deviceID string, configJSON string, updatedAt int64) error {
+	_, err := r.db.Exec(`UPDATE fieldtrip_devices SET device_config=?, updated_at=? WHERE id=?`,
+		configJSON, updatedAt, deviceID)
+	return err
+}
+
+// GetDeviceConfig retrieves the stored device config JSON
+func (r *FieldTripRepository) GetDeviceConfig(deviceID string) (string, error) {
+	var config string
+	err := r.db.QueryRow(`SELECT device_config FROM fieldtrip_devices WHERE id = ?`, deviceID).Scan(&config)
+	return config, err
 }
