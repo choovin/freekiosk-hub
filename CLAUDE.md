@@ -105,7 +105,52 @@ MAX_WORKERS=5             # 并发工作线程数
 | `RETENTION_DAYS` | 数据保留天数 | 31 |
 | `MAX_WORKERS` | 并发工作线程 | 5 |
 
-## 先决条件
+## Git Hooks 工作流
+
+项目已配置 git hooks 来规范 commit message 格式：
+
+```bash
+# 配置 hooks（首次 clone 后运行）
+bash bin/setup-hooks.sh
+
+# 功能完成后运行此脚本（自动生成文档 + 更新 changelog + 版本递增）
+bash bin/post-feature-hub.sh
+
+# 或者手动提交时，遵循以下格式：
+git commit -m "type(scope): description"
+```
+
+### Commit Message 格式
+
+```
+type(scope): description
+```
+
+**type 可选值：**
+| type | 含义 |
+|------|------|
+| feat | 新功能 |
+| fix | Bug 修复 |
+| docs | 文档更新 |
+| ui | UI/样式变更 |
+| api | API 变更 |
+| db | 数据库变更 |
+| refactor | 重构 |
+| build | 依赖/构建 |
+| ci | CI 配置 |
+| test | 测试相关 |
+
+**示例：**
+```bash
+git commit -m "feat(api): 添加设备信息上报接口"
+git commit -m "fix(hub): 修复SELECT * 导致sqlx扫描失败"
+git commit -m "ui(dashboard): 优化仪表板布局"
+```
+
+**规则：**
+- description 使用中文，句末不加句号
+- 长度不超过 72 字符
+- scope 可选（如 android、hub、api、ui）
 
 - **Go**: 编程语言
 - **Make**: 用于常见任务
