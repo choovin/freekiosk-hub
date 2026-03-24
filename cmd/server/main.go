@@ -218,6 +218,24 @@ func main() {
 	}
 	slog.Info("✅ MDM平板设备服务已初始化")
 
+	// 12. 配置档案服务初始化
+	configRepo := repositories.NewSQLiteConfigurationRepository(db)
+	configSvc := services.NewConfigurationService(configRepo)
+	if err := configRepo.InitSchema(ctx); err != nil {
+		slog.Error("❌ Failed to initialize configuration schema", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("✅ 配置档案服务已初始化")
+
+	// 13. 应用包服务初始化
+	appPkgRepo := repositories.NewSQLiteAppPackageRepository(db)
+	appPkgSvc := services.NewAppPackageService(appPkgRepo, cfg.MediaDir, cfg.BaseURL)
+	if err := appPkgRepo.InitSchema(ctx); err != nil {
+		slog.Error("❌ Failed to initialize app package schema", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("✅ 应用包服务已初始化")
+
 	// 7. 初始化 WebSocket Hub (用于实时通知)
 	sse.InitWsHub()
 	slog.Info("✅ WebSocket Hub 已初始化")
@@ -236,7 +254,7 @@ func main() {
 
 	e := echo.New()
 	e.Renderer = &api.TemplRenderer{}
-	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, ftRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc, mdmTabletRepo, mdmTabletSvc)
+	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, ftRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc, mdmTabletRepo, mdmTabletSvc, configSvc, appPkgSvc)
 	e.Static("/media", cfg.MediaDir)
 	go func() {
 		slog.Info("🌐 Web Server starting", "port", cfg.ServerPort)

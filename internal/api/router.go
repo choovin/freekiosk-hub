@@ -41,6 +41,8 @@ type ApiServer struct {
 	AuditSvc       *services.AuditService  // 企业版: 审计日志服务
 	MDMTabletRepo  repositories.MDMTabletRepository // MDM平板设备仓库
 	MDMTabletSvc   services.MDMTabletService       // MDM平板设备服务
+	ConfigSvc      services.ConfigurationService    // 配置档案服务
+	AppPkgSvc      services.AppPackageService      // 应用包服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -63,6 +65,8 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	auditSvc *services.AuditService, // 企业版: 审计日志服务
 	mdmTabletRepo repositories.MDMTabletRepository, // MDM平板设备仓库
 	mdmTabletSvc services.MDMTabletService, // MDM平板设备服务
+	configSvc services.ConfigurationService, // 配置档案服务
+	appPkgSvc services.AppPackageService, // 应用包服务
 ) *ApiServer {
 	s := &ApiServer{
 		Echo:           e,
@@ -85,6 +89,8 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		AuditSvc:       auditSvc,
 		MDMTabletRepo:  mdmTabletRepo,
 		MDMTabletSvc:   mdmTabletSvc,
+		ConfigSvc:      configSvc,
+		AppPkgSvc:      appPkgSvc,
 	}
 
 	s.setupMiddlewares()
@@ -404,6 +410,48 @@ func (s *ApiServer) setupRoutes() {
 		protected.GET("/mdm", mdmTabletH.HandleMDMTabletsDashboard)
 		protected.GET("/mdm/devices/:id", mdmTabletH.HandleMDMTabletDetails)
 		protected.GET("/mdm/devices/:id/modal", mdmTabletH.HandleMDMTabletModal)
+	}
+
+	// --- 13. 配置档案管理 API ---
+	if s.ConfigSvc != nil {
+		configH := NewConfigurationHandler(s.ConfigSvc)
+
+		// 配置档案路由 (挂载在租户路径下)
+		configRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 配置档案CRUD
+			configRoutes.POST("/configurations", configH.HandleCreate)
+			configRoutes.GET("/configurations", configH.HandleList)
+			configRoutes.GET("/configurations/:id", configH.HandleGet)
+			configRoutes.PUT("/configurations/:id", configH.HandleUpdate)
+			configRoutes.DELETE("/configurations/:id", configH.HandleDelete)
+
+			// 设备配置分配
+			configRoutes.POST("/configurations/assign", configH.HandleAssignToDevice)
+			configRoutes.POST("/configurations/unassign", configH.HandleUnassignFromDevice)
+			configRoutes.GET("/devices/:deviceId/configurations/current", configH.HandleGetDeviceConfiguration)
+			configRoutes.GET("/devices/:deviceId/configurations", configH.HandleGetDeviceConfigurations)
+		}
+	}
+
+	// --- 14. 应用包管理 API ---
+	if s.AppPkgSvc != nil {
+		appPkgH := NewAppPackageHandler(s.AppPkgSvc, s.Cfg.BaseURL+"/apk")
+
+		// 应用包路由 (挂载在租户路径下)
+		appPkgRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			appPkgRoutes.GET("/apps", appPkgH.HandleListPackages)
+			appPkgRoutes.GET("/apps/search", appPkgH.HandleSearchPackages)
+			appPkgRoutes.GET("/apps/:id", appPkgH.HandleGetPackage)
+			appPkgRoutes.POST("/apps", appPkgH.HandleUploadPackage)
+			appPkgRoutes.DELETE("/apps/:id", appPkgH.HandleDeletePackage)
+			appPkgRoutes.GET("/apps/:id/download", appPkgH.HandleDownloadPackage)
+			appPkgRoutes.GET("/apps/:id/download-url", appPkgH.HandleGetDownloadURL)
+		}
+
+		// 应用包下载路由 (公开)
+		s.Echo.GET("/apk/:id", appPkgH.HandleDownloadPackage)
 	}
 
 	// --- Field Trip API v2 ---
