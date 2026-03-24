@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -142,21 +143,21 @@ func (r *FieldTripRepository) CreateDevice(d *models.FieldTripDevice) error {
 // GetDeviceByID retrieves a device by ID
 func (r *FieldTripRepository) GetDeviceByID(id string) (*models.FieldTripDevice, error) {
 	var d models.FieldTripDevice
-	err := r.db.Get(&d, "SELECT * FROM fieldtrip_devices WHERE id = ?", id)
+	err := r.db.Get(&d, `SELECT id, name, group_id, api_key_hash, hub_url, last_seen, last_lat, last_lng, status, signing_pubkey, created_at, updated_at FROM fieldtrip_devices WHERE id = ?`, id)
 	return &d, err
 }
 
 // ListDevices returns all devices
 func (r *FieldTripRepository) ListDevices() ([]models.FieldTripDevice, error) {
 	var devices []models.FieldTripDevice
-	err := r.db.Select(&devices, "SELECT * FROM fieldtrip_devices ORDER BY name")
+	err := r.db.Select(&devices, `SELECT id, name, group_id, api_key_hash, hub_url, last_seen, last_lat, last_lng, status, signing_pubkey, created_at, updated_at FROM fieldtrip_devices ORDER BY name`)
 	return devices, err
 }
 
 // ListDevicesByGroup returns all devices in a group
 func (r *FieldTripRepository) ListDevicesByGroup(groupID string) ([]models.FieldTripDevice, error) {
 	var devices []models.FieldTripDevice
-	err := r.db.Select(&devices, "SELECT * FROM fieldtrip_devices WHERE group_id = ? ORDER BY name", groupID)
+	err := r.db.Select(&devices, `SELECT id, name, group_id, api_key_hash, hub_url, last_seen, last_lat, last_lng, status, signing_pubkey, created_at, updated_at FROM fieldtrip_devices WHERE group_id = ? ORDER BY name`, groupID)
 	return devices, err
 }
 
@@ -302,9 +303,15 @@ func (r *FieldTripRepository) UpdateDeviceInfo(deviceID string, deviceInfoJSON s
 
 // GetDeviceInfo retrieves the stored device info JSON for a device
 func (r *FieldTripRepository) GetDeviceInfo(deviceID string) (string, error) {
-	var info string
+	var info sql.NullString
 	err := r.db.QueryRow(`SELECT device_info FROM fieldtrip_devices WHERE id = ?`, deviceID).Scan(&info)
-	return info, err
+	if err != nil {
+		return "", err
+	}
+	if !info.Valid {
+		return "", nil
+	}
+	return info.String, nil
 }
 
 // UpdateDeviceConfig stores device configuration JSON
@@ -316,7 +323,13 @@ func (r *FieldTripRepository) UpdateDeviceConfig(deviceID string, configJSON str
 
 // GetDeviceConfig retrieves the stored device config JSON
 func (r *FieldTripRepository) GetDeviceConfig(deviceID string) (string, error) {
-	var config string
+	var config sql.NullString
 	err := r.db.QueryRow(`SELECT device_config FROM fieldtrip_devices WHERE id = ?`, deviceID).Scan(&config)
-	return config, err
+	if err != nil {
+		return "", err
+	}
+	if !config.Valid {
+		return "", nil
+	}
+	return config.String, nil
 }

@@ -2,18 +2,18 @@ package models
 
 // FieldTripDevice represents a field-trip managed device
 type FieldTripDevice struct {
-	ID           string  `json:"id" db:"id"`
-	Name         string  `json:"name" db:"name"`
-	GroupID      string  `json:"group_id" db:"group_id"`
-	ApiKeyHash   string  `json:"-" db:"api_key_hash"`
-	HubURL       string  `json:"hub_url" db:"hub_url"`
-	LastSeen     *int64  `json:"last_seen" db:"last_seen"`
-	LastLat      *float64 `json:"last_lat" db:"last_lat"`
-	LastLng      *float64 `json:"last_lng" db:"last_lng"`
-	Status       string  `json:"status" db:"status"`
-	SigningPubKey string `json:"signing_pubkey" db:"signing_pubkey"`
-	CreatedAt    int64   `json:"created_at" db:"created_at"`
-	UpdatedAt    int64   `json:"updated_at" db:"updated_at"`
+	ID            string  `json:"id" db:"id"`
+	Name          string  `json:"name" db:"name"`
+	GroupID       string  `json:"group_id" db:"group_id"`
+	ApiKeyHash    string  `json:"-" db:"api_key_hash"`
+	HubURL        string  `json:"hub_url" db:"hub_url"`
+	LastSeen      *int64  `json:"last_seen" db:"last_seen"`
+	LastLat       *float64 `json:"last_lat" db:"last_lat"`
+	LastLng       *float64 `json:"last_lng" db:"last_lng"`
+	Status        string  `json:"status" db:"status"`
+	SigningPubKey string  `json:"signing_pubkey" db:"signing_pubkey"`
+	CreatedAt     int64   `json:"created_at" db:"created_at"`
+	UpdatedAt     int64   `json:"updated_at" db:"updated_at"`
 }
 
 // FieldTripGroup represents a device group
