@@ -164,8 +164,16 @@ templ FieldTripDevicesTab(groups []models.FieldTripGroup, allDevices []models.Fi
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
 				</svg>
-				<p class="text-lg font-medium">暂无设备</p>
-				<p class="text-sm mt-1">创建分组并添加设备后，它们将显示在这里</p>
+				<p class="text-lg font-medium text-slate-500">暂无设备</p>
+				<p class="text-sm mt-2">请先在「配置」页面创建分组，然后批量导入设备</p>
+				<div class="mt-4 flex gap-2 justify-center">
+					<button onclick="switchFtTab('config')" class="btn btn-primary btn-sm gap-1">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+						</svg>
+						去配置
+					</button>
+				</div>
 			</div>
 		}
 	</div>
@@ -199,13 +207,26 @@ templ FieldTripDeviceCard(device models.FieldTripDevice, groups []models.FieldTr
 						<p class="text-xs text-slate-400">{ groupName }</p>
 					</div>
 				</div>
-				<div class={ "badge badge-sm gap-1", templ.KV("badge-success", device.Status == "active"), templ.KV("badge-error", device.Status != "active") }>
-					<div class={ "w-1.5 h-1.5 rounded-full", templ.KV("bg-white", device.Status == "active"), templ.KV("bg-white/50", device.Status != "active") }></div>
-					if device.Status == "active" {
-						在线
-					} else {
-						离线
-					}
+				<div class="flex items-center gap-2">
+					<div class={ "badge badge-sm gap-1", templ.KV("badge-success", device.Status == "active"), templ.KV("badge-error", device.Status != "active") }>
+						<div class={ "w-1.5 h-1.5 rounded-full", templ.KV("bg-white", device.Status == "active"), templ.KV("bg-white/50", device.Status != "active") }></div>
+						if device.Status == "active" {
+							在线
+						} else {
+							离线
+						}
+					</div>
+					<!-- QR Code Quick Preview Button - More Visible -->
+					<button
+						class="btn btn-primary btn-sm gap-1"
+						onclick="event.stopPropagation(); showDeviceQR(this.closest('[data-device-id]').dataset.deviceId, this.closest('[data-device-id]').dataset.deviceName)"
+						title="扫码绑定"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+						</svg>
+						绑定
+					</button>
 				</div>
 			</div>
 
@@ -237,20 +258,15 @@ templ FieldTripDeviceCard(device models.FieldTripDevice, groups []models.FieldTr
 			</div>
 
 			<!-- Device info placeholder (filled by device info API) -->
-			<div id={ fmt.Sprintf("ft-device-info-%s", device.ID) } class="text-xs text-slate-400 italic">点击查看详情...</div>
+			<div id={ fmt.Sprintf("ft-device-info-%s", device.ID } class="text-xs text-slate-400">正在获取设备信息...</div>
 
 			<!-- Actions row -->
 			<div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-50">
-				<button class="btn btn-ghost btn-xs gap-1" onclick="event.stopPropagation(); showDeviceQR(this.closest('[data-device-id]').dataset.deviceId, this.closest('[data-device-id]').dataset.deviceName)" title="查看二维码">
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-					</svg>
-					二维码
-				</button>
-				<button class="btn btn-ghost btn-xs text-error" onclick="event.stopPropagation(); deleteDevice(this.closest('[data-device-id]').dataset.deviceId)" title="删除设备">
+				<button class="btn btn-ghost btn-xs text-error gap-1" onclick="event.stopPropagation(); deleteDevice(this.closest('[data-device-id]').dataset.deviceId)" title="删除设备">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
 					</svg>
+					删除
 				</button>
 			</div>
 		</div>
@@ -267,13 +283,21 @@ templ FieldTripDeviceCard(device models.FieldTripDevice, groups []models.FieldTr
 				if (el && Object.keys(info).length > 0) {
 					let infoText = [];
 					if (info.battery_level !== undefined) infoText.push('电池: ' + info.battery_level + '%');
-					if (info.imei) infoText.push('IMEI: ' + info.imei);
-					if (info.app_version) infoText.push('App: ' + info.app_version);
+					if (info.imei) infoText.push('序列号: ' + info.imei);
+					if (info.app_version) infoText.push('App版本: ' + info.app_version);
 					el.textContent = infoText.join(' · ') || '暂无详细信息';
 					el.classList.remove('italic');
+				} else {
+					el.textContent = '暂无详细信息';
 				}
+			} else {
+				const el = document.getElementById('ft-device-info-' + { device.ID });
+				if (el) el.textContent = '暂无详细信息';
 			}
-		} catch(e) {}
+		} catch(e) {
+			const el = document.getElementById('ft-device-info-' + { device.ID });
+			if (el) el.textContent = '暂无详细信息';
+		}
 	})();
 	</script>
 }
@@ -935,23 +959,43 @@ templ FieldTripGroupFormModal(group *models.FieldTripGroup, lang string) {
 
 templ FieldTripDeviceQRModal() {
 	<div id="device-qr-modal" class="fixed inset-0 z-[100] hidden">
-		<div class="absolute inset-0 bg-black/50" onclick="closeDeviceQR()"></div>
-		<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
+		<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeDeviceQR()"></div>
+		<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4">
 			<div class="text-center">
-				<h3 id="qr-modal-title" class="font-bold text-lg mb-4">设备二维码</h3>
-				<div id="qr-modal-content" class="flex justify-center mb-4">
-					<img id="qr-modal-image" src="" alt="QR Code" class="w-64 h-64" />
+				<div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+					</svg>
 				</div>
-				<p class="text-sm text-slate-500 mb-4">请使用 FreeKiosk 应用扫描此二维码绑定设备</p>
-				<button onclick="closeDeviceQR()" class="btn btn-primary">关闭</button>
+				<h3 id="qr-modal-title" class="font-bold text-xl mb-2 text-slate-800">设备二维码</h3>
+				<p id="qr-modal-device-name" class="text-sm text-slate-500 mb-4"></p>
+				<div id="qr-modal-content" class="flex justify-center mb-6">
+					<div class="bg-white p-4 rounded-2xl shadow-lg border-2 border-slate-100">
+						<img id="qr-modal-image" src="" alt="二维码" class="w-56 h-56" />
+					</div>
+				</div>
+				<p class="text-sm text-slate-500 mb-4">使用 FreeKiosk 应用扫描二维码快速绑定设备</p>
+				<div class="flex gap-3">
+					<a id="qr-download-link" href="#" download="device-qr.png" class="btn btn-outline flex-1 gap-2">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+						</svg>
+						下载二维码
+					</a>
+					<button onclick="closeDeviceQR()" class="btn btn-primary flex-1">关闭</button>
+				</div>
 			</div>
 		</div>
 	</div>
 
 	<script>
 	function showDeviceQR(deviceId, deviceName) {
-		document.getElementById('qr-modal-title').textContent = deviceName + ' 二维码';
-		document.getElementById('qr-modal-image').src = '/api/v2/fieldtrip/devices/' + deviceId + '/qr';
+		document.getElementById('qr-modal-title').textContent = deviceName;
+		document.getElementById('qr-modal-device-name').textContent = '扫码绑定此设备';
+		const qrImage = document.getElementById('qr-modal-image');
+		qrImage.src = '/api/v2/fieldtrip/devices/' + deviceId + '/qr';
+		document.getElementById('qr-download-link').href = '/api/v2/fieldtrip/devices/' + deviceId + '/qr';
+		document.getElementById('qr-download-link').download = deviceName + '-二维码.png';
 		document.getElementById('device-qr-modal').classList.remove('hidden');
 	}
 	function closeDeviceQR() {
@@ -962,7 +1006,7 @@ templ FieldTripDeviceQRModal() {
 		console.log('openDeviceDetail', deviceId);
 	}
 	function deleteDevice(deviceId) {
-		if (!confirm('确定要删除此设备吗？')) return;
+		if (!confirm('确定要删除此设备吗？此操作不可恢复。')) return;
 		fetch('/api/v2/fieldtrip/devices/' + deviceId, { method: 'DELETE' })
 			.then(r => { if (r.ok) window.location.reload(); });
 	}
