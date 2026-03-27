@@ -47,6 +47,7 @@ type ApiServer struct {
 	RemoteCtrlSvc  services.RemoteControlService   // 远程控制服务
 	PushSvc        services.PushNotificationService // 推送通知服务
 	UserSvc        services.UserService            // 用户管理服务
+	NetworkRuleSvc services.NetworkRuleService     // 网络规则服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -75,6 +76,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	remoteCtrlSvc services.RemoteControlService, // 远程控制服务
 	pushSvc services.PushNotificationService, // 推送通知服务
 	userSvc services.UserService, // 用户管理服务
+	networkRuleSvc services.NetworkRuleService, // 网络规则服务
 ) *ApiServer {
 	s := &ApiServer{
 		Echo:           e,
@@ -103,6 +105,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		RemoteCtrlSvc:  remoteCtrlSvc,
 		PushSvc:        pushSvc,
 		UserSvc:        userSvc,
+		NetworkRuleSvc: networkRuleSvc,
 	}
 
 	s.setupMiddlewares()
@@ -587,6 +590,35 @@ func (s *ApiServer) setupRoutes() {
 		protected.GET("/users/new", userH.CreateUser)
 		protected.GET("/users/:id", userH.GetUser)
 		protected.GET("/users/:id/edit", userH.UpdateUser)
+	}
+
+	// --- 19. 网络规则管理 API ---
+	if s.NetworkRuleSvc != nil {
+		networkRuleH := NewNetworkRuleHandler(s.NetworkRuleSvc)
+
+		// 网络规则路由 (挂载在租户路径下)
+		networkRuleRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 网络规则CRUD
+			networkRuleRoutes.POST("/network-rules", networkRuleH.CreateRule)
+			networkRuleRoutes.GET("/network-rules", networkRuleH.ListRules)
+			networkRuleRoutes.GET("/network-rules/:id", networkRuleH.GetRule)
+			networkRuleRoutes.PUT("/network-rules/:id", networkRuleH.UpdateRule)
+			networkRuleRoutes.DELETE("/network-rules/:id", networkRuleH.DeleteRule)
+
+			// 规则匹配检查
+			networkRuleRoutes.POST("/network-rules/match", networkRuleH.MatchRule)
+
+			// 流量日志
+			networkRuleRoutes.GET("/traffic-logs", networkRuleH.ListTrafficLogs)
+			networkRuleRoutes.GET("/traffic-stats", networkRuleH.GetTrafficStats)
+			networkRuleRoutes.GET("/traffic-stats/top-domains", networkRuleH.GetTopDomains)
+
+			// 白名单
+			networkRuleRoutes.POST("/whitelist", networkRuleH.AddToWhitelist)
+			networkRuleRoutes.DELETE("/whitelist/:id", networkRuleH.RemoveFromWhitelist)
+			networkRuleRoutes.GET("/whitelist", networkRuleH.ListWhitelist)
+		}
 	}
 
 	// --- Field Trip API v2 ---

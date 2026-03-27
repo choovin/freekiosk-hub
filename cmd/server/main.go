@@ -272,6 +272,15 @@ func main() {
 	}
 	slog.Info("✅ 用户管理服务已初始化")
 
+	// 18. 网络规则服务初始化
+	networkRuleRepo := repositories.NewSQLiteNetworkRuleRepository(db)
+	networkRuleSvc := services.NewNetworkRuleService(networkRuleRepo)
+	if err := networkRuleRepo.InitSchema(ctx); err != nil {
+		slog.Error("❌ Failed to initialize network rule schema", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("✅ 网络规则服务已初始化")
+
 	// 7. 初始化 WebSocket Hub (用于实时通知)
 	sse.InitWsHub()
 	slog.Info("✅ WebSocket Hub 已初始化")
@@ -290,7 +299,7 @@ func main() {
 
 	e := echo.New()
 	e.Renderer = &api.TemplRenderer{}
-	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, ftRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc, mdmTabletRepo, mdmTabletSvc, configSvc, appPkgSvc, geofenceSvc, remoteControlSvc, pushSvc, userSvc)
+	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, ftRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc, mdmTabletRepo, mdmTabletSvc, configSvc, appPkgSvc, geofenceSvc, remoteControlSvc, pushSvc, userSvc, networkRuleSvc)
 	e.Static("/media", cfg.MediaDir)
 	go func() {
 		slog.Info("🌐 Web Server starting", "port", cfg.ServerPort)
