@@ -46,6 +46,7 @@ type ApiServer struct {
 	GeofenceSvc    services.GeofenceService        // 地理围栏服务
 	RemoteCtrlSvc  services.RemoteControlService   // 远程控制服务
 	PushSvc        services.PushNotificationService // 推送通知服务
+	UserSvc        services.UserService            // 用户管理服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -73,6 +74,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	geofenceSvc services.GeofenceService, // 地理围栏服务
 	remoteCtrlSvc services.RemoteControlService, // 远程控制服务
 	pushSvc services.PushNotificationService, // 推送通知服务
+	userSvc services.UserService, // 用户管理服务
 ) *ApiServer {
 	s := &ApiServer{
 		Echo:           e,
@@ -100,6 +102,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		GeofenceSvc:    geofenceSvc,
 		RemoteCtrlSvc:  remoteCtrlSvc,
 		PushSvc:        pushSvc,
+		UserSvc:        userSvc,
 	}
 
 	s.setupMiddlewares()
@@ -547,6 +550,43 @@ func (s *ApiServer) setupRoutes() {
 			pushRoutes.GET("/devices/:deviceId/notifications", pushH.ListDeviceNotifications)
 			pushRoutes.GET("/devices/:deviceId/receipts", pushH.GetDeviceReceipts)
 		}
+	}
+
+	// --- 18. 用户管理 API ---
+	if s.UserSvc != nil {
+		userH := NewUserHandler(s.UserSvc)
+
+		// 用户路由 (挂载在租户路径下)
+		userRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 用户管理
+			userRoutes.POST("/users", userH.CreateUser)
+			userRoutes.GET("/users", userH.ListUsers)
+			userRoutes.GET("/users/:id", userH.GetUser)
+			userRoutes.PUT("/users/:id", userH.UpdateUser)
+			userRoutes.DELETE("/users/:id", userH.DeleteUser)
+			userRoutes.POST("/users/:id/password", userH.ChangePassword)
+			userRoutes.POST("/users/:id/reset-password", userH.ResetPassword)
+
+			// 认证
+			userRoutes.POST("/auth/login", userH.Login)
+			userRoutes.POST("/auth/logout", userH.Logout)
+			userRoutes.GET("/auth/me", userH.Me)
+			userRoutes.POST("/auth/validate", userH.ValidateToken)
+
+			// 角色管理
+			userRoutes.POST("/roles", userH.CreateRole)
+			userRoutes.GET("/roles", userH.ListRoles)
+			userRoutes.GET("/roles/:id", userH.GetRole)
+			userRoutes.PUT("/roles/:id", userH.UpdateRole)
+			userRoutes.DELETE("/roles/:id", userH.DeleteRole)
+		}
+
+		// 用户管理页面路由
+		protected.GET("/users", userH.ListUsers)
+		protected.GET("/users/new", userH.CreateUser)
+		protected.GET("/users/:id", userH.GetUser)
+		protected.GET("/users/:id/edit", userH.UpdateUser)
 	}
 
 	// --- Field Trip API v2 ---

@@ -263,6 +263,15 @@ func main() {
 	}
 	slog.Info("✅ 推送通知服务已初始化")
 
+	// 17. 用户管理服务初始化
+	userRepo := repositories.NewSQLiteUserRepository(db)
+	userSvc := services.NewUserService(userRepo)
+	if err := userRepo.InitSchema(ctx); err != nil {
+		slog.Error("❌ Failed to initialize user schema", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("✅ 用户管理服务已初始化")
+
 	// 7. 初始化 WebSocket Hub (用于实时通知)
 	sse.InitWsHub()
 	slog.Info("✅ WebSocket Hub 已初始化")
@@ -281,7 +290,7 @@ func main() {
 
 	e := echo.New()
 	e.Renderer = &api.TemplRenderer{}
-	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, ftRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc, mdmTabletRepo, mdmTabletSvc, configSvc, appPkgSvc, geofenceSvc, remoteControlSvc, pushSvc)
+	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, ftRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc, mdmTabletRepo, mdmTabletSvc, configSvc, appPkgSvc, geofenceSvc, remoteControlSvc, pushSvc, userSvc)
 	e.Static("/media", cfg.MediaDir)
 	go func() {
 		slog.Info("🌐 Web Server starting", "port", cfg.ServerPort)
