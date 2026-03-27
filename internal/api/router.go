@@ -43,6 +43,7 @@ type ApiServer struct {
 	MDMTabletSvc   services.MDMTabletService       // MDM平板设备服务
 	ConfigSvc      services.ConfigurationService    // 配置档案服务
 	AppPkgSvc      services.AppPackageService      // 应用包服务
+	GeofenceSvc    services.GeofenceService        // 地理围栏服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -67,6 +68,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	mdmTabletSvc services.MDMTabletService, // MDM平板设备服务
 	configSvc services.ConfigurationService, // 配置档案服务
 	appPkgSvc services.AppPackageService, // 应用包服务
+	geofenceSvc services.GeofenceService, // 地理围栏服务
 ) *ApiServer {
 	s := &ApiServer{
 		Echo:           e,
@@ -91,6 +93,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		MDMTabletSvc:   mdmTabletSvc,
 		ConfigSvc:      configSvc,
 		AppPkgSvc:      appPkgSvc,
+		GeofenceSvc:    geofenceSvc,
 	}
 
 	s.setupMiddlewares()
@@ -452,6 +455,35 @@ func (s *ApiServer) setupRoutes() {
 
 		// 应用包下载路由 (公开)
 		s.Echo.GET("/apk/:id", appPkgH.HandleDownloadPackage)
+	}
+
+	// --- 15. 地理围栏管理 API ---
+	if s.GeofenceSvc != nil {
+		geofenceH := NewGeofenceHandler(s.GeofenceSvc)
+
+		// 地理围栏路由 (挂载在租户路径下)
+		geofenceRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 围栏CRUD
+			geofenceRoutes.POST("/geofences", geofenceH.HandleCreate)
+			geofenceRoutes.GET("/geofences", geofenceH.HandleList)
+			geofenceRoutes.GET("/geofences/active", geofenceH.HandleListActive)
+			geofenceRoutes.GET("/geofences/:id", geofenceH.HandleGet)
+			geofenceRoutes.PUT("/geofences/:id", geofenceH.HandleUpdate)
+			geofenceRoutes.DELETE("/geofences/:id", geofenceH.HandleDelete)
+
+			// 围栏事件
+			geofenceRoutes.GET("/geofences/:id/events", geofenceH.HandleGetGeofenceEvents)
+
+			// 设备围栏分配
+			geofenceRoutes.POST("/geofences/assign", geofenceH.HandleAssignToDevice)
+			geofenceRoutes.POST("/geofences/unassign", geofenceH.HandleUnassignFromDevice)
+			geofenceRoutes.GET("/devices/:deviceId/geofences", geofenceH.HandleGetDeviceGeofences)
+			geofenceRoutes.GET("/devices/:deviceId/geofence-events", geofenceH.HandleGetDeviceEvents)
+
+			// 位置检查
+			geofenceRoutes.POST("/devices/:deviceId/check-location", geofenceH.HandleCheckLocation)
+		}
 	}
 
 	// --- Field Trip API v2 ---
