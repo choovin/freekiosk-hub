@@ -45,6 +45,7 @@ type ApiServer struct {
 	AppPkgSvc      services.AppPackageService      // 应用包服务
 	GeofenceSvc    services.GeofenceService        // 地理围栏服务
 	RemoteCtrlSvc  services.RemoteControlService   // 远程控制服务
+	PushSvc        services.PushNotificationService // 推送通知服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -71,6 +72,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	appPkgSvc services.AppPackageService, // 应用包服务
 	geofenceSvc services.GeofenceService, // 地理围栏服务
 	remoteCtrlSvc services.RemoteControlService, // 远程控制服务
+	pushSvc services.PushNotificationService, // 推送通知服务
 ) *ApiServer {
 	s := &ApiServer{
 		Echo:           e,
@@ -97,6 +99,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		AppPkgSvc:      appPkgSvc,
 		GeofenceSvc:    geofenceSvc,
 		RemoteCtrlSvc:  remoteCtrlSvc,
+		PushSvc:        pushSvc,
 	}
 
 	s.setupMiddlewares()
@@ -516,6 +519,33 @@ func (s *ApiServer) setupRoutes() {
 			remoteCtrlRoutes.POST("/remote/sessions/:sessionId/commands", remoteCtrlH.SendCommand)
 			remoteCtrlRoutes.PUT("/remote/commands/:id/status", remoteCtrlH.UpdateCommandStatus)
 			remoteCtrlRoutes.GET("/remote/sessions/:sessionId/commands", remoteCtrlH.GetSessionCommands)
+		}
+	}
+
+	// --- 17. 推送通知 API ---
+	if s.PushSvc != nil {
+		pushH := NewPushNotificationHandler(s.PushSvc)
+
+		// 推送通知路由 (挂载在租户路径下)
+		pushRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 通知管理
+			pushRoutes.POST("/notifications", pushH.CreateNotification)
+			pushRoutes.GET("/notifications", pushH.ListNotifications)
+			pushRoutes.GET("/notifications/:id", pushH.GetNotification)
+			pushRoutes.PUT("/notifications/:id", pushH.UpdateNotification)
+			pushRoutes.DELETE("/notifications/:id", pushH.DeleteNotification)
+
+			// 发送
+			pushRoutes.POST("/notifications/send/device", pushH.SendToDevice)
+			pushRoutes.POST("/notifications/send/group", pushH.SendToGroup)
+			pushRoutes.POST("/notifications/send/all", pushH.SendToAll)
+			pushRoutes.POST("/notifications/schedule", pushH.ScheduleNotification)
+
+			// 回执
+			pushRoutes.GET("/notifications/:id/receipts", pushH.GetReceipts)
+			pushRoutes.GET("/devices/:deviceId/notifications", pushH.ListDeviceNotifications)
+			pushRoutes.GET("/devices/:deviceId/receipts", pushH.GetDeviceReceipts)
 		}
 	}
 
