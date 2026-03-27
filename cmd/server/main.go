@@ -281,6 +281,15 @@ func main() {
 	}
 	slog.Info("✅ 网络规则服务已初始化")
 
+	// 19. 高级功能服务初始化 (设备拍照、联系人、LDAP、白标)
+	advancedRepo := repositories.NewSQLiteAdvancedRepository(db)
+	advancedSvc := services.NewAdvancedService(advancedRepo)
+	if err := advancedRepo.InitSchema(ctx); err != nil {
+		slog.Error("❌ Failed to initialize advanced schema", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("✅ 高级功能服务已初始化")
+
 	// 7. 初始化 WebSocket Hub (用于实时通知)
 	sse.InitWsHub()
 	slog.Info("✅ WebSocket Hub 已初始化")
@@ -299,7 +308,7 @@ func main() {
 
 	e := echo.New()
 	e.Renderer = &api.TemplRenderer{}
-	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, ftRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc, mdmTabletRepo, mdmTabletSvc, configSvc, appPkgSvc, geofenceSvc, remoteControlSvc, pushSvc, userSvc, networkRuleSvc)
+	api.NewRouter(e, db.DB, tabletRepo, reportRepo, groupRepo, ftRepo, monitorSvc, kioskClient, *cfg, mediaService, mqttService, nil, nil, nil, policySvc, tenantSvc, metricsSvc, auditSvc, mdmTabletRepo, mdmTabletSvc, configSvc, appPkgSvc, geofenceSvc, remoteControlSvc, pushSvc, userSvc, networkRuleSvc, advancedSvc)
 	e.Static("/media", cfg.MediaDir)
 	go func() {
 		slog.Info("🌐 Web Server starting", "port", cfg.ServerPort)

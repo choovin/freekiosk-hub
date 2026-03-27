@@ -48,6 +48,7 @@ type ApiServer struct {
 	PushSvc        services.PushNotificationService // 推送通知服务
 	UserSvc        services.UserService            // 用户管理服务
 	NetworkRuleSvc services.NetworkRuleService     // 网络规则服务
+	AdvancedSvc   services.AdvancedService         // 高级功能服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -77,6 +78,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	pushSvc services.PushNotificationService, // 推送通知服务
 	userSvc services.UserService, // 用户管理服务
 	networkRuleSvc services.NetworkRuleService, // 网络规则服务
+	advancedSvc services.AdvancedService, // 高级功能服务
 ) *ApiServer {
 	s := &ApiServer{
 		Echo:           e,
@@ -106,6 +108,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		PushSvc:        pushSvc,
 		UserSvc:        userSvc,
 		NetworkRuleSvc: networkRuleSvc,
+		AdvancedSvc:   advancedSvc,
 	}
 
 	s.setupMiddlewares()
@@ -618,6 +621,45 @@ func (s *ApiServer) setupRoutes() {
 			networkRuleRoutes.POST("/whitelist", networkRuleH.AddToWhitelist)
 			networkRuleRoutes.DELETE("/whitelist/:id", networkRuleH.RemoveFromWhitelist)
 			networkRuleRoutes.GET("/whitelist", networkRuleH.ListWhitelist)
+		}
+	}
+
+	// --- 20. 高级功能 API (设备拍照、联系人、LDAP、白标) ---
+	if s.AdvancedSvc != nil {
+		advancedH := NewAdvancedHandler(s.AdvancedSvc)
+
+		// 高级功能路由 (挂载在租户路径下)
+		advancedRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 设备拍照
+			advancedRoutes.POST("/device-photos", advancedH.CreateDevicePhoto)
+			advancedRoutes.GET("/device-photos", advancedH.ListDevicePhotos)
+			advancedRoutes.GET("/device-photos/:id", advancedH.GetDevicePhoto)
+			advancedRoutes.DELETE("/device-photos/:id", advancedH.DeleteDevicePhoto)
+
+			// 联系人
+			advancedRoutes.POST("/contacts", advancedH.CreateContact)
+			advancedRoutes.GET("/contacts", advancedH.ListContacts)
+			advancedRoutes.GET("/contacts/search", advancedH.SearchContacts)
+			advancedRoutes.GET("/contacts/:id", advancedH.GetContact)
+			advancedRoutes.PUT("/contacts/:id", advancedH.UpdateContact)
+			advancedRoutes.DELETE("/contacts/:id", advancedH.DeleteContact)
+
+			// LDAP配置
+			advancedRoutes.POST("/ldap/configs", advancedH.CreateLDAPConfig)
+			advancedRoutes.GET("/ldap/configs", advancedH.ListLDAPConfigs)
+			advancedRoutes.GET("/ldap/configs/:id", advancedH.GetLDAPConfig)
+			advancedRoutes.PUT("/ldap/configs/:id", advancedH.UpdateLDAPConfig)
+			advancedRoutes.DELETE("/ldap/configs/:id", advancedH.DeleteLDAPConfig)
+			advancedRoutes.POST("/ldap/configs/:id/test", advancedH.TestLDAPConnection)
+			advancedRoutes.POST("/ldap/configs/:id/sync", advancedH.SyncLDAPUsers)
+			advancedRoutes.GET("/ldap/users", advancedH.ListLDAPUsers)
+
+			// 白标配置
+			advancedRoutes.POST("/white-label", advancedH.CreateWhiteLabelConfig)
+			advancedRoutes.GET("/white-label", advancedH.GetWhiteLabelConfigByTenant)
+			advancedRoutes.PUT("/white-label/:id", advancedH.UpdateWhiteLabelConfig)
+			advancedRoutes.DELETE("/white-label/:id", advancedH.DeleteWhiteLabelConfig)
 		}
 	}
 
