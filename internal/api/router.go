@@ -44,6 +44,7 @@ type ApiServer struct {
 	ConfigSvc      services.ConfigurationService    // 配置档案服务
 	AppPkgSvc      services.AppPackageService      // 应用包服务
 	GeofenceSvc    services.GeofenceService        // 地理围栏服务
+	RemoteCtrlSvc  services.RemoteControlService   // 远程控制服务
 }
 
 // NewRouter 初始化服务器、处理器和路由
@@ -69,6 +70,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 	configSvc services.ConfigurationService, // 配置档案服务
 	appPkgSvc services.AppPackageService, // 应用包服务
 	geofenceSvc services.GeofenceService, // 地理围栏服务
+	remoteCtrlSvc services.RemoteControlService, // 远程控制服务
 ) *ApiServer {
 	s := &ApiServer{
 		Echo:           e,
@@ -94,6 +96,7 @@ func NewRouter(e *echo.Echo, db *sql.DB,
 		ConfigSvc:      configSvc,
 		AppPkgSvc:      appPkgSvc,
 		GeofenceSvc:    geofenceSvc,
+		RemoteCtrlSvc:  remoteCtrlSvc,
 	}
 
 	s.setupMiddlewares()
@@ -483,6 +486,36 @@ func (s *ApiServer) setupRoutes() {
 
 			// 位置检查
 			geofenceRoutes.POST("/devices/:deviceId/check-location", geofenceH.HandleCheckLocation)
+		}
+	}
+
+	// --- 16. 远程控制 API ---
+	if s.RemoteCtrlSvc != nil {
+		remoteCtrlH := NewRemoteControlHandler(s.RemoteCtrlSvc)
+
+		// 远程控制路由 (挂载在租户路径下)
+		remoteCtrlRoutes := s.Echo.Group("/api/v2/tenants/:tenantId")
+		{
+			// 会话管理
+			remoteCtrlRoutes.POST("/remote/sessions", remoteCtrlH.CreateSession)
+			remoteCtrlRoutes.GET("/remote/sessions/:id", remoteCtrlH.GetSession)
+			remoteCtrlRoutes.PUT("/remote/sessions/:id", remoteCtrlH.UpdateSession)
+			remoteCtrlRoutes.DELETE("/remote/sessions/:id", remoteCtrlH.DeleteSession)
+			remoteCtrlRoutes.GET("/remote/devices/:deviceId/sessions", remoteCtrlH.ListDeviceSessions)
+			remoteCtrlRoutes.GET("/remote/devices/:deviceId/sessions/active", remoteCtrlH.GetActiveSession)
+
+			// 事件记录
+			remoteCtrlRoutes.POST("/remote/sessions/:sessionId/events", remoteCtrlH.RecordEvent)
+			remoteCtrlRoutes.GET("/remote/sessions/:sessionId/events", remoteCtrlH.GetSessionEvents)
+
+			// 屏幕截图
+			remoteCtrlRoutes.POST("/remote/sessions/:sessionId/screenshots", remoteCtrlH.SaveScreenCapture)
+			remoteCtrlRoutes.GET("/remote/sessions/:sessionId/screenshots", remoteCtrlH.GetSessionScreenCaptures)
+
+			// 命令管理
+			remoteCtrlRoutes.POST("/remote/sessions/:sessionId/commands", remoteCtrlH.SendCommand)
+			remoteCtrlRoutes.PUT("/remote/commands/:id/status", remoteCtrlH.UpdateCommandStatus)
+			remoteCtrlRoutes.GET("/remote/sessions/:sessionId/commands", remoteCtrlH.GetSessionCommands)
 		}
 	}
 
